@@ -16,6 +16,7 @@ honesty boundary in PRD.md §4 is untouched by anything in this file.
 import json
 import os
 import re
+import time
 from functools import lru_cache
 
 import requests
@@ -26,6 +27,15 @@ import requests
 GEMINI_MODEL = "gemini-3.6-flash"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 TIMEOUT_S = 60
+
+# Gemini returns 503 "high demand" fairly often, and it clears on retry —
+# seen repeatedly on 2026-09-05. Retry that status and nothing else. An
+# invalid key, a 404 for a retired model or a 400 for a bad request will
+# fail again identically, so retrying them only makes a teacher wait
+# longer for the same message.
+RETRY_STATUSES = (503,)
+RETRIES = 2  # three attempts in total
+BACKOFF_S = (1, 3)
 
 SIMPLIFY_PROMPT = """You are helping a primary-school teacher in Jharkhand, India.
 
@@ -117,37 +127,47 @@ def simplify(text: str) -> dict:
         raise ValueError("Nothing to simplify — the text was empty.")
     _, key = _config()
 
-    try:
-        response = requests.post(
-            GEMINI_URL.format(model=GEMINI_MODEL),
-            headers={"x-goog-api-key": key, "Content-Type": "application/json"},
-            json={
-                "contents": [
-                    {"parts": [{"text": SIMPLIFY_PROMPT.format(text=text.strip())}]}
-                ],
-                "generationConfig": {
-                    "responseMimeType": "application/json",
-                    "responseSchema": _RESPONSE_SCHEMA,
-                    "temperature": 0.2,
-                },
-            },
-            timeout=TIMEOUT_S,
-        )
-    except requests.Timeout:
-        # Seen in practice, and it must not surface as a bare 500. A
-        # teacher standing in front of a class needs to know it is worth
-        # trying again (RULES.md §3).
-        raise RuntimeError(
-            f"The simplification service did not answer within {TIMEOUT_S} "
-            "seconds. Check the connection and try again."
-        )
-    except requests.RequestException as e:
-        raise RuntimeError(f"Could not reach the simplification service: {e}")
+    payload = {
+        "contents": [
+            {"parts": [{"text": SIMPLIFY_PROMPT.format(text=text.strip())}]}
+        ],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "responseSchema": _RESPONSE_SCHEMA,
+            "temperature": 0.2,
+        },
+    }
+
+    for attempt in range(RETRIES + 1):
+        try:
+            response = requests.post(
+                GEMINI_URL.format(model=GEMINI_MODEL),
+                headers={"x-goog-api-key": key, "Content-Type": "application/json"},
+                json=payload,
+                timeout=TIMEOUT_S,
+            )
+        except requests.Timeout:
+            # Must not surface as a bare 500. A teacher standing in front
+            # of a class needs to know it is worth trying again
+            # (RULES.md §3).
+            raise RuntimeError(
+                f"The simplification service did not answer within {TIMEOUT_S} "
+                "seconds. Check the connection and try again."
+            )
+        except requests.RequestException as e:
+            raise RuntimeError(f"Could not reach the simplification service: {e}")
+
+        if response.status_code not in RETRY_STATUSES or attempt == RETRIES:
+            break
+        time.sleep(BACKOFF_S[attempt])
 
     if not response.ok:
+        attempts = ""
+        if response.status_code in RETRY_STATUSES:
+            attempts = f" after {RETRIES + 1} attempts"
         raise RuntimeError(
-            f"The simplification service returned {response.status_code}. "
-            f"{response.text[:200]}"
+            f"The simplification service returned {response.status_code}"
+            f"{attempts}. {response.text[:200]}"
         )
 
     try:

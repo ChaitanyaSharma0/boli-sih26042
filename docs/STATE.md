@@ -307,13 +307,12 @@ Added to PLAN.md after the failure was seen live, not predicted.
   `santali_translation` are never written, so the table cannot tell you
   what the teacher was actually shown. Fine for linking corrections;
   not enough to reconstruct a session.
-- The pedagogy step depends on a third-party service that goes down.
-  Gemini 503s ("high demand") were hit repeatedly on 2026-09-05 and
-  succeeded on retry. Since Phase 8.5 an outage no longer takes the
-  screen with it — but Santali still gets nothing when Gemini is down,
-  because translation genuinely depends on the simplified text. There is
-  no retry: one 503 means no Santali for that submission. A small retry
-  with backoff in `models/pedagogy.py` would probably fix most of it.
+- The pedagogy step depends on a third-party service that goes down, but
+  the common case is now handled: `models/pedagogy.py` retries a 503
+  twice with a 1s then 3s backoff, and Phase 8.5 keeps an outage from
+  taking the screen down. A 503 that survives three attempts still means
+  no Santali for that submission — the other four languages are
+  unaffected either way.
 - For a phrase-bank language, the correction form's "original" is the
   text BOLI was asked to speak, not the phrase bank's target string —
   `/speak` returns audio bytes, not the entry it matched, so the

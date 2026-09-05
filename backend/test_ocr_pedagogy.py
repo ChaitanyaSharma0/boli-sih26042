@@ -133,9 +133,113 @@ def test_network_failure_is_readable_not_a_500():
         pedagogy.requests.post = original
 
 
+class _FakeResponse:
+    def __init__(self, status, body=""):
+        self.status_code = status
+        self.ok = 200 <= status < 300
+        self.text = body
+
+    def json(self):
+        import json as _json
+
+        return _json.loads(self.text)
+
+
+def _with_fake_post(responses):
+    """Replace requests.post with one that returns `responses` in order."""
+    from models import pedagogy
+
+    calls = []
+
+    def fake(*args, **kwargs):
+        calls.append(1)
+        return responses[min(len(calls) - 1, len(responses) - 1)]
+
+    original = pedagogy.requests.post
+    pedagogy.requests.post = fake
+    return pedagogy, original, calls
+
+
+def test_503_is_retried_and_can_succeed():
+    """Gemini's "high demand" 503 clears on retry — seen repeatedly."""
+    import json as _json
+
+    good = _FakeResponse(
+        200,
+        _json.dumps(
+            {
+                "candidates": [
+                    {
+                        "content": {
+                            "parts": [
+                                {
+                                    "text": _json.dumps(
+                                        {
+                                            "concept": "c",
+                                            "adapted_hindi": ["किसान काम करता है।"],
+                                            "substitutions": [],
+                                        }
+                                    )
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ),
+    )
+    pedagogy, original, calls = _with_fake_post(
+        [_FakeResponse(503, "busy"), _FakeResponse(503, "busy"), good]
+    )
+    pedagogy.BACKOFF_S = (0, 0)  # do not actually wait in a test
+    try:
+        r = client.post("/simplify", json={"text": "किसान खेत में काम करता है।"})
+        assert r.status_code == 200, r.text
+        assert len(calls) == 3, f"expected 3 attempts, made {len(calls)}"
+        print(f"503      : retried {len(calls) - 1}x then succeeded")
+    finally:
+        pedagogy.requests.post = original
+        pedagogy.BACKOFF_S = (1, 3)
+
+
+def test_503_that_never_clears_gives_up():
+    pedagogy, original, calls = _with_fake_post([_FakeResponse(503, "busy")])
+    pedagogy.BACKOFF_S = (0, 0)
+    try:
+        r = client.post("/simplify", json={"text": "किसान खेत में काम करता है।"})
+        assert r.status_code == 502, r.status_code
+        assert len(calls) == 3, f"expected 3 attempts, made {len(calls)}"
+        assert "after 3 attempts" in r.json()["detail"], r.json()
+        print(f"503      : gave up after {len(calls)} attempts, message says so")
+    finally:
+        pedagogy.requests.post = original
+        pedagogy.BACKOFF_S = (1, 3)
+
+
+def test_client_errors_are_not_retried():
+    """An invalid key or a retired model fails identically every time.
+
+    Retrying those only makes a teacher wait longer for the same message,
+    so each must cost exactly one call.
+    """
+    for status, label in ((400, "invalid API key"), (404, "retired model")):
+        pedagogy, original, calls = _with_fake_post([_FakeResponse(status, "nope")])
+        try:
+            r = client.post("/simplify", json={"text": "किसान खेत में काम करता है।"})
+            assert r.status_code == 502, r.status_code
+            assert len(calls) == 1, f"{label}: retried {len(calls)} times, expected 1"
+            assert "attempts" not in r.json()["detail"], r.json()
+        finally:
+            pedagogy.requests.post = original
+        print(f"{status}      : {label} failed fast, 1 call, no retry")
+
+
 if __name__ == "__main__":
     ocr_text = test_ocr_reads_hindi()
     test_simplify(ocr_text)
     test_empty_text_is_rejected()
     test_network_failure_is_readable_not_a_500()
+    test_503_is_retried_and_can_succeed()
+    test_503_that_never_clears_gives_up()
+    test_client_errors_are_not_retried()
     print("\nPASS")
