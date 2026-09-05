@@ -6,17 +6,20 @@ import {
   speak,
   translate,
 } from "../api";
-import { translateTargetFor } from "../capability";
+import { speaksWithoutPedagogy, translateTargetFor } from "../capability";
 import AudioPlayer from "../components/AudioPlayer";
 import CorrectionForm from "../components/CorrectionForm";
 
 // Screen 3 — the lesson, adapted, translated where that is real, and
 // spoken where a voice exists.
 //
-// The calls run in sequence, not in parallel: /simplify, then /translate
-// for languages that genuinely have a model, then /speak per language
-// (ARCHITECTURE.md §5). Sequential is easier to follow when one step
-// fails, and fast enough for a classroom.
+// The calls run in sequence, not in parallel (ARCHITECTURE.md §5), and
+// the order matters: the phrase-bank languages are spoken BEFORE
+// /simplify is called, because they do not use the LLM at all. A slow or
+// failing Gemini must not delay or cancel results that never needed it
+// (PLAN.md Phase 8.5, added after a live 503 took the whole screen with
+// it). A /simplify failure is caught and scoped to the languages that
+// actually depended on it.
 //
 // PRD.md §4's boundary is enforced here by construction, not by a check
 // that could be forgotten: translateTargetFor() returns null for every
@@ -38,6 +41,8 @@ export default function Result({
   const [translations, setTranslations] = useState([]);
   const [audio, setAudio] = useState({});
   const [lessonId, setLessonId] = useState(null);
+  // Scoped to the languages that needed pedagogy — never fatal.
+  const [simplifyError, setSimplifyError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -63,45 +68,11 @@ export default function Result({
         if (cancelled) return;
         setLessonId(lesson.id);
 
-        // 1. Simplify. Hindi to Hindi; no boundary crossed.
-        setStage("Simplifying the lesson…");
-        const simplified = await simplify(hindiText);
-        if (cancelled) return;
-        setAdapted(simplified);
-
-        // 2. Translate — only languages with a real model behind them.
-        for (const language of picked) {
-          const target = translateTargetFor(language);
-          if (!target) continue; // phrase-bank language: never translated
-          setStage("Translating into " + language.name + "…");
-          for (const sentence of simplified.adapted_hindi) {
-            const result = await translate(sentence, target);
-            if (cancelled) return;
-            translated.push({
-              code: language.code,
-              name: language.name,
-              sentence,
-              translated: result.translated,
-              contaminated: result.script_contamination,
-            });
-            setTranslations([...translated]);
-          }
-        }
-
-        // 3. Speak — only languages that have a voice at all.
-        for (const language of picked) {
-          if (language.tts !== "full") continue; // Santali has no voice
+        // Speak one language and record the outcome. A failure is stored
+        // against that language, never thrown — one checkpoint failing
+        // must not lose everybody else's results.
+        async function speakInto(language, text) {
           setStage("Generating " + language.name + " audio…");
-
-          // Speak the translation when a real one exists; otherwise send
-          // the teacher's own Hindi, which is what the phrase bank is
-          // keyed on. If it is not a bank phrase, /speak refuses and says
-          // so, and that refusal is rendered as a refusal.
-          const mine = translated.filter((t) => t.code === language.code);
-          const text = mine.length
-            ? mine.map((t) => t.translated).join(" ")
-            : hindiText;
-
           try {
             const result = await speak(text, language.code);
             if (cancelled) return;
@@ -111,12 +82,68 @@ export default function Result({
             }));
           } catch (e) {
             if (cancelled) return;
-            // One language failing must not lose the others.
             setAudio((prev) => ({
               ...prev,
               [language.code]: { kind: "error", error: e.message },
             }));
           }
+        }
+
+        // 1. Speak the languages that do not need the LLM, first. The
+        // phrase bank is keyed on the teacher's own Hindi; if the
+        // sentence is not in it, /speak refuses and that refusal is
+        // rendered as a refusal.
+        for (const language of picked.filter(speaksWithoutPedagogy)) {
+          await speakInto(language, hindiText);
+          if (cancelled) return;
+        }
+
+        // 2. Simplify. Hindi to Hindi; no boundary crossed. Everything
+        // above is already on screen if this fails.
+        setStage("Simplifying the lesson…");
+        let simplified = null;
+        try {
+          simplified = await simplify(hindiText);
+          if (cancelled) return;
+          setAdapted(simplified);
+        } catch (e) {
+          if (cancelled) return;
+          setSimplifyError(e.message);
+        }
+
+        // 3. Translate — only languages with a real model behind them,
+        // and only if there is adapted text to translate. Translating the
+        // unsimplified sentence instead would produce exactly the broken
+        // output the pedagogy step exists to prevent (PLAN.md Phase 8.5).
+        if (simplified) {
+          for (const language of picked) {
+            const target = translateTargetFor(language);
+            if (!target) continue; // phrase-bank language: never translated
+            setStage("Translating into " + language.name + "…");
+            for (const sentence of simplified.adapted_hindi) {
+              const result = await translate(sentence, target);
+              if (cancelled) return;
+              translated.push({
+                code: language.code,
+                name: language.name,
+                sentence,
+                translated: result.translated,
+                contaminated: result.script_contamination,
+              });
+              setTranslations([...translated]);
+            }
+          }
+        }
+
+        // 4. Speak anything that has both a translation and a voice.
+        // Nothing does today — Santali has no TTS checkpoint — but the
+        // step is here so adding one needs no new wiring.
+        for (const language of picked) {
+          if (language.tts !== "full" || speaksWithoutPedagogy(language)) continue;
+          const mine = translated.filter((t) => t.code === language.code);
+          if (!mine.length) continue;
+          await speakInto(language, mine.map((t) => t.translated).join(" "));
+          if (cancelled) return;
         }
 
         setStage("");
@@ -156,6 +183,18 @@ export default function Result({
 
       {stage && <p className="stage">{stage}</p>}
       {error && <p className="error">{error}</p>}
+
+      {simplifyError && (
+        <div className="group">
+          <h3>Simplified Hindi</h3>
+          <p className="error">
+            The lesson could not be simplified this time. {simplifyError}
+          </p>
+          <p className="note">
+            Anything below that does not need this step is unaffected.
+          </p>
+        </div>
+      )}
 
       {adapted && (
         <div className="group">
@@ -202,6 +241,14 @@ export default function Result({
                 No translation model exists for {language.name}. Anything below
                 comes from the curated phrase bank, not from translating your
                 sentence — and it is pending validation by a native speaker.
+              </p>
+            )}
+
+            {simplifyError && !isBank && (
+              <p className="error">
+                No {language.name} translation this time: it depends on the
+                simplification step, which failed. The other languages on this
+                page were not affected.
               </p>
             )}
 

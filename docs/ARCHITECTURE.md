@@ -176,13 +176,28 @@ proven in the Colab notebook (`/docs/research/` has the working code).
 ## 5. Frontend data flow
 
 Screen 1 (Capture) → holds `hindiText` in state → screen 2 (LanguageSelect)
-→ holds `selectedLangs[]` → screen 3 (Result) fires, in order:
-`POST /simplify` → `POST /translate` (if Santali selected) →
-`POST /speak` per selected language → render all results together.
+→ holds `selectedLangs[]` → screen 3 (Result) fires, in this order:
 
-Do not fire these in parallel on first pass — sequential is simpler to
-debug and fast enough for a hackathon demo. Parallelize only if latency
-is visibly bad in testing.
+1. `POST /lessons` — record the submission, get an id for corrections.
+2. `POST /speak` for every selected language that has a voice but no
+   translation model (Ho, Mundari, Kurukh, Sadri). These use the phrase
+   bank and never touch the LLM.
+3. `POST /simplify`.
+4. `POST /translate` per adapted sentence, for languages with a real
+   model (Santali only).
+5. `POST /speak` for any language that has both a translation and a
+   voice — none today, Santali has no TTS checkpoint.
+
+**Step 2 comes before step 3 deliberately.** The phrase-bank languages
+do not depend on pedagogy output, so they must not queue behind a call
+to a third-party LLM that can be slow, rate-limited or down. A `/simplify`
+failure is caught and scoped to the languages that actually needed it;
+it must never abort the rest (PLAN.md Phase 8.5, learned from a live
+Gemini 503).
+
+Do not fire these in parallel — sequential is simpler to debug and fast
+enough for a hackathon demo. Parallelize only if latency is visibly bad
+in testing. Reordering for independence is not parallelizing.
 
 ## 6. Deployment target
 

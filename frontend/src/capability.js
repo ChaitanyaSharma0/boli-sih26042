@@ -116,3 +116,16 @@ export const VERIFIED_CONTRAST = [
     why: "Same idea, local wording: धान (paddy) and हाट (the weekly village market).",
   },
 ];
+
+// True when a language can be spoken without waiting for the pedagogy
+// step: it has a voice, and it has no translation model, so what gets
+// spoken comes from the curated phrase bank rather than from anything the
+// LLM produced.
+//
+// These languages are handled BEFORE /simplify (ARCHITECTURE.md §5). A
+// third-party LLM that is slow, rate-limited or down must not delay or
+// cancel results that never needed it — PLAN.md Phase 8.5, added after a
+// live Gemini 503 took the whole Result screen with it.
+export function speaksWithoutPedagogy(language) {
+  return language.tts === "full" && translateTargetFor(language) === null;
+}

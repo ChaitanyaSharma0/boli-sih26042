@@ -13,11 +13,11 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 8 — DONE. Next up: Phase 9 (styling pass).`
+`Phase 8.5 — DONE. Next up: Phase 9 (styling pass).`
 
 ## Last commit
 
-`79d09da — feat: santali contrast demo control`
+`(Phase 8.5 commit — see git log -1)`
 
 ## What is confirmed working right now
 
@@ -241,6 +241,32 @@ before the code was written (RULES.md §6).
   asserts on, including an explicit assertion that neither half is
   `किसान खेत में धान उगाता है।`. 14 frontend tests passing.
 
+### Phase 8.5 — Graceful degradation — DONE 2026-09-05
+Added to PLAN.md after the failure was seen live, not predicted.
+- What changed: the Result screen now speaks the phrase-bank languages
+  **before** calling `/simplify`, and a `/simplify` failure is caught and
+  scoped instead of thrown to one outer catch. ARCHITECTURE.md §5 has
+  the new order.
+- Verified against an induced failure, not by reasoning: a backend
+  started with `LLM_API_KEY=INVALID_KEY_FOR_DEGRADATION_TEST`, so
+  `/simplify` really returned 502 ("API key not valid"). Result:
+
+  ```
+  Ho       -> audio/wav, 110,650 bytes
+  Mundari  -> audio/wav, 108,602 bytes
+  Kurukh   -> audio/wav, 135,226 bytes
+  Sadri    -> audio/wav, 113,722 bytes
+  Santali  -> inline error, scoped to Santali only
+  ```
+
+- The unsimplified sentence is deliberately NOT translated as a
+  fallback. That would produce the broken output the pedagogy step
+  exists to prevent, and present it as a normal result.
+- 18 frontend tests passing, four of them on
+  `speaksWithoutPedagogy()` — including that a language with both a
+  model and a voice is NOT treated as pedagogy-independent, since its
+  audio would come from the translation.
+
 ## What is known broken or not yet attempted
 
 - **The pedagogy step's own output is not guaranteed to translate
@@ -281,12 +307,13 @@ before the code was written (RULES.md §6).
   `santali_translation` are never written, so the table cannot tell you
   what the teacher was actually shown. Fine for linking corrections;
   not enough to reconstruct a session.
-- The pedagogy step depends on a third-party service that goes down. A
-  Gemini 503 ("high demand") was hit during Phase 8 verification. It
-  surfaces as a readable 502 rather than a crash, but the whole result
-  flow stops there, because `/simplify` runs first. Worth thinking about
-  before a live demo: a Gemini outage currently takes the entire Result
-  screen with it, including the languages that need no LLM at all.
+- The pedagogy step depends on a third-party service that goes down.
+  Gemini 503s ("high demand") were hit repeatedly on 2026-09-05 and
+  succeeded on retry. Since Phase 8.5 an outage no longer takes the
+  screen with it — but Santali still gets nothing when Gemini is down,
+  because translation genuinely depends on the simplified text. There is
+  no retry: one 503 means no Santali for that submission. A small retry
+  with backoff in `models/pedagogy.py` would probably fix most of it.
 - For a phrase-bank language, the correction form's "original" is the
   text BOLI was asked to speak, not the phrase bank's target string —
   `/speak` returns audio bytes, not the entry it matched, so the
@@ -318,6 +345,18 @@ because X." Keep entries short and dated.)*
   requires a reviewed commit. That flag is exactly the claim RULES.md §2
   says must never be softened quietly, so it does not get a path that
   bypasses review.
+- 2026-09-05 — **`gemini-3.6-flash` is correct and verified**, against
+  the API rather than the AI Studio UI: it appears in `ListModels` with
+  `generateContent`, and a live call returns 200. The 404s visible in the
+  usage dashboard for 2026-09-05 came from `gemini-2.5-flash`, which the
+  code called during Phase 3 before the switch. Trap for later:
+  `gemini-2.5-flash` is still listed by `ListModels` but returns 404
+  "no longer available to new users" on `generateContent` — being in the
+  list is not proof of access, only an actual call is.
+- 2026-09-05 — Phase 8.5 reordered the Result sequence so the
+  phrase-bank languages are spoken before `/simplify`. This is not
+  parallelism (ARCHITECTURE.md §5 still forbids that); it is putting the
+  work that has no dependency ahead of the work that does.
 - 2026-09-05 — `script_contamination` is deliberately named for what it
   measures. `false` means no Meetei Mayek was found and nothing more —
   it is not a claim the translation is correct, and the docs say so.

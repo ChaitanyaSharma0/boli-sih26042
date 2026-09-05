@@ -14,6 +14,7 @@ import {
   capabilityBadge,
   describeCapability,
   groupLanguages,
+  speaksWithoutPedagogy,
   translateTargetFor,
 } from "../src/capability.js";
 
@@ -182,5 +183,41 @@ test("the demo targets Santali through the same constant as everything else", ()
   assert.equal(
     translateTargetFor({ code: "sat", translation: "full", tts: "none" }),
     SANTALI_TARGET,
+  );
+});
+
+// --- Phase 8.5: independence from the pedagogy step --------------------
+// A slow or failing third-party LLM must not delay or cancel results
+// that never needed it. These languages are spoken before /simplify.
+
+test("phrase-bank languages with a voice do not wait on pedagogy", () => {
+  for (const code of ["hoc", "unr", "kru", "sck"]) {
+    const language = LIVE.find((l) => l.code === code);
+    assert.equal(
+      speaksWithoutPedagogy(language),
+      true,
+      `${code} uses the phrase bank and TTS, neither of which touches the LLM`,
+    );
+  }
+});
+
+test("Santali is not spoken early — it has no voice at all", () => {
+  const sat = LIVE.find((l) => l.code === "sat");
+  assert.equal(speaksWithoutPedagogy(sat), false);
+});
+
+test("a translatable language is never treated as pedagogy-independent", () => {
+  // Hypothetical future language with both a model and a voice: its audio
+  // comes from the translation, so it genuinely does depend on pedagogy.
+  assert.equal(
+    speaksWithoutPedagogy({ code: "sat", translation: "full", tts: "full" }),
+    false,
+  );
+});
+
+test("a language with no voice is never spoken, pedagogy or not", () => {
+  assert.equal(
+    speaksWithoutPedagogy({ code: "xxx", translation: "phrase_bank", tts: "none" }),
+    false,
   );
 });

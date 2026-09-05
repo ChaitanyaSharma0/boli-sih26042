@@ -105,6 +105,34 @@ Claude Code session pick up context without re-reading this whole plan.
   do not skip it for time
 - **Commit: "feat: santali contrast demo control"**
 
+## Phase 8.5 — Graceful degradation when the LLM is unavailable
+
+Added 2026-09-05, after the failure was observed live rather than
+predicted: Gemini returned 503 "high demand" during Phase 8
+verification, and because `/simplify` runs first and throws to a single
+outer catch, the whole Result screen died — including Ho, Mundari,
+Kurukh and Sadri, which do not use the LLM at all.
+
+This is a functional correctness bug, not a styling concern, so it goes
+before Phase 9.
+
+- **Ho/Mundari/Kurukh/Sadri must render and play normally when
+  `/simplify` fails, times out, or is merely slow.** They depend on the
+  phrase bank and TTS, neither of which touches the LLM. Their `/speak`
+  calls therefore move *before* `/simplify` in the sequence, so a slow
+  pedagogy call cannot delay them either — see ARCHITECTURE.md §5.
+- **A `/simplify` failure is scoped to Santali**, shown as an inline
+  error in Santali's own section. It must never abort the other
+  languages' results.
+- Do **not** paper over the failure by translating the unsimplified text
+  instead. That would produce output the pedagogy step exists to
+  prevent, and present it as a normal result.
+- **Verify with an induced failure**, not by reasoning about it: point
+  `LLM_API_KEY` at an invalid value, run the flow, and confirm the
+  phrase-bank languages still return audio while Santali shows its own
+  error.
+- **Commit: "fix: /simplify failure no longer takes down the other languages"**
+
 ## Phase 9 — Styling pass
 - Apply the visual language from the SIH deck (navy/green palette,
   card-based layout) so the app and the deck feel like one product
