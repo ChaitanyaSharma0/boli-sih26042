@@ -86,6 +86,21 @@ Claude Code session pick up context without re-reading this whole plan.
   short and adapted but still leaks Meetei Mayek. Any replacement pair
   must be checked against the live API first, because the same word can
   be clean in one sentence and not another.
+- **Hardcode that pair. Do not call `/simplify` live and translate
+  whatever comes back.** The LLM is not deterministic, and its output
+  can contain a word that contaminates — measured in Phase 3, where one
+  of two adapted sentences leaked Meetei Mayek on धान. A demo control
+  that sometimes fails to demonstrate the thing it exists to
+  demonstrate is worse than no control.
+- **Label it "verified example", not "live pipeline output."** The two
+  buttons show a fixed, checked pair, and the UI must say so. This is
+  the same honesty rule as everywhere else (RULES.md §2): the claim on
+  screen has to match what the code actually did.
+- The free-text simplify-then-translate flow elsewhere in the app stays
+  live and unpredictable, and that is fine — PRD.md §4 says the gap is
+  part of the pitch, not something to hide. The difference is that the
+  demo control makes a specific promise about what it will show, and
+  the free-text flow does not.
 - This is the single highest-value UI addition in the whole build —
   do not skip it for time
 - **Commit: "feat: santali contrast demo control"**
