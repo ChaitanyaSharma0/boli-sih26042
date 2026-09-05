@@ -17,7 +17,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Last commit
 
-`(Phase 4 commit — see git log -1)`
+`11cf1d3 — feat: correction logging`
 
 ## What is confirmed working right now
 
