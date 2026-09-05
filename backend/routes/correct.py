@@ -34,10 +34,10 @@ def correct(req: CorrectionRequest):
     if not req.corrected.strip():
         raise HTTPException(400, "The corrected text is empty.")
 
-    # lesson_id is stored as given and not checked against lessons. Nothing
-    # writes that table until Phase 7, and dropping a teacher's correction
-    # because the lesson row does not exist yet would lose real data to a
-    # bookkeeping detail.
+    # lesson_id is stored as given and not checked against lessons.
+    # POST /lessons now supplies a real id, but a correction is still worth
+    # more than the foreign key: refusing to log one because the lesson row
+    # went missing would lose real teacher input to a bookkeeping detail.
     with closing(db.connect()) as conn:
         cur = conn.execute(
             "INSERT INTO corrections (lesson_id, lang_code, original_text, "

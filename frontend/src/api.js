@@ -53,7 +53,17 @@ export function simplify(text) {
 // wrapper does nothing to soften that — see translateTargetFor().
 export function translate(text, target) {
   return postJson("/translate", { text, target });
-  // { translated, target }
+  // { translated, target, script_contamination }
+}
+
+// One row per teacher submission. Called before the rest of the sequence,
+// so a correction has a real lesson to point at (ARCHITECTURE.md §3).
+export function createLesson({ sourceText, sourceType, languages }) {
+  return postJson("/lessons", {
+    source_text: sourceText,
+    source_type: sourceType,
+    languages_requested: languages,
+  }); // { id }
 }
 
 // /speak answers in one of two shapes, and the difference matters:

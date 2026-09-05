@@ -30,4 +30,12 @@ def translate(req: TranslateRequest):
         translated = translation.translate(req.text, req.target)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    return {"translated": translated, "target": req.target}
+
+    # Report the one failure mode we have actually measured, rather than
+    # handing back broken output that looks fine. A caller that renders
+    # this line unlabelled is overclaiming (ARCHITECTURE.md §3).
+    return {
+        "translated": translated,
+        "target": req.target,
+        "script_contamination": translation.contains_meetei_mayek(translated),
+    }

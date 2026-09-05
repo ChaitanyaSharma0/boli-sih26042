@@ -37,12 +37,14 @@ def main():
     with TestClient(app) as client:
         r = client.post("/translate", json={"text": TEXTBOOK, "target": "sat_Olck"})
         r.raise_for_status()
-        textbook_out = r.json()["translated"]
+        textbook = r.json()
+        textbook_out = textbook["translated"]
         print("textbook :", TEXTBOOK, "\n        ->", textbook_out)
 
         r = client.post("/translate", json={"text": ADAPTED_CLEAN, "target": "sat_Olck"})
         r.raise_for_status()
-        adapted_out = r.json()["translated"]
+        adapted = r.json()
+        adapted_out = adapted["translated"]
         print("adapted  :", ADAPTED_CLEAN, "\n        ->", adapted_out)
 
         assert contains_meetei_mayek(textbook_out), (
@@ -54,6 +56,13 @@ def main():
             "The adapted sentence now leaks Meetei Mayek — the clean half of the "
             "contrast is gone. Same rule: fix it, do not relax the assertion."
         )
+
+        # The route must report the contamination, not merely contain it.
+        # A caller that cannot tell these two responses apart will render
+        # broken output as if it were fine (ARCHITECTURE.md §3).
+        assert textbook["script_contamination"] is True, textbook
+        assert adapted["script_contamination"] is False, adapted
+        print("flagged  : textbook script_contamination=True, adapted=False")
 
         # Ho: real speech, real bytes. Odia script, per DATA_DICTIONARY.md §1.
         r = client.post("/speak", json={"text": "ଦା ଆଲେ ଜୀଉ ତାନା", "lang": "hoc"})

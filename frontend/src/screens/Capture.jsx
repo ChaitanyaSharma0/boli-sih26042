@@ -8,7 +8,12 @@ import { ocr } from "../api";
 // vowel signs (किसान comes back as कस्िान) while still reporting decent
 // confidence, so the invitation to check the text is not boilerplate —
 // it is the actual correction mechanism (ARCHITECTURE.md §3).
-export default function Capture({ hindiText, setHindiText, onNext }) {
+export default function Capture({
+  hindiText,
+  setHindiText,
+  setSourceType,
+  onNext,
+}) {
   const [reading, setReading] = useState(false);
   const [error, setError] = useState("");
   const [ocrConfidence, setOcrConfidence] = useState(null);
@@ -21,6 +26,7 @@ export default function Capture({ hindiText, setHindiText, onNext }) {
     try {
       const result = await ocr(file);
       setHindiText(result.text);
+      setSourceType("ocr");
       setOcrConfidence(result.confidence);
     } catch (e) {
       setError(e.message);
@@ -38,7 +44,12 @@ export default function Capture({ hindiText, setHindiText, onNext }) {
         id="hindi"
         rows={4}
         value={hindiText}
-        onChange={(e) => setHindiText(e.target.value)}
+        onChange={(e) => {
+          setHindiText(e.target.value);
+          // Editing a photographed line keeps it "ocr" — it did come off a
+          // photo. Only clearing the box entirely makes it typed again.
+          if (!e.target.value.trim()) setSourceType("typed");
+        }}
         placeholder="किसान खेत में गेहूँ उगाता है।"
       />
 

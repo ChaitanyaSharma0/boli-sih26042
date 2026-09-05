@@ -107,6 +107,30 @@ this file casually.
 ```
 
 ```jsonc
+// POST /translate response
+{
+  "translated": "ᱪᱟᱥᱤᱭᱟᱹ ᱫᱚ ᱪᱟᱥ ᱚᱲᱟᱜ ᱨᱮ ꯒꯦꯍꯨ ᱡᱟᱱᱟᱢᱼᱟ ᱾",
+  "target": "sat_Olck",
+  "script_contamination": true   // Meetei Mayek present in the output
+}
+```
+
+`script_contamination` is computed by `contains_meetei_mayek()` in
+`backend/models/translation.py`. True means IndicTrans2 fell back to
+another Indic script mid-sentence because a word was outside its Santali
+training data — `ꯒꯦꯍꯨ` for गेहूँ, `ꯆꯦꯡ` for धान. The frontend must show
+something visible when this is true; see ARCHITECTURE.md §3.
+
+It is a measurement of one known failure, not a general check that the
+output is correct. `false` means no Meetei Mayek was found, and nothing
+more than that — it is not a claim that the translation is right.
+
+```jsonc
+// POST /lessons response
+{ "id": 1 }
+```
+
+```jsonc
 // POST /simplify response
 {
   "concept": "Farmers grow food and sell it to others.",

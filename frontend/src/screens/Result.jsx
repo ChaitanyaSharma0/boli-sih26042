@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { languages as fetchLanguages, simplify, speak, translate } from "../api";
+import {
+  createLesson,
+  languages as fetchLanguages,
+  simplify,
+  speak,
+  translate,
+} from "../api";
 import { translateTargetFor } from "../capability";
 import AudioPlayer from "../components/AudioPlayer";
 import CorrectionForm from "../components/CorrectionForm";
@@ -19,18 +25,19 @@ import CorrectionForm from "../components/CorrectionForm";
 // text against the curated bank and refuses anything else. The backend
 // 501s them too; this is the belt to those braces.
 
-// Nothing writes the lessons table yet — no endpoint in ARCHITECTURE.md §3
-// creates a lesson row. Corrections are still worth logging, so they go in
-// with lesson_id 0, meaning "no lesson row". Flagged in STATE.md.
-const NO_LESSON = 0;
-
-export default function Result({ hindiText, selectedLangs, onBack }) {
+export default function Result({
+  hindiText,
+  sourceType,
+  selectedLangs,
+  onBack,
+}) {
   const [stage, setStage] = useState("Loading languages…");
   const [error, setError] = useState("");
   const [chosen, setChosen] = useState([]);
   const [adapted, setAdapted] = useState(null);
   const [translations, setTranslations] = useState([]);
   const [audio, setAudio] = useState({});
+  const [lessonId, setLessonId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +52,16 @@ export default function Result({ hindiText, selectedLangs, onBack }) {
         if (cancelled) return;
         const picked = all.filter((l) => selectedLangs.includes(l.code));
         setChosen(picked);
+
+        // 0. Record the submission, so any correction below points at a
+        // real lesson row rather than a placeholder (ARCHITECTURE.md §3).
+        const lesson = await createLesson({
+          sourceText: hindiText,
+          sourceType,
+          languages: selectedLangs,
+        });
+        if (cancelled) return;
+        setLessonId(lesson.id);
 
         // 1. Simplify. Hindi to Hindi; no boundary crossed.
         setStage("Simplifying the lesson…");
@@ -65,6 +82,7 @@ export default function Result({ hindiText, selectedLangs, onBack }) {
               name: language.name,
               sentence,
               translated: result.translated,
+              contaminated: result.script_contamination,
             });
             setTranslations([...translated]);
           }
@@ -113,7 +131,7 @@ export default function Result({ hindiText, selectedLangs, onBack }) {
     return () => {
       cancelled = true;
     };
-  }, [hindiText, selectedLangs]);
+  }, [hindiText, sourceType, selectedLangs]);
 
   // Play one phrase from the bank, when the teacher's own sentence was not
   // in it. Same /speak route, same rules — just a phrase that will match.
@@ -193,13 +211,20 @@ export default function Result({ hindiText, selectedLangs, onBack }) {
                   {mine.map((t, i) => (
                     <li key={i} lang={language.code}>
                       {t.translated}
+                      {t.contaminated && (
+                        <span className="warn">
+                          The model does not recognise a word in this sentence,
+                          so part of this line is in the wrong script. Try
+                          simpler, more local wording.
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ol>
                 <CorrectionForm
                   lang={language.code}
                   original={mine.map((t) => t.translated).join(" ")}
-                  lessonId={NO_LESSON}
+                  lessonId={lessonId}
                 />
               </>
             )}
@@ -224,7 +249,7 @@ export default function Result({ hindiText, selectedLangs, onBack }) {
                   <CorrectionForm
                     lang={language.code}
                     original={spoken.text}
-                    lessonId={NO_LESSON}
+                    lessonId={lessonId}
                   />
                 )}
               </>

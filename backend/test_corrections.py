@@ -11,6 +11,7 @@ lifespan warmup does not run, and the database is initialised directly.
 """
 
 import io
+import json
 import os
 import sys
 import tempfile
@@ -95,11 +96,72 @@ def test_count_increments():
     print("count    : 4 after three more")
 
 
+def test_creating_a_lesson():
+    """POST /lessons gives a correction something real to point at."""
+    r = client.post(
+        "/lessons",
+        json={
+            "source_text": "किसान खेत में गेहूँ उगाता है।",
+            "source_type": "ocr",
+            "languages_requested": ["sat", "hoc"],
+        },
+    )
+    assert r.status_code == 200, r.text
+    lesson_id = r.json()["id"]
+    assert isinstance(lesson_id, int) and lesson_id > 0, r.json()
+
+    row = dict(
+        db.connect()
+        .execute("SELECT * FROM lessons WHERE id = ?", (lesson_id,))
+        .fetchone()
+    )
+    assert row["source_type"] == "ocr", row
+    assert json.loads(row["languages_requested"]) == ["sat", "hoc"], row
+    # Deliberately minimal — these are filled in by nothing yet.
+    assert row["adapted_text"] is None and row["santali_translation"] is None
+    print(f"lesson   : id={lesson_id}, languages={row['languages_requested']}")
+
+    # And a correction can now reference it for real.
+    r = client.post(
+        "/correct",
+        json={
+            "lesson_id": lesson_id,
+            "original": "x",
+            "corrected": "y",
+            "lang": "sat",
+        },
+    )
+    assert r.status_code == 200, r.text
+    linked = db.connect().execute(
+        "SELECT lesson_id FROM corrections WHERE id = ?", (r.json()["id"],)
+    ).fetchone()[0]
+    assert linked == lesson_id
+    print(f"linked   : correction -> lesson {lesson_id}")
+
+
+def test_bad_lessons_are_rejected():
+    base = {
+        "source_text": "किसान खेत में गेहूँ उगाता है।",
+        "source_type": "typed",
+        "languages_requested": ["hoc"],
+    }
+    cases = {
+        "empty text": {**base, "source_text": "   "},
+        "bad source_type": {**base, "source_type": "dictated"},
+        "no languages": {**base, "languages_requested": []},
+        "unknown language": {**base, "languages_requested": ["hoc", "xyz"]},
+    }
+    for name, body in cases.items():
+        r = client.post("/lessons", json=body)
+        assert r.status_code == 400, f"{name} was accepted: {r.status_code}"
+    print(f"rejected : {', '.join(cases)}")
+
+
 def test_bad_input_is_rejected():
     base = {"lesson_id": 1, "original": "x", "corrected": "y", "lang": "hoc"}
     assert client.post("/correct", json={**base, "lang": "xyz"}).status_code == 400
     assert client.post("/correct", json={**base, "corrected": "  "}).status_code == 400
-    assert client.get("/corrections/count").json() == {"count": 4}, "a rejected correction was written anyway"
+    assert client.get("/corrections/count").json() == {"count": 5}, "a rejected correction was written anyway"
     print("rejected : unknown language and empty correction, nothing written")
 
 
@@ -108,5 +170,7 @@ if __name__ == "__main__":
     test_count_starts_empty()
     test_logging_a_correction()
     test_count_increments()
+    test_creating_a_lesson()
+    test_bad_lessons_are_rejected()
     test_bad_input_is_rejected()
     print(f"\nPASS  (scratch db: {_scratch})")

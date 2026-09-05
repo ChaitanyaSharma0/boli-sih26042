@@ -8,6 +8,8 @@ import Result from "./screens/Result";
 export default function App() {
   const [step, setStep] = useState(0);
   const [hindiText, setHindiText] = useState("");
+  // Whether the text came off a photo or a keyboard, for the lesson row.
+  const [sourceType, setSourceType] = useState("typed");
   const [selectedLangs, setSelectedLangs] = useState([]);
 
   // State lives here, not in the screens, because it flows forward:
@@ -23,6 +25,7 @@ export default function App() {
         <Capture
           hindiText={hindiText}
           setHindiText={setHindiText}
+          setSourceType={setSourceType}
           onNext={next}
         />
       )}
@@ -37,6 +40,7 @@ export default function App() {
       {step === 2 && (
         <Result
           hindiText={hindiText}
+          sourceType={sourceType}
           selectedLangs={selectedLangs}
           onBack={back}
         />

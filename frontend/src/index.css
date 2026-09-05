@@ -185,3 +185,20 @@ form button {
   width: auto;
   margin-right: 0.5rem;
 }
+
+/* A translation the model could not fully handle. Never silently styled
+   like clean output — DATA_DICTIONARY.md §4, ARCHITECTURE.md §3. */
+.warn {
+  display: block;
+  margin-top: 0.25rem;
+  padding-left: 0.5rem;
+  border-left: 4px solid #a60;
+  font-size: 0.85rem;
+  color: #a60;
+}
+
+.demo-case {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ccc;
+}

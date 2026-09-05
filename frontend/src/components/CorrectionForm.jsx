@@ -37,6 +37,10 @@ export default function CorrectionForm({ lang, original, lessonId }) {
   }
 
   if (!open) {
+    // Without a lesson row there is nothing for the correction to
+    // reference, so the offer is not made rather than made and then
+    // failed on submit.
+    if (lessonId == null) return null;
     return (
       <button className="link" onClick={() => setOpen(true)}>
         Suggest a correction

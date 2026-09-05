@@ -16,7 +16,15 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from db import db  # noqa: E402
 from models import translation, tts  # noqa: E402
-from routes import correct, languages, ocr, pedagogy, speak, translate  # noqa: E402
+from routes import (  # noqa: E402
+    correct,
+    languages,
+    lessons,
+    ocr,
+    pedagogy,
+    speak,
+    translate,
+)
 
 
 @asynccontextmanager
@@ -42,7 +50,7 @@ app.add_middleware(
 
 app.mount("/audio", StaticFiles(directory="static/audio"), name="audio")
 
-for module in (ocr, pedagogy, translate, speak, correct, languages):
+for module in (ocr, pedagogy, translate, speak, correct, languages, lessons):
     app.include_router(module.router)
 
 

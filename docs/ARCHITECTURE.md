@@ -92,11 +92,47 @@ NOT inline in the route file — keep prompts in one place, versioned.
 
 ### `POST /translate`
 Request: `{ "text": "<hindi sentence>", "target": "sat_Olck" }`
-Response: `{ "translated": "<ol chiki text>", "target": "sat_Olck" }`
+Response:
+```json
+{
+  "translated": "<ol chiki text>",
+  "target": "sat_Olck",
+  "script_contamination": true
+}
+```
 **`target` accepts only `sat_Olck` in this build.** Any other value
 returns `501 Not Implemented` with a message pointing at the phrase
 bank endpoint instead. Do not silently fall through — fail loudly and
 explain why, per PRD.md scope boundary.
+
+`script_contamination` is true when the output contains Meetei Mayek
+characters — the failure IndicTrans2 shows on vocabulary outside its
+Santali training data (PRD.md §5). It is not a general foreign-script
+detector; it detects the one failure mode we have actually measured.
+**The UI must not render a contaminated line as if it were clean.**
+Silently showing broken output as normal is the same overclaim the
+scope boundary exists to prevent.
+
+### `POST /lessons`
+Request:
+```json
+{
+  "source_text": "किसान खेत में गेहूँ उगाता है।",
+  "source_type": "typed",
+  "languages_requested": ["sat", "hoc"]
+}
+```
+Response: `{ "id": 1 }`
+
+Called by screen 3 before anything else, as soon as the source text and
+the chosen languages are known. Writes one `lessons` row and returns its
+id, which `/correct` then references. `source_type` is `"typed"` or
+`"ocr"`; anything else is a 400.
+
+Deliberately minimal: it does **not** store the adapted text or the
+Santali translation, so those columns stay null for now. The row exists
+to give a correction something real to point at, not to be a full
+record of the session.
 
 ### `POST /speak`
 Request: `{ "text": "<text in target script>", "lang": "hoc" }`
