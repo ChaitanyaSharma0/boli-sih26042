@@ -1,7 +1,19 @@
-"""POST /correct, GET /corrections/count — logged, never auto-applied. Phase 4."""
+"""POST /correct, GET /corrections/count — teacher corrections.
+
+This writes a row and stops. No retraining is triggered, no model is
+updated, and the correction is not applied to anything the teacher sees
+next. PRD.md §3 calls this "a durable record that the correction loop is
+architected in" — saying more than that anywhere in the UI would be a
+claim the code does not back.
+"""
+
+from contextlib import closing
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+from db import db
+from routes.languages import NAMES
 
 router = APIRouter()
 
@@ -15,9 +27,29 @@ class CorrectionRequest(BaseModel):
 
 @router.post("/correct")
 def correct(req: CorrectionRequest):
-    raise HTTPException(501, "Correction logging not wired yet — PLAN.md Phase 4.")
+    if req.lang not in NAMES:
+        raise HTTPException(
+            400, f"Unknown language '{req.lang}'. See GET /languages."
+        )
+    if not req.corrected.strip():
+        raise HTTPException(400, "The corrected text is empty.")
+
+    # lesson_id is stored as given and not checked against lessons. Nothing
+    # writes that table until Phase 7, and dropping a teacher's correction
+    # because the lesson row does not exist yet would lose real data to a
+    # bookkeeping detail.
+    with closing(db.connect()) as conn:
+        cur = conn.execute(
+            "INSERT INTO corrections (lesson_id, lang_code, original_text, "
+            "corrected_text) VALUES (?, ?, ?, ?)",
+            (req.lesson_id, req.lang, req.original, req.corrected.strip()),
+        )
+        conn.commit()
+        return {"id": cur.lastrowid, "logged": True}
 
 
 @router.get("/corrections/count")
 def corrections_count():
-    raise HTTPException(501, "Correction logging not wired yet — PLAN.md Phase 4.")
+    with closing(db.connect()) as conn:
+        (count,) = conn.execute("SELECT COUNT(*) FROM corrections").fetchone()
+    return {"count": count}

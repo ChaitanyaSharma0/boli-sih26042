@@ -14,12 +14,14 @@ from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
+from db import db  # noqa: E402
 from models import translation, tts  # noqa: E402
 from routes import correct, languages, ocr, pedagogy, speak, translate  # noqa: E402
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    db.init()
     # Load every model once at startup, never per request (ARCHITECTURE.md §4).
     # Costs ~a minute on a cold HF cache; makes each teacher request seconds.
     translation.warmup()

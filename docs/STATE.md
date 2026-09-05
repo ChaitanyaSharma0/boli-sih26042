@@ -13,11 +13,11 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 3 — DONE. Next up: Phase 4 (database + corrections).`
+`Phase 4 — DONE. Next up: Phase 5 (frontend Capture screen).`
 
 ## Last commit
 
-`8c16d74 — feat: ocr and pedagogy routes`
+`(Phase 4 commit — see git log -1)`
 
 ## What is confirmed working right now
 
@@ -108,6 +108,23 @@ causes redone work or, worse, confidently broken assumptions.
   model. A model counting its own words is a claim; this is a
   measurement.
 
+### Phase 4 — Database + corrections — DONE 2026-09-05
+- What works: `db/schema.sql` creates `lessons` and `corrections`,
+  applied by `db.init()` from the startup lifespan and safe to re-run.
+  `POST /correct` writes one row and returns `{"id": N, "logged": true}`;
+  `GET /corrections/count` returns `{"count": N}`.
+- Verified by curl against a live uvicorn: count 0 -> POST /correct ->
+  `{"id":1,"logged":true}` -> count 1, with `db/boli.sqlite` created on
+  disk. `backend/test_corrections.py` re-runs the whole thing against a
+  temp database, including that a rejected correction writes nothing.
+- The dev database was deleted after the curl run. A leftover test row
+  would inflate the "N corrections collected" counter the frontend
+  shows, and that counter is supposed to be honest, small and real.
+- Nothing writes the `lessons` table yet — that is the Phase 7 result
+  flow. `/correct` therefore stores `lesson_id` without checking it
+  exists; dropping a teacher's correction over a bookkeeping detail
+  would lose real data.
+
 ## What is known broken or not yet attempted
 
 - **The pedagogy step's own output is not guaranteed to translate
@@ -134,8 +151,11 @@ causes redone work or, worse, confidently broken assumptions.
   cover more classroom topics.
 - **No phrase-bank entry has been checked by a native speaker.** Every
   `verified` is False and must stay False until one actually is.
-- `/correct` and `/corrections/count` are still 501 stubs, and
-  `db/schema.sql` is still empty (Phase 4).
+- The `lessons` table exists but is never written; the Phase 7 result
+  flow is what fills it.
+- Corrections are logged and nothing more. No retraining, and the
+  correction is not applied to what the teacher sees next. Do not let
+  any UI copy imply otherwise (PRD.md §3).
 - Frontend is still the three empty Phase 0 screens; nothing calls the
   backend yet.
 - Startup loads all five models before serving, so a cold `uvicorn` boot
@@ -148,6 +168,20 @@ causes redone work or, worse, confidently broken assumptions.
 and won't be captured elsewhere — e.g. "chose Render over HF Space
 because X." Keep entries short and dated.)*
 
+- 2026-09-05 — **`db/schema.sql` deliberately does not create the
+  `phrase_bank` table from DATA_DICTIONARY.md §3.** That file
+  contradicts itself: §2 names `backend/models/phrase_bank.py` as the
+  source of truth, §3's comment says the table is "what the app actually
+  queries". Two copies would drift, and keeping the entries in
+  version-controlled code means flipping an entry's `verified` flag
+  needs a reviewed commit, where a SQLite `UPDATE` would not — and that
+  flag is exactly the claim RULES.md §2 says must never be softened
+  quietly. **This needs a call: either drop the table from
+  DATA_DICTIONARY.md §3, or move the bank into the database and make
+  §2 point there.** Flagged, not silently resolved.
+- 2026-09-05 — `schema.sql` adds `IF NOT EXISTS` to each `CREATE TABLE`
+  so startup can apply it on every boot. The column definitions are
+  otherwise exactly DATA_DICTIONARY.md §3.
 - 2026-09-05 — Only the Gemini provider is implemented in
   `models/pedagogy.py`, because that is what `LLM_PROVIDER` is set to.
   Another provider raises a clear error naming the file to change,
