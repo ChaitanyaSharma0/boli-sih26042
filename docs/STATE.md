@@ -17,7 +17,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Last commit
 
-`(Phase 2 commit — see git log -1)`
+`d9fabcf — feat: phrase bank enforcement, /languages endpoint`
 
 ## What is confirmed working right now
 
