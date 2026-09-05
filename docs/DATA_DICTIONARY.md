@@ -1,0 +1,140 @@
+# DATA_DICTIONARY — BOLI
+
+Companion to ARCHITECTURE.md. Exact schema and exact model identifiers —
+if code and this file disagree, this file is wrong and should be fixed,
+not silently diverged from.
+
+## 1. Model IDs — copy these exactly, do not guess at variants
+
+| Purpose | Model ID | Notes |
+|---|---|---|
+| Translation (Santali only) | `ai4bharat/indictrans2-indic-indic-dist-320M` | Gated. Needs `HF_TOKEN`. Target lang code: `sat_Olck`. Source: `hin_Deva`. |
+| TTS — Ho | `facebook/mms-tts-hoc` | Expects **Odia script** input, not Devanagari. |
+| TTS — Mundari | `facebook/mms-tts-unr` | Expects **Odia script** input. |
+| TTS — Kurukh | `facebook/mms-tts-kru` | Expects Devanagari input. |
+| TTS — Sadri | `facebook/mms-tts-sck` | Expects Devanagari input. |
+| TTS — Santali | *(none exists)* | No checkpoint anywhere, from anyone. Do not search for one and swap it in without updating PRD.md and this table. |
+| Pedagogy simplification | LLM API (Claude/GPT/Gemini — see `.env` for which key is active) | Prompt lives in `backend/models/pedagogy.py` |
+| OCR | Tesseract, `hin` language pack | Local, no API key needed |
+
+## 2. Phrase bank — the fixed Hindi → target-language pairs
+
+This table is the entire content of the "curated phrase bank" referred
+to in PRD.md §4 and ARCHITECTURE.md §3. **Every entry here is
+unverified by a native speaker** — constructed to stay inside each
+model's vocabulary. Do not present these as linguistically confirmed
+anywhere in the UI. Add a `verified` column (see §3 below) the moment
+any entry actually gets checked by a speaker.
+
+| id | lang_code | hindi_source | target_text | verified |
+|---|---|---|---|---|
+| 1 | hoc | पानी हमारा जीवन है | दा आले जीउ ताना *(Odia script)* | false |
+| 2 | unr | पानी हमारा जीवन है | दा आले जिउ ताना *(Odia script)* | false |
+| 3 | kru | पानी हमारा जीवन है | अम्म हमक जीवन रअदा | false |
+| 4 | sck | पानी हमारा जीवन है | पानी हमन के जीवन हे | false |
+
+(Exact Unicode strings live in `backend/models/phrase_bank.py` as the
+source of truth — this table is documentation of what's there, not a
+substitute for reading the code.)
+
+**Expanding the phrase bank**: adding new phrases is allowed and
+encouraged (more classroom topics = better demo), but every new entry
+must follow the same rule — Hindi source, hand-constructed or
+speaker-provided target text, `verified: false` until an actual speaker
+confirms it, and it must stay inside the target model's known-working
+character set. See RULES.md §8 for how to check a checkpoint's vocab
+before writing text for it.
+
+## 3. Database schema
+
+```sql
+-- lessons: one row per teacher submission (capture -> result flow)
+CREATE TABLE lessons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    source_text TEXT NOT NULL,           -- original Hindi, typed or OCR'd
+    source_type TEXT NOT NULL,           -- 'typed' | 'ocr'
+    adapted_text TEXT,                   -- pedagogy output, JSON-encoded array
+    santali_translation TEXT,            -- Ol Chiki, null if not requested
+    languages_requested TEXT NOT NULL    -- JSON array, e.g. ["hoc","sat"]
+);
+
+-- corrections: teacher-submitted fixes, logged not auto-applied
+CREATE TABLE corrections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lesson_id INTEGER REFERENCES lessons(id),
+    lang_code TEXT NOT NULL,
+    original_text TEXT NOT NULL,
+    corrected_text TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- phrase_bank: the curated table for Ho/Mundari/Kurukh/Sadri
+-- (mirrors the markdown table in section 2 above — that table is for
+-- human reading, this is what the app actually queries)
+CREATE TABLE phrase_bank (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lang_code TEXT NOT NULL,
+    hindi_source TEXT NOT NULL,
+    target_text TEXT NOT NULL,
+    verified BOOLEAN NOT NULL DEFAULT 0,
+    verified_by TEXT,                    -- name/note, null until verified
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
+
+## 4. API response shapes (canonical — matches ARCHITECTURE.md §3)
+
+These are the source-of-truth JSON shapes. If a route's actual response
+drifts from this, that's a bug in the route, not a reason to update
+this file casually.
+
+```jsonc
+// GET /languages
+[
+  {
+    "code": "sat",
+    "name": "Santali",
+    "translation": "full",       // "full" | "phrase_bank" | "none"
+    "tts": "none",                // "full" | "phrase_bank" | "none"
+    "note": "No TTS checkpoint exists anywhere for Santali."
+  },
+  {
+    "code": "hoc",
+    "name": "Ho",
+    "translation": "phrase_bank",
+    "tts": "full",
+    "note": null
+  }
+  // ...unr, kru, sck follow the same shape as hoc
+]
+```
+
+```jsonc
+// POST /simplify response
+{
+  "concept": "Farmers grow food and sell it to others.",
+  "adapted_hindi": [
+    "किसान खेत में धान उगाता है।",
+    "धान हाट में बिकता है।",
+    "किसान पैसे कमाता है।"
+  ],
+  "substitutions": [
+    {"from": "गेहूँ", "to": "धान", "why": "Wheat is not grown in Jharkhand."},
+    {"from": "बाज़ार", "to": "हाट", "why": "Haat is the local weekly market."}
+  ],
+  "readability": {"before_wps": 10, "after_wps": 4.3}
+}
+```
+
+## 5. Environment variables (`.env`)
+
+```
+HF_TOKEN=            # required for IndicTrans2 gated model
+LLM_API_KEY=         # for pedagogy simplification step
+LLM_PROVIDER=        # "anthropic" | "openai" | "gemini"
+DATABASE_PATH=./db/boli.sqlite
+```
+
+Never commit a real `.env`. `.env.example` in the repo has these keys
+with empty values, per ARCHITECTURE.md §2.
