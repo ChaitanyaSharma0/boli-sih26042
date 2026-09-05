@@ -17,7 +17,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Last commit
 
-`scaffold: repo structure, empty routes, empty screens`
+`57b79be — scaffold: repo structure, empty routes, empty screens`
 
 ## What is confirmed working right now
 
