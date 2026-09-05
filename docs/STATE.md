@@ -17,7 +17,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Last commit
 
-`(Phase 1 commit — see git log -1)`
+`f671c2c — feat: model routes wired, translation contrast verified via curl`
 
 ## What is confirmed working right now
 
