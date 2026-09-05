@@ -579,11 +579,18 @@ the pair must be `धान हाट में बिकता है।` or `�
   installed and there is no session. Docker is not installed either, so
   the Dockerfile is unbuilt. Nothing about the deploy can be completed
   from here.
-- **Free-tier Space storage is ephemeral, so logged corrections do not
-  survive a restart.** PRD.md §3 calls the correction log "a durable
-  record"; on this tier it is not one. Either say so plainly when
-  demoing, or persist to a HF Dataset — not built. This is a claim to
-  get right before a judge asks.
+- **OPEN, not resolved: the correction log is not durable.** Free-tier
+  Space storage is ephemeral, so logged corrections vanish on restart
+  and the "N corrections collected" counter resets. PRD.md §3 has been
+  corrected in place — the word "durable" is gone and the gap is stated
+  there — but the underlying problem is untouched.
+  - Intended fix, tracked as PLAN.md Phase 11 (optional, post-deploy):
+    write corrections to a Hugging Face Dataset repo instead of local
+    SQLite. Free, genuinely persistent, and a better match for the
+    "corpus we are building" pitch than a file that disappears.
+  - Needs a **write**-scoped `HF_TOKEN`; the current one is Read.
+  - Until it lands: do not describe the log as durable or growing in the
+    UI, the deck, or a judge answer. Say it resets on restart.
 - **CORS is still `allow_origins=["*"]`.** Fine for a demo backend with
   no auth (ARCHITECTURE.md §7), but worth narrowing to the Vercel origin
   once that origin exists, rather than leaving it unexamined in public.

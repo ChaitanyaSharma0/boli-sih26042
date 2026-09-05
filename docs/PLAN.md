@@ -147,6 +147,28 @@ before Phase 9.
   model download timeouts, static file paths)
 - **Commit: "chore: deployed, docs updated with live URLs"**
 
+## Phase 11 — Corrections to a HF Dataset (optional, post-deploy)
+
+Not urgent, and explicitly after Phase 10. Worth doing properly rather
+than working around.
+
+The corrections log is written to local SQLite, and a free Hugging Face
+Space has ephemeral storage, so **corrections do not survive a restart**
+(PRD.md §3). Writing them to a Hugging Face Dataset repo instead is
+free, persists properly, and matches the "corpus we are building" pitch
+better than a file that vanishes.
+
+- Swap the `corrections` writes in `backend/routes/correct.py` for
+  appends to a Dataset repo; keep the `/correct` and
+  `/corrections/count` contracts exactly as ARCHITECTURE.md §3 defines
+  them, so the frontend needs no change.
+- Needs an `HF_TOKEN` with **write** scope — the current one is Read.
+- Keep it honest either way: this makes the log durable, it still does
+  not retrain anything (PRD.md §3).
+- Until this lands, PRD.md §3's warning stands and the gap gets stated
+  out loud rather than papered over.
+- **Commit: "feat: corrections persist to a hf dataset"**
+
 ---
 
 ## If time runs out before Phase 10

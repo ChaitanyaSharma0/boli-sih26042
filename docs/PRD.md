@@ -39,7 +39,19 @@ have already validated (see `/docs/research/`):
    Sadri / Santali as applicable. Downloadable/printable worksheet.
 
 Plus a lightweight **teacher correction log** — not live retraining,
-just a durable record that the correction loop is architected in.
+just a record that the correction loop is architected in.
+
+> **Known gap, do not overstate this one.** The log is written to a
+> local SQLite file, and the deployment target — a free Hugging Face
+> Space — has ephemeral storage. **Corrections do not survive a restart,
+> so the log is not actually durable today**, and the "N corrections
+> collected" counter resets with it. Until that is fixed, do not
+> describe this as a durable or growing record anywhere in the UI, the
+> deck, or a judge answer. The intended fix is to write corrections to a
+> Hugging Face Dataset repo instead of a local file — free, genuinely
+> persistent, and a better match for the "corpus we are building" story
+> than a file that disappears. Tracked in PLAN.md Phase 11 and STATE.md;
+> not built.
 
 ## 4. Explicit scope boundaries — read this before building anything
 
