@@ -26,15 +26,30 @@ mother tongue — for languages no commercial system supports.
 
 ## Live URLs
 
-*(Not deployed yet. Everything is prepared — `backend/Dockerfile`, the
-Space card in `backend/README.md`, and both verification scripts take a
-`--base-url`. The deploy needs a write-scoped HF token and Vercel
-access; see `docs/DEPLOY.md`.)*
-
 | | URL |
 |---|---|
-| Backend (HF Space, Docker SDK) | *pending* |
-| Frontend (Vercel) | *pending* |
+| Frontend (Vercel) | https://frontend-henna-one-93.vercel.app |
+| Backend (Cloudflare Quick Tunnel) | https://linked-johnston-jewelry-nitrogen.trycloudflare.com |
+
+> ### Read this before sharing the link
+>
+> **The backend is not hosted anywhere. It is a tunnel to a laptop.**
+> The `trycloudflare.com` URL forwards to `localhost:8001` on one
+> developer machine, and it only answers while **both** `uvicorn` and
+> `cloudflared` are running on that machine. Close either one, sleep the
+> laptop, or lose its network, and the site goes dead — the frontend
+> stays up on Vercel and simply cannot reach a backend.
+>
+> **Restarting `cloudflared` assigns a brand-new random URL.** The
+> frontend has the old one compiled into its bundle, because Vite
+> inlines `VITE_API_BASE` at build time. So a new tunnel means a new
+> Vercel build, every time. There is no way around that short of a
+> stable hostname.
+>
+> Hugging Face now paywalls Docker Spaces, and the Render and Railway
+> free tiers cannot hold IndicTrans2 plus four MMS-TTS checkpoints in
+> memory at once, so there is currently no free host that fits. This
+> tunnel is the honest stopgap, not a deployment.
 
 ## Running it locally
 

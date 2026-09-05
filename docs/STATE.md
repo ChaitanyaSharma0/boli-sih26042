@@ -13,7 +13,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 10 — PREPARED, NOT DEPLOYED. Blocked on credentials, see below.`
+`Phase 10 — LIVE VIA TUNNEL, not hosted. See the warning below.`
 
 ## Last commit
 
@@ -305,10 +305,45 @@ Added to PLAN.md after the failure was seen live, not predicted.
 - Confirmed working in a real browser by the user on 2026-09-05: audio
   plays, the correction form opens and submits.
 
-### Phase 10 — Deploy — PREPARED, NOT DEPLOYED 2026-09-05
-**Nothing is live. Do not tell anyone there is a URL.** Everything that
-can be done without deploy credentials is done; the deploy itself is
-blocked, see "Open questions / blockers".
+### Phase 10 — Deploy — LIVE VIA TUNNEL 2026-09-05
+
+| | URL |
+|---|---|
+| Frontend (Vercel) | https://frontend-henna-one-93.vercel.app |
+| Backend (Cloudflare Quick Tunnel) | https://linked-johnston-jewelry-nitrogen.trycloudflare.com |
+
+**This is not a hosted deployment and must not be described as one.**
+The backend URL forwards to `localhost:8001` on one developer laptop and
+answers only while both `uvicorn` and `cloudflared` are running there.
+Close either, sleep the machine, or lose its network and the demo dies.
+Restarting `cloudflared` assigns a new random URL, and because Vite
+inlines `VITE_API_BASE` at build time, a new tunnel requires a new
+Vercel build. PRD.md §5's "permanent public URL" success criterion is
+**not met** — Hugging Face now paywalls Docker Spaces and the Render and
+Railway free tiers cannot hold the models.
+
+Verified against the real URLs, not localhost:
+- `test_contrast.py --base-url https://linked-johnston-...trycloudflare.com`
+  **PASS** — textbook sentence still leaks Meetei Mayek with
+  `script_contamination=true`, adapted sentence clean and `false`, Ho
+  returned 108,602 bytes of wav, both boundary 501s held.
+- Cross-origin from the Vercel origin: `OPTIONS /speak` preflight
+  returns the allow headers, and a real `POST /speak` returned
+  `audio/wav`, 119,866 bytes.
+- The Vercel bundle really does target the tunnel — the built asset
+  contains the `trycloudflare.com` URL and no localhost fallback.
+- **Not run against the tunnel: the Phase 8.5 degradation test.** It
+  needs `/simplify` to actually be failing, which would mean restarting
+  the live backend with an invalid key and breaking the demo. It stays
+  verified locally. Run it from a machine whose DNS resolves
+  `trycloudflare.com` if you want it against the live URL.
+
+Environment note: this machine's DNS resolver returns NXDOMAIN for
+`*.trycloudflare.com` while 1.1.1.1 resolves it fine, so the tunnel is
+unreachable from this laptop by name even though it works from
+everywhere else. Verification here was done by pinning the hostname to
+the Cloudflare IP for one process. If the site looks dead locally but
+fine on a phone, that is why.
 
 - Working-directory bug **fixed and verified**: the static mount and
   `DATABASE_PATH` now resolve against the file's own location, so the
@@ -573,12 +608,20 @@ the pair must be `धान हाट में बिकता है।` or `�
 
 ## Open questions / blockers
 
-- **Phase 10 is blocked on credentials.** The `HF_TOKEN` in
-  `backend/.env` is Read-scoped — enough to pull the gated model at
-  runtime, not enough to create or push a Space. The Vercel CLI is not
-  installed and there is no session. Docker is not installed either, so
-  the Dockerfile is unbuilt. Nothing about the deploy can be completed
-  from here.
+- **There is still no permanent backend host**, so PRD.md §5's
+  "deployed to a permanent public URL" criterion is unmet. The tunnel is
+  a stopgap tied to one laptop. `backend/Dockerfile` and the Space card
+  are still in the repo and still unbuilt, ready if a paid Space or
+  another host with enough RAM becomes an option.
+- **The Vercel deployment was made with `vercel deploy --temporary`**,
+  because the CLI had no login session. It is live and public, and it
+  landed under the `sharmachamp0135-cpus-projects` scope. Claim it in
+  the Vercel dashboard so it is properly owned rather than left as an
+  unclaimed temporary deployment.
+- **The tunnel exposes the backend publicly with no auth and
+  `allow_origins=["*"]`.** Anyone with the URL can call `/simplify` and
+  spend the Gemini quota on the key in `backend/.env`. Acceptable for a
+  short demo window; do not leave it running unattended.
 - **OPEN, not resolved: the correction log is not durable.** Free-tier
   Space storage is ephemeral, so logged corrections vanish on restart
   and the "N corrections collected" counter resets. PRD.md §3 has been
