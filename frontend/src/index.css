@@ -1,7 +1,56 @@
-/* Mobile-first — the primary user is a teacher on a phone (RULES.md §5). */
+/* Mobile-first and deliberately plain. The visual pass is Phase 9;
+   this is only enough to be usable on a phone held at the front of a
+   classroom — full-width controls and large tap targets. */
 body {
   margin: 0;
   padding: 1rem;
   font-family: system-ui, sans-serif;
   line-height: 1.5;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+textarea,
+button {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+}
+
+button {
+  min-height: 3rem;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+.file input {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.note,
+.error {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid;
+}
+
+.note {
+  border-color: #888;
+}
+
+.error {
+  border-color: #b00;
+  color: #b00;
 }

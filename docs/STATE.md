@@ -13,11 +13,11 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 4 — DONE. Next up: Phase 5 (frontend Capture screen).`
+`Phase 5 — DONE. Next up: Phase 6 (frontend language select).`
 
 ## Last commit
 
-`11cf1d3 — feat: correction logging`
+`(Phase 5 commit — see git log -1)`
 
 ## What is confirmed working right now
 
@@ -125,6 +125,26 @@ causes redone work or, worse, confidently broken assumptions.
   exists; dropping a teacher's correction over a bookkeeping detail
   would lose real data.
 
+### Phase 5 — Frontend Capture screen — DONE 2026-09-05
+- What works: `screens/Capture.jsx` takes a typed Hindi sentence or a
+  photo. A photo goes to `POST /ocr` via `src/api.js` and the result
+  lands in the textarea, editable. `App.jsx` now holds `hindiText` and
+  `selectedLangs` and passes them forward (ARCHITECTURE.md §5).
+- Verified: `npm run build` clean, `npm run lint` (oxlint) clean, and
+  the exact cross-origin path the browser will take proven by curl —
+  the `OPTIONS /ocr` preflight from `Origin: http://localhost:5173`
+  returns `access-control-allow-origin: *`, and a multipart upload with
+  that Origin returns `{"text": "कस्िान खेत में गेहूँ उगाता है",
+  "confidence": "ok"}`.
+- **Not verified by me: the screen in an actual browser.** There is no
+  browser driver in this environment, so the build, the lint and the
+  API contract are checked but the click-through is not. Open
+  `npm run dev` and try it before trusting it.
+- The OCR note under the textarea always tells the teacher to check the
+  text, not only on low confidence. That run returned `confidence: ok`
+  while still misreading किसान as कस्िान, so a note shown only on low
+  confidence would stay hidden for exactly the failure that needs it.
+
 ## What is known broken or not yet attempted
 
 - **The pedagogy step's own output is not guaranteed to translate
@@ -161,8 +181,10 @@ causes redone work or, worse, confidently broken assumptions.
   paths, so `uvicorn main:app` from the repo root fails on boot. Same
   for the test scripts. Harmless locally, worth fixing in Phase 10
   before it becomes a deploy-day surprise.
-- Frontend is still the three empty Phase 0 screens; nothing calls the
-  backend yet.
+- Screens 2 and 3 are still the empty Phase 0 stubs (Phases 6-7).
+- The frontend points at `http://127.0.0.1:8000` unless `VITE_API_BASE`
+  is set. Phase 10 has to set that at build time for the deployed
+  frontend.
 - Startup loads all five models before serving, so a cold `uvicorn` boot
   takes roughly a minute. Fine for a demo; worth revisiting if it makes
   Phase 10's deploy time out.
@@ -183,6 +205,10 @@ because X." Keep entries short and dated.)*
   requires a reviewed commit. That flag is exactly the claim RULES.md §2
   says must never be softened quietly, so it does not get a path that
   bypasses review.
+- 2026-09-05 — `src/api.js` surfaces FastAPI's `detail` string straight
+  to the teacher rather than a generic "something went wrong". The
+  backend's messages are written to be read by one (RULES.md §3), so
+  replacing them with a generic string would throw away the useful half.
 - 2026-09-05 — `schema.sql` adds `IF NOT EXISTS` to each `CREATE TABLE`
   so startup can apply it on every boot. The column definitions are
   otherwise exactly DATA_DICTIONARY.md §3.
