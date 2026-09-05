@@ -17,7 +17,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Last commit
 
-`(Phase 8.5 commit — see git log -1)`
+`f11b4a5 — fix: /simplify failure no longer takes down the other languages`
 
 ## What is confirmed working right now
 
