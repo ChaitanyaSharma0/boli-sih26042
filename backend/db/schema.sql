@@ -4,13 +4,12 @@
 -- without erroring; the table definitions themselves match the data
 -- dictionary.
 --
--- The phrase_bank table from DATA_DICTIONARY.md §3 is deliberately NOT
--- created. §2 of that same file names backend/models/phrase_bank.py as
--- the source of truth for those entries, and two copies would drift.
--- Keeping them in version-controlled code also means flipping an entry's
--- `verified` flag takes a reviewed commit, where a SQLite UPDATE would
--- not — and that flag is exactly the claim RULES.md §2 says must never
--- be softened quietly. Raised in STATE.md for a decision.
+-- There is no phrase_bank table, by decision (2026-09-05). The curated
+-- entries live only in backend/models/phrase_bank.py, which is the
+-- single source of truth. A database copy would let an entry's
+-- `verified` flag be flipped by a runtime UPDATE; in code it takes a
+-- reviewed commit, and that flag is exactly the claim RULES.md §2 says
+-- must never be softened quietly.
 
 -- lessons: one row per teacher submission (capture -> result flow).
 -- Written by the result flow in Phase 7; nothing writes here yet.

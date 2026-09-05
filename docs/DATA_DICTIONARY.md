@@ -33,9 +33,10 @@ any entry actually gets checked by a speaker.
 | 3 | kru | पानी हमारा जीवन है | अम्म हमक जीवन रअदा | false |
 | 4 | sck | पानी हमारा जीवन है | पानी हमन के जीवन हे | false |
 
-(Exact Unicode strings live in `backend/models/phrase_bank.py` as the
-source of truth — this table is documentation of what's there, not a
-substitute for reading the code.)
+**`backend/models/phrase_bank.py` is the single source of truth, full
+stop.** The table above documents what is in that module; it is not a
+substitute for reading the code, and there is no database copy. The
+phrase bank is deliberately NOT stored in SQLite — see §3.
 
 **Expanding the phrase bank**: adding new phrases is allowed and
 encouraged (more classroom topics = better demo), but every new entry
@@ -68,20 +69,15 @@ CREATE TABLE corrections (
     corrected_text TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
-
--- phrase_bank: the curated table for Ho/Mundari/Kurukh/Sadri
--- (mirrors the markdown table in section 2 above — that table is for
--- human reading, this is what the app actually queries)
-CREATE TABLE phrase_bank (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    lang_code TEXT NOT NULL,
-    hindi_source TEXT NOT NULL,
-    target_text TEXT NOT NULL,
-    verified BOOLEAN NOT NULL DEFAULT 0,
-    verified_by TEXT,                    -- name/note, null until verified
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
 ```
+
+**There is no `phrase_bank` table, on purpose.** The curated entries
+live only in `backend/models/phrase_bank.py` (§2). Putting them in the
+database would mean flipping an entry's `verified` flag could happen
+through a runtime `UPDATE`; keeping them in version-controlled code
+means it takes a reviewed commit. That flag is exactly the claim
+RULES.md §2 says must never be softened quietly, so it does not get a
+path that bypasses review. Decided 2026-09-05.
 
 ## 4. API response shapes (canonical — matches ARCHITECTURE.md §3)
 

@@ -156,6 +156,11 @@ causes redone work or, worse, confidently broken assumptions.
 - Corrections are logged and nothing more. No retraining, and the
   correction is not applied to what the teacher sees next. Do not let
   any UI copy imply otherwise (PRD.md §3).
+- The backend only starts from inside `backend/`. Both the
+  `static/audio` static mount and `DATABASE_PATH`'s default are relative
+  paths, so `uvicorn main:app` from the repo root fails on boot. Same
+  for the test scripts. Harmless locally, worth fixing in Phase 10
+  before it becomes a deploy-day surprise.
 - Frontend is still the three empty Phase 0 screens; nothing calls the
   backend yet.
 - Startup loads all five models before serving, so a cold `uvicorn` boot
@@ -168,17 +173,16 @@ causes redone work or, worse, confidently broken assumptions.
 and won't be captured elsewhere — e.g. "chose Render over HF Space
 because X." Keep entries short and dated.)*
 
-- 2026-09-05 — **`db/schema.sql` deliberately does not create the
-  `phrase_bank` table from DATA_DICTIONARY.md §3.** That file
-  contradicts itself: §2 names `backend/models/phrase_bank.py` as the
-  source of truth, §3's comment says the table is "what the app actually
-  queries". Two copies would drift, and keeping the entries in
-  version-controlled code means flipping an entry's `verified` flag
-  needs a reviewed commit, where a SQLite `UPDATE` would not — and that
-  flag is exactly the claim RULES.md §2 says must never be softened
-  quietly. **This needs a call: either drop the table from
-  DATA_DICTIONARY.md §3, or move the bank into the database and make
-  §2 point there.** Flagged, not silently resolved.
+- 2026-09-05 — **DECIDED: `backend/models/phrase_bank.py` is the single
+  source of truth for the phrase bank, and there is no `phrase_bank`
+  table.** DATA_DICTIONARY.md used to contradict itself here (§2 named
+  the module, §3's schema comment named the table); §3's `CREATE TABLE
+  phrase_bank` block has been removed and both sections now say the
+  same thing. The reason is not tidiness: a database copy would let an
+  entry's `verified` flag be flipped by a runtime `UPDATE`, where code
+  requires a reviewed commit. That flag is exactly the claim RULES.md §2
+  says must never be softened quietly, so it does not get a path that
+  bypasses review.
 - 2026-09-05 — `schema.sql` adds `IF NOT EXISTS` to each `CREATE TABLE`
   so startup can apply it on every boot. The column definitions are
   otherwise exactly DATA_DICTIONARY.md §3.
