@@ -13,11 +13,11 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 7 — DONE. Next up: Phase 8 (Santali contrast demo control).`
+`Phase 8 — DONE. Next up: Phase 9 (styling pass).`
 
 ## Last commit
 
-`4a81a82 — feat: result screen, full flow working end to end`
+`79d09da — feat: santali contrast demo control`
 
 ## What is confirmed working right now
 
@@ -212,6 +212,35 @@ causes redone work or, worse, confidently broken assumptions.
   as Phases 5 and 6 — the request sequence and the pure logic are
   checked, the rendering and clicking are not.
 
+### Contract changes — DONE 2026-09-05 (commit bb471e9)
+Both were documented in ARCHITECTURE.md §3 and DATA_DICTIONARY.md §4
+before the code was written (RULES.md §6).
+- `/translate` now returns `script_contamination`, from the existing
+  `contains_meetei_mayek()`. The Result screen shows a visible note on
+  any contaminated line rather than rendering it like clean output.
+  `test_contrast.py` asserts the flag both ways, so the P0 test pins it.
+- `POST /lessons` writes one row and returns its id; screen 3 calls it
+  first so corrections reference a real lesson instead of `lesson_id 0`.
+  Minimal by design — `adapted_text` and `santali_translation` stay null.
+  Screen 1 tracks whether the text came from a photo or a keyboard.
+- Verified live: `POST /lessons` -> id, a correction linked to it, and
+  the flag true for the textbook sentence, false for the adapted one.
+
+### Phase 8 — Santali contrast demo control — DONE 2026-09-05
+- What works: two buttons on screen 1, behind a "Why simplifying
+  matters" toggle. The sentence pair is hardcoded per the PLAN.md Phase 8
+  decision; the translations are live, and the Broken/Clean verdict comes
+  from `script_contamination`, not from a canned string.
+- Verified live: the textbook sentence returned
+  `script_contamination=true` and `धान हाट में बिकता है।` returned false,
+  so the control renders Broken then Clean.
+- The label states that only the input is fixed, and that neither line
+  has been checked by a Santali speaker — what is verified is the script
+  behaviour, not the translation quality.
+- Three frontend tests pin the pair to the one `test_contrast.py`
+  asserts on, including an explicit assertion that neither half is
+  `किसान खेत में धान उगाता है।`. 14 frontend tests passing.
+
 ## What is known broken or not yet attempted
 
 - **The pedagogy step's own output is not guaranteed to translate
@@ -248,21 +277,16 @@ causes redone work or, worse, confidently broken assumptions.
   paths, so `uvicorn main:app` from the repo root fails on boot. Same
   for the test scripts. Harmless locally, worth fixing in Phase 10
   before it becomes a deploy-day surprise.
-- **Live Santali output is shown unlabelled even when contaminated.**
-  Measured during the Phase 7 flow test: the first adapted sentence
-  translated to `... ᱨᱮ ꯆꯦꯡ ᱠᱚ ᱡᱟᱱᱟᱢᱼᱟ ᱾`, with Meetei Mayek in it, and
-  the Result screen renders that exactly like a clean line. The backend
-  has `contains_meetei_mayek()` already but `/translate` does not return
-  a flag, and adding one changes the response shape in
-  DATA_DICTIONARY.md §4. **Open question: should `/translate` return a
-  script-contamination flag so the UI can say "the model does not know
-  this word"?** Not done unilaterally — it needs the doc updated first
-  (RULES.md §6).
-- **Corrections are logged with `lesson_id: 0`.** ARCHITECTURE.md §3
-  defines no endpoint that creates a `lessons` row, so there is no id to
-  send. The corrections are still real and still logged; they are just
-  not linked to a lesson. Either add a lesson-creating endpoint to the
-  contract or make `lesson_id` optional — needs a decision.
+- `lessons` rows record only the submission. `adapted_text` and
+  `santali_translation` are never written, so the table cannot tell you
+  what the teacher was actually shown. Fine for linking corrections;
+  not enough to reconstruct a session.
+- The pedagogy step depends on a third-party service that goes down. A
+  Gemini 503 ("high demand") was hit during Phase 8 verification. It
+  surfaces as a readable 502 rather than a crash, but the whole result
+  flow stops there, because `/simplify` runs first. Worth thinking about
+  before a live demo: a Gemini outage currently takes the entire Result
+  screen with it, including the languages that need no LLM at all.
 - For a phrase-bank language, the correction form's "original" is the
   text BOLI was asked to speak, not the phrase bank's target string —
   `/speak` returns audio bytes, not the entry it matched, so the
@@ -294,6 +318,19 @@ because X." Keep entries short and dated.)*
   requires a reviewed commit. That flag is exactly the claim RULES.md §2
   says must never be softened quietly, so it does not get a path that
   bypasses review.
+- 2026-09-05 — `script_contamination` is deliberately named for what it
+  measures. `false` means no Meetei Mayek was found and nothing more —
+  it is not a claim the translation is correct, and the docs say so.
+- 2026-09-05 — The demo control translates live rather than showing a
+  stored output string. Hardcoding the *input* pair is what makes the
+  demo reliable; hardcoding the *output* would make it a screenshot
+  pretending to be a model. The Broken/Clean verdict comes from the
+  flag the backend actually returned on that request.
+- 2026-09-05 — Screen 1 keeps `source_type` as `"ocr"` even after the
+  teacher edits the text, because it did come off a photo. It resets to
+  `"typed"` only when the box is cleared completely.
+- 2026-09-05 — `CorrectionForm` renders nothing when it has no lesson
+  id, rather than offering a correction that would fail on submit.
 - 2026-09-05 — The Result screen sends the teacher's ORIGINAL Hindi to
   `/speak` for phrase-bank languages, not the adapted Hindi. The bank is
   keyed on Hindi source strings, and the adapted text is whatever the
