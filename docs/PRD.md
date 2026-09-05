@@ -72,10 +72,32 @@ just a durable record that the correction loop is architected in.
 - A teacher can go from "typed/photographed Hindi sentence" to
   "playable audio in a target language" in under 15 seconds, no errors,
   on a phone browser.
-- Santali path shows the pedagogy fix live: a long unmodified textbook
-  sentence produces visibly broken output (script contamination); the
-  same sentence after simplification produces clean output. This
-  contrast must be reproducible on demand, not just in a screenshot.
+- Santali path shows the pedagogy fix live: an unmodified textbook
+  sentence produces visibly broken output (Meetei Mayek script
+  contamination); an adapted sentence built from in-domain vocabulary
+  produces clean Ol Chiki. This contrast must be reproducible on
+  demand, not just in a screenshot.
+
+  **What actually drives the contrast is vocabulary, not sentence
+  length.** IndicTrans2 leaks another Indic script when a word falls
+  outside its Santali training distribution, and shortening a sentence
+  does not by itself fix that. Verified through the live API on
+  2026-09-05:
+
+  | Hindi in | Santali out | Clean? |
+  |---|---|---|
+  | किसान खेत में गेहूँ उगाता है और उसे बाज़ार में बेचता है। | `... ᱨᱮ ꯒꯦꯍꯨ ᱡᱟᱱᱟᱢᱼᱟ ...` | no — गेहूँ → Meetei Mayek |
+  | किसान खेत में धान उगाता है। | `... ᱨᱮ ꯆꯦꯡ ᱠᱚ ᱡᱟᱱᱟᱢᱼᱟ ᱾` | no — धान → Meetei Mayek |
+  | धान हाट में बिकता है। | `ᱦᱟᱛ ᱨᱮ ᱫᱟᱠᱟ ᱟᱹᱠᱷᱨᱤᱧ ᱦᱩᱭᱩᱜᱼᱟ ᱾` | yes |
+  | किसान पैसे कमाता है। | `ᱪᱟᱥᱤᱭᱟᱹ ᱠᱚ ᱠᱟᱹᱣᱰᱤ ᱠᱚ ᱟᱨᱡᱟᱣᱼᱟ ᱾` | yes |
+
+  Note rows 2 and 3: **the same word, धान, leaks in one sentence and
+  translates cleanly in another.** So this is not a per-word blacklist
+  that can be computed — it is context-dependent, and any sentence used
+  as the "clean" half of a demo has to be checked against the live API
+  rather than assumed. The canonical clean example is
+  `धान हाट में बिकता है।`. `किसान खेत में धान उगाता है।` is **not** a
+  clean example, despite being short and adapted.
 - Every screen states clearly what is real translation vs. curated
   phrase bank. No overclaiming, anywhere, ever.
 - Deployed to a permanent public URL (not a Colab-dependent tunnel).

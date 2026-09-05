@@ -74,10 +74,18 @@ Claude Code session pick up context without re-reading this whole plan.
 - **Commit: "feat: result screen, full flow working end to end"**
 
 ## Phase 8 — The demo moment
-- Add a small UI affordance specifically for the long-vs-short Santali
-  contrast: a toggle or two buttons ("try the textbook sentence" /
-  "try the simplified sentence") so this is one click in the live app,
-  not something only reproducible in Colab
+- Add a small UI affordance specifically for the Santali
+  in-domain-vs-out-of-domain vocabulary contrast: a toggle or two
+  buttons ("try the textbook sentence" / "try the adapted sentence")
+  so this is one click in the live app, not something only
+  reproducible in Colab
+- **Use the verified sentence pair**, per PRD.md §5:
+  - out-of-domain (breaks): `किसान खेत में गेहूँ उगाता है और उसे बाज़ार में बेचता है।`
+  - in-domain (clean): `धान हाट में बिकता है।`
+  Do **not** use `किसान खेत में धान उगाता है।` as the clean half — it is
+  short and adapted but still leaks Meetei Mayek. Any replacement pair
+  must be checked against the live API first, because the same word can
+  be clean in one sentence and not another.
 - This is the single highest-value UI addition in the whole build —
   do not skip it for time
 - **Commit: "feat: santali contrast demo control"**
