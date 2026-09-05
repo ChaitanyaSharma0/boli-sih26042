@@ -13,11 +13,11 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 5 — DONE. Next up: Phase 6 (frontend language select).`
+`Phase 6 — DONE. Next up: Phase 7 (frontend result screen).`
 
 ## Last commit
 
-`09b2738 — feat: capture screen wired to backend`
+`(Phase 6 commit — see git log -1)`
 
 ## What is confirmed working right now
 
@@ -144,6 +144,36 @@ causes redone work or, worse, confidently broken assumptions.
   text, not only on low confidence. That run returned `confidence: ok`
   while still misreading किसान as कस्िान, so a note shown only on low
   confidence would stay hidden for exactly the failure that needs it.
+- Confirmed working in a real browser by the user on 2026-09-05: typed
+  text, navigation, and photo upload against a local backend.
+
+### Phase 6 — Frontend Language select — DONE 2026-09-05
+- What works: `screens/LanguageSelect.jsx` fetches `GET /languages` on
+  mount and renders a multi-select chip per language, with loading,
+  error and retry states. Nothing about a language is hardcoded — the
+  list, the wording and the styling hook all come from the response.
+- **The boundary is visible on screen, three ways at once.** Languages
+  are split into "Real translation" and "Curated phrase bank" groups
+  with their own headings and explanations; each chip carries a badge
+  ("AI translation" / "Phrase bank only"); and each chip spells out what
+  that means in a sentence. The phrase-bank group states plainly that no
+  translation model exists for those languages and that the phrases are
+  "pending validation" per PRD.md §4.
+- Colour is never the only cue. The visual distinction is carried by
+  group headings and badge text, with the solid-vs-dashed left border as
+  a redundant second signal, so it survives greyscale, a colourblind
+  reader and a screen reader. Chips are real checkboxes with labels, so
+  keyboard and screen-reader use work without extra ARIA.
+- Verified: `npm test` (7 assertions, Node's built-in runner) passes,
+  `npm run lint` and `npm run build` clean, and the cross-origin
+  `GET /languages` returns 200 with the allow header from
+  `Origin: http://localhost:5173`.
+- The test fixture in `frontend/test/capability.test.js` was diffed
+  field-by-field against the live `/languages` response on 2026-09-05
+  and matches exactly. Re-check that if the endpoint changes; a stale
+  fixture would let the tests pass while the screen lied.
+- **Not verified by me: the screen in a real browser.** No browser
+  driver here — same limitation as Phase 5.
 
 ## What is known broken or not yet attempted
 
@@ -181,7 +211,11 @@ causes redone work or, worse, confidently broken assumptions.
   paths, so `uvicorn main:app` from the repo root fails on boot. Same
   for the test scripts. Harmless locally, worth fixing in Phase 10
   before it becomes a deploy-day surprise.
-- Screens 2 and 3 are still the empty Phase 0 stubs (Phases 6-7).
+- Screen 3 is still the empty Phase 0 stub (Phase 7).
+- `frontend/test/capability.test.js` hardcodes a copy of the
+  `/languages` response. It is verified to match today, but nothing
+  automatically re-checks it — if `/languages` changes shape, the tests
+  keep passing against the old fixture.
 - The frontend points at `http://127.0.0.1:8000` unless `VITE_API_BASE`
   is set. Phase 10 has to set that at build time for the deployed
   frontend.
@@ -205,6 +239,28 @@ because X." Keep entries short and dated.)*
   requires a reviewed commit. That flag is exactly the claim RULES.md §2
   says must never be softened quietly, so it does not get a path that
   bypasses review.
+- 2026-09-05 — All UI copy about what a language can do lives in
+  `frontend/src/capability.js`, not inside the components. Same reason
+  the pedagogy prompt lives in one file (RULES.md §3): this text is the
+  UI half of PRD.md §4's boundary, so it should take one diff in one
+  place to change — and keeping it out of JSX means it can be tested
+  with Node's built-in runner and no browser, no framework, no new
+  dependency.
+- 2026-09-05 — `describeCapability()` covers every combination of
+  `translation` and `tts` the API could return, including ones no
+  language currently has. An unhandled pair would render as blank space,
+  and blank space on that screen reads as "no limitations". There is a
+  test asserting each combination produces real text.
+- 2026-09-05 — `groupLanguages()` gives an unrecognised `translation`
+  value its own group rather than dropping it. A language silently
+  missing from the screen is the one failure that would let a teacher
+  assume a capability nobody claimed.
+- 2026-09-05 — The "pending validation" line on the phrase-bank group is
+  static text, not driven by the `verified` flags in
+  `models/phrase_bank.py` (`/languages` does not carry them). Every entry
+  is currently unverified so it is accurate, and if one is ever verified
+  the text errs toward understating. Revisit when the first entry is
+  actually confirmed by a speaker.
 - 2026-09-05 — `src/api.js` surfaces FastAPI's `detail` string straight
   to the teacher rather than a generic "something went wrong". The
   backend's messages are written to be read by one (RULES.md §3), so

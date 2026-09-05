@@ -16,6 +16,15 @@ async function detail(response) {
   }
 }
 
+// The capability list. The frontend renders what each language can and
+// cannot do from this response and never hardcodes it (RULES.md §5), so a
+// backend change to a language's capability needs no frontend change.
+export async function languages() {
+  const response = await fetch(`${BASE}/languages`);
+  if (!response.ok) throw new Error(await detail(response));
+  return response.json(); // [{ code, name, translation, tts, note }]
+}
+
 export async function ocr(file) {
   const form = new FormData();
   form.append("file", file);
