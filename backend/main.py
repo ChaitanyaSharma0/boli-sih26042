@@ -5,6 +5,7 @@ translation. Ho/Mundari/Kurukh/Sadri are phrase-bank + TTS only.
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -48,7 +49,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/audio", StaticFiles(directory="static/audio"), name="audio")
+# Resolved against this file, not the working directory: the app must
+# start the same way from backend/, from the repo root, or from / in a
+# container (PLAN.md Phase 10).
+_AUDIO_DIR = Path(__file__).resolve().parent / "static" / "audio"
+_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/audio", StaticFiles(directory=_AUDIO_DIR), name="audio")
 
 for module in (ocr, pedagogy, translate, speak, correct, languages, lessons):
     app.include_router(module.router)

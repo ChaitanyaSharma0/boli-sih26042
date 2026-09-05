@@ -1,6 +1,13 @@
 """Phase 1 verification — run with the venv python from backend/.
 
     ./.venv/Scripts/python.exe test_contrast.py
+    ./.venv/Scripts/python.exe test_contrast.py --base-url https://<space>.hf.space
+
+With no argument it drives the app in-process. With --base-url it runs
+the identical assertions against a deployed instance over HTTP, which is
+how Phase 10 re-checks the contrast against the real URL rather than
+localhost — deployment breaks subtle things, so this must be re-run
+there and not assumed.
 
 Two things are checked, both through the real FastAPI routes:
 
@@ -33,8 +40,37 @@ TEXTBOOK = "किसान खेत में गेहूँ उगाता 
 ADAPTED_CLEAN = "धान हाट में बिकता है।"
 
 
+class _RemoteClient:
+    """Just enough of TestClient's surface to run the same assertions."""
+
+    def __init__(self, base_url):
+        import requests
+
+        self._base = base_url.rstrip("/")
+        self._session = requests.Session()
+
+    def post(self, path, **kwargs):
+        return self._session.post(self._base + path, timeout=180, **kwargs)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self._session.close()
+
+
+def _client():
+    args = sys.argv[1:]
+    if "--base-url" in args:
+        base = args[args.index("--base-url") + 1]
+        print(f"target   : {base}")
+        return _RemoteClient(base)
+    print("target   : in-process app")
+    return TestClient(app)
+
+
 def main():
-    with TestClient(app) as client:
+    with _client() as client:
         r = client.post("/translate", json={"text": TEXTBOOK, "target": "sat_Olck"})
         r.raise_for_status()
         textbook = r.json()

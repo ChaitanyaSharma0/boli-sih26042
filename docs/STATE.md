@@ -13,7 +13,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 9 — DONE. Next up: Phase 10 (deploy).`
+`Phase 10 — PREPARED, NOT DEPLOYED. Blocked on credentials, see below.`
 
 ## Last commit
 
@@ -302,6 +302,40 @@ Added to PLAN.md after the failure was seen live, not predicted.
 - **Not verified by me: how it actually looks in a browser.** The
   contrast ratios are computed and the build is clean, but nobody has
   seen it rendered.
+- Confirmed working in a real browser by the user on 2026-09-05: audio
+  plays, the correction form opens and submits.
+
+### Phase 10 — Deploy — PREPARED, NOT DEPLOYED 2026-09-05
+**Nothing is live. Do not tell anyone there is a URL.** Everything that
+can be done without deploy credentials is done; the deploy itself is
+blocked, see "Open questions / blockers".
+
+- Working-directory bug **fixed and verified**: the static mount and
+  `DATABASE_PATH` now resolve against the file's own location, so the
+  app starts identically from `backend/`, from the repo root, or from
+  `C:\`. Verified by actually starting uvicorn from `C:\` — all nine
+  routes served, the sqlite file created in `backend/db/`, and no stray
+  files written into the foreign directory. A relative `DATABASE_PATH`
+  resolves against `backend/`; an absolute one is used as given, which
+  is how a container mounts a volume.
+- `backend/Dockerfile` written for the HF Spaces Docker contract: uid
+  1000, writable `$HOME`, port 7860, CPU-only torch, `tesseract-ocr-hin`,
+  and the pinned pure-Python IndicTransToolkit commit.
+  **It has never been built** — Docker is not installed here. The first
+  real build is its first test; expect one round of iteration.
+- `backend/README.md` doubles as the Space card (`sdk: docker`,
+  `app_port: 7860`) and states the scope boundary on its front page.
+- `docs/DEPLOY.md` is the runbook, including what to expect on a cold
+  boot and what is still needed to deploy.
+- **Both verification scripts now take a URL**, which is what makes the
+  Phase 10 re-check possible at all:
+  - `backend/test_contrast.py --base-url <url>` — same assertions over
+    HTTP. Proven against a real server on 127.0.0.1:8011, not just
+    in-process.
+  - `frontend/test/degradation.mjs <url>` — moved out of scratch and
+    into the repo. Proven against a real server with an invalid key: Ho
+    106,554 / Mundari 112,698 / Kurukh 126,010 / Sadri 115,770 bytes of
+    audio while `/simplify` returned 502.
 
 ## What is known broken or not yet attempted
 
@@ -538,6 +572,21 @@ the pair must be `धान हाट में बिकता है।` or `�
 `किसान खेत में धान उगाता है।`, which still contaminates.
 
 ## Open questions / blockers
+
+- **Phase 10 is blocked on credentials.** The `HF_TOKEN` in
+  `backend/.env` is Read-scoped — enough to pull the gated model at
+  runtime, not enough to create or push a Space. The Vercel CLI is not
+  installed and there is no session. Docker is not installed either, so
+  the Dockerfile is unbuilt. Nothing about the deploy can be completed
+  from here.
+- **Free-tier Space storage is ephemeral, so logged corrections do not
+  survive a restart.** PRD.md §3 calls the correction log "a durable
+  record"; on this tier it is not one. Either say so plainly when
+  demoing, or persist to a HF Dataset — not built. This is a claim to
+  get right before a judge asks.
+- **CORS is still `allow_origins=["*"]`.** Fine for a demo backend with
+  no auth (ARCHITECTURE.md §7), but worth narrowing to the Vercel origin
+  once that origin exists, rather than leaving it unexamined in public.
 
 - Native speaker validation for Ho/Mundari/Kurukh/Sadri phrase bank
   entries — not yet obtained. Do not change `verified` to `true` in
