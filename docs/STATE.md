@@ -17,7 +17,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Last commit
 
-`(Phase 5 commit — see git log -1)`
+`09b2738 — feat: capture screen wired to backend`
 
 ## What is confirmed working right now
 
