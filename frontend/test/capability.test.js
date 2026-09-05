@@ -9,6 +9,8 @@ import { test } from "node:test";
 
 import {
   GROUPS,
+  SANTALI_TARGET,
+  VERIFIED_CONTRAST,
   capabilityBadge,
   describeCapability,
   groupLanguages,
@@ -144,4 +146,41 @@ test("capability wins over the code map, not the other way round", () => {
 test("only one language in the live list is translatable at all", () => {
   const translatable = LIVE.filter((l) => translateTargetFor(l) !== null);
   assert.deepEqual(translatable.map((l) => l.code), ["sat"]);
+});
+
+// --- the demo control's fixed pair -------------------------------------
+// PLAN.md Phase 8: these sentences are hardcoded on purpose. The pair
+// must stay exactly what backend/test_contrast.py asserts on, and must
+// never quietly become the short-but-still-contaminated sentence.
+
+test("the verified pair is the pair the backend test pins", () => {
+  const byKey = Object.fromEntries(VERIFIED_CONTRAST.map((e) => [e.key, e]));
+  assert.equal(
+    byKey.textbook.hindi,
+    "किसान खेत में गेहूँ उगाता है और उसे बाज़ार में बेचता है।",
+  );
+  assert.equal(byKey.adapted.hindi, "धान हाट में बिकता है।");
+});
+
+test("the clean half is never the sentence that still contaminates", () => {
+  // किसान खेत में धान उगाता है। is short and adapted and STILL leaks
+  // Meetei Mayek (ꯆꯦꯡ). Measured 2026-09-05. It must not be used as the
+  // clean example (PRD.md §5).
+  const trap = "किसान खेत में धान उगाता है।";
+  for (const example of VERIFIED_CONTRAST) {
+    assert.notEqual(
+      example.hindi,
+      trap,
+      "this sentence contaminates despite being short — it cannot be either " +
+        "half of the demo pair without re-checking against the live API",
+    );
+  }
+});
+
+test("the demo targets Santali through the same constant as everything else", () => {
+  assert.equal(SANTALI_TARGET, "sat_Olck");
+  assert.equal(
+    translateTargetFor({ code: "sat", translation: "full", tts: "none" }),
+    SANTALI_TARGET,
+  );
 });

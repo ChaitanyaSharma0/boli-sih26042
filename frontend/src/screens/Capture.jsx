@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ocr } from "../api";
+import ContrastDemo from "../components/ContrastDemo";
 
 // Screen 1 — the teacher types the lesson line, or photographs it.
 //
@@ -76,6 +77,8 @@ export default function Capture({
       <button onClick={onNext} disabled={!hindiText.trim()}>
         Choose languages
       </button>
+
+      <ContrastDemo />
     </section>
   );
 }

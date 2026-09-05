@@ -89,3 +89,30 @@ export function translateTargetFor(language) {
   if (language.translation !== "full") return null;
   return TRANSLATE_TARGETS[language.code] ?? null;
 }
+
+// The IndicTrans2 target for Santali, named once so the demo control and
+// translateTargetFor() cannot disagree about it.
+export const SANTALI_TARGET = TRANSLATE_TARGETS.sat;
+
+// The demo control's fixed sentence pair (PLAN.md Phase 8, PRD.md §5).
+//
+// Checked against the live API on 2026-09-05. Do NOT swap either line for
+// something that merely looks similar: the contamination is context
+// dependent, and the same word behaves differently in different sentences
+// — किसान खेत में धान उगाता है। is short, adapted, and still leaks. Any
+// replacement must be re-checked against the live API first, and
+// backend/test_contrast.py asserts on exactly this pair.
+export const VERIFIED_CONTRAST = [
+  {
+    key: "textbook",
+    label: "Straight from the textbook",
+    hindi: "किसान खेत में गेहूँ उगाता है और उसे बाज़ार में बेचता है।",
+    why: "Contains गेहूँ (wheat) — a crop barely grown in Jharkhand, and a word outside the model's Santali training data.",
+  },
+  {
+    key: "adapted",
+    label: "Adapted for a Jharkhand classroom",
+    hindi: "धान हाट में बिकता है।",
+    why: "Same idea, local wording: धान (paddy) and हाट (the weekly village market).",
+  },
+];
