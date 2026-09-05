@@ -1,38 +1,154 @@
-/* Mobile-first and deliberately plain. The visual pass is Phase 9;
-   this is only enough to be usable on a phone held at the front of a
-   classroom — full-width controls and large tap targets. */
+/* BOLI — visual language shared with the SIH deck (PLAN.md Phase 9).
+   The palette values below are the deck's own, taken from its build.js,
+   so the app and the slides read as one product rather than two designs
+   from two different days.
+
+   Mobile-first throughout: the primary user is a teacher holding a phone
+   at the front of a classroom (PRD.md §2, RULES.md §5). */
+
+:root {
+  --navy: #1e3a5f;
+  --green: #1b6b45;
+  --red: #b02a20;
+  --amber: #b06a00;
+
+  --card: #f1f4f8;
+  --card-green: #e8f3ed;
+
+  --text: #1a1a1a;
+  --muted: #555555;
+
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(30, 58, 95, 0.12);
+  --shadow-raised: 0 2px 8px rgba(30, 58, 95, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 1rem;
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
+  background: #fff;
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.55;
+}
+
+main {
+  max-width: 42rem;
+  margin: 0 auto;
 }
 
 h1 {
+  margin: 0 0 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid var(--navy);
+  color: var(--navy);
   font-size: 1.5rem;
+  letter-spacing: 0.02em;
 }
 
+h2 {
+  color: var(--navy);
+  font-size: 1.2rem;
+}
+
+h3 {
+  margin: 0 0 0.25rem;
+  color: var(--navy);
+  font-size: 1.05rem;
+}
+
+/* --- Cards -----------------------------------------------------------
+   The deck's card treatment: light ground, rounded corners, a shadow
+   soft enough to lift the card without announcing itself. */
+.group {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.group-blurb {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* --- Form controls ---------------------------------------------------- */
 label {
   display: block;
   margin-top: 1rem;
+  color: var(--navy);
   font-weight: 600;
 }
 
-textarea,
-button {
+textarea {
   width: 100%;
-  box-sizing: border-box;
-  font: inherit;
   margin-top: 0.5rem;
   padding: 0.75rem;
+  border: 1px solid #c3ccd8;
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+}
+
+textarea:focus,
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
 }
 
 button {
+  width: 100%;
   min-height: 3rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--navy);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  box-shadow: var(--shadow-raised);
 }
 
 button:disabled {
-  opacity: 0.5;
+  background: #d8dee6;
+  color: var(--muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* An inline action that is a real button for accessibility but reads as
+   a link. Overrides the full-width default above. */
+.link {
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--navy);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link:hover {
+  box-shadow: none;
+  color: var(--green);
 }
 
 .file input {
@@ -40,80 +156,111 @@ button:disabled {
   margin-top: 0.5rem;
 }
 
+form button {
+  width: auto;
+  margin-right: 0.5rem;
+}
+
+/* --- Messages --------------------------------------------------------
+   Three levels, three colours, and each one also says in words what it
+   is — colour is never the only carrier of meaning. */
 .note,
-.error {
+.error,
+.warn {
   padding: 0.5rem 0.75rem;
   border-left: 4px solid;
-}
-
-.note {
-  border-color: #888;
-}
-
-.error {
-  border-color: #b00;
-  color: #b00;
-}
-
-/* --- Language select -------------------------------------------------
-   Still deliberately plain; Phase 9 is the visual pass. What is NOT
-   deferred is the distinction between real translation and phrase bank
-   (PRD.md §4) — that is carried by group headings and badge text, so it
-   survives greyscale, a colourblind reader and a screen reader. The
-   border style is a second, redundant cue, never the only one. */
-
-.group {
-  margin-top: 1.5rem;
-}
-
-.group h3 {
-  margin-bottom: 0.25rem;
-  font-size: 1.1rem;
-}
-
-.group-blurb {
-  margin-top: 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
   font-size: 0.9rem;
 }
 
+.note {
+  border-color: #9aa7b6;
+  background: #fff;
+  color: var(--muted);
+}
+
+.error {
+  border-color: var(--red);
+  background: #fdf3f2;
+  color: var(--red);
+}
+
+/* A translation the model could not fully handle. Never styled like
+   clean output — DATA_DICTIONARY.md §4, ARCHITECTURE.md §3. Amber, not
+   red: the request worked, the model's coverage did not.
+
+   The deck's amber (#B06A00) reaches only 4.28:1 on white, under the
+   4.5:1 WCAG AA needs for text this size, and no lighter background can
+   raise it. So amber carries the meaning as a border and tint, where
+   3:1 is the bar and it passes comfortably, and the words themselves use
+   the deck's body colour at 16:1. Same palette, readable warning. */
+.warn {
+  display: block;
+  margin-top: 0.35rem;
+  border-color: var(--amber);
+  background: #fdf6ea;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.stage {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.subs li {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* --- Language chips --------------------------------------------------
+   The distinction between real translation and phrase bank is carried by
+   the group heading and the badge text first. Colour and border style
+   are redundant reinforcement, so the meaning survives greyscale, a
+   colourblind reader and a screen reader (PRD.md §4). */
 .chip {
   display: flex;
   gap: 0.75rem;
   align-items: flex-start;
   margin-top: 0.5rem;
   padding: 0.75rem;
-  font-weight: normal;
-  border: 1px solid #999;
+  background: #fff;
+  border: 1px solid #d3dae3;
   border-left-width: 5px;
-  border-radius: 4px;
+  border-radius: var(--radius);
+  font-weight: normal;
   cursor: pointer;
 }
 
-/* Solid left edge = a real model translates this language.
-   Dashed left edge = a fixed phrase list, no translation model. */
+/* Solid green edge = a real model translates this language. */
 .chip-full {
+  border-left-color: var(--green);
   border-left-style: solid;
 }
 
+/* Dashed amber edge = a fixed phrase list, no translation model. Amber
+   for a known limitation, not red: nothing here is broken. */
 .chip-phrase_bank {
+  border-left-color: var(--amber);
   border-left-style: dashed;
 }
 
 .chip-selected {
-  background: #eef;
-  border-color: #224;
+  background: var(--card-green);
+  border-color: var(--green);
 }
 
 .chip:focus-within {
-  outline: 3px solid #224;
+  outline: 3px solid var(--navy);
   outline-offset: 2px;
 }
 
 .chip input {
+  flex: none;
   width: 1.25rem;
   height: 1.25rem;
   margin-top: 0.2rem;
-  flex: none;
+  accent-color: var(--navy);
 }
 
 .chip-body {
@@ -123,27 +270,44 @@ button:disabled {
 }
 
 .chip-name {
+  color: var(--navy);
   font-weight: 600;
 }
 
+/* Badge text stays the body colour at every size; the capability colour
+   is carried by the border, which only has to clear the 3:1 non-text
+   bar. At 0.7rem, coloured text would not clear 4.5:1 for amber. */
 .chip-badge {
+  display: inline-block;
   margin-left: 0.5rem;
   padding: 0.1rem 0.4rem;
-  font-size: 0.75rem;
-  font-weight: normal;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  border: 1px solid currentColor;
-  border-radius: 3px;
   white-space: nowrap;
 }
 
-.chip-detail,
-.chip-note {
+.chip-full .chip-badge {
+  border-color: var(--green);
+  background: var(--card-green);
+}
+
+.chip-phrase_bank .chip-badge {
+  border-color: var(--amber);
+  background: #fdf6ea;
+}
+
+.chip-detail {
   font-size: 0.9rem;
 }
 
 .chip-note {
+  color: var(--muted);
+  font-size: 0.9rem;
   font-style: italic;
 }
 
@@ -151,54 +315,42 @@ button:disabled {
   opacity: 0.6;
 }
 
-/* --- Result ----------------------------------------------------------
-   Still plain; Phase 9 is the visual pass. */
-
-.stage {
-  font-style: italic;
+/* A result card inherits the same edge language as its chip. */
+.group.chip-full,
+.group.chip-phrase_bank {
+  border-left-width: 5px;
+  border-left-style: solid;
 }
 
-.subs li {
-  font-size: 0.9rem;
+.group.chip-phrase_bank {
+  border-left-style: dashed;
 }
 
-/* An inline action that is a button for accessibility but reads as a
-   link. Overrides the full-width default above. */
-.link {
-  width: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  background: none;
-  border: none;
-  color: #224;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
+/* --- Audio ------------------------------------------------------------ */
 audio {
   width: 100%;
   margin-top: 0.5rem;
 }
 
-form button {
-  width: auto;
-  margin-right: 0.5rem;
-}
-
-/* A translation the model could not fully handle. Never silently styled
-   like clean output — DATA_DICTIONARY.md §4, ARCHITECTURE.md §3. */
-.warn {
-  display: block;
-  margin-top: 0.25rem;
-  padding-left: 0.5rem;
-  border-left: 4px solid #a60;
-  font-size: 0.85rem;
-  color: #a60;
-}
-
+/* --- The contrast demo ----------------------------------------------- */
 .demo-case {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #d3dae3;
+}
+
+.demo-case p[lang="sat"] {
+  padding: 0.5rem 0.75rem;
+  background: var(--card-green);
+  border-radius: var(--radius);
+  font-size: 1.05rem;
+}
+
+ol,
+ul {
+  padding-left: 1.25rem;
+}
+
+li {
+  margin: 0.25rem 0;
 }
