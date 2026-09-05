@@ -13,11 +13,11 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 8.5 — DONE. Next up: Phase 9 (styling pass).`
+`Phase 9 — DONE. Next up: Phase 10 (deploy).`
 
 ## Last commit
 
-`f11b4a5 — fix: /simplify failure no longer takes down the other languages`
+`3c19d35 — style: visual pass matching deck design language`
 
 ## What is confirmed working right now
 
@@ -266,6 +266,42 @@ Added to PLAN.md after the failure was seen live, not predicted.
   `speaksWithoutPedagogy()` — including that a language with both a
   model and a voice is NOT treated as pedagogy-independent, since its
   audio would come from the translation.
+- **Gemini 503 retry — RESOLVED 2026-09-05** (commit 9379ea6), no longer
+  an open item. `models/pedagogy.py` retries a 503 twice with a 1s then
+  3s backoff and reports "after 3 attempts" if it gives up. Only 503 is
+  retried: an invalid key, a 404 for a retired model or a 400 fails
+  identically every time, so retrying those would only make a teacher
+  wait longer for the same message. Verified by induced failure —
+  503/503/200 makes exactly 3 calls and succeeds, a permanent 503 makes
+  3 and says so, and 400 and 404 each cost exactly one call. The
+  invalid-key degradation run still passes and finishes in 2s, which is
+  itself evidence the client error is not retried.
+
+### Phase 9 — Styling pass — DONE 2026-09-05
+- The deck's own palette from its `build.js`, as CSS custom properties
+  in `frontend/src/index.css`: navy `#1E3A5F`, green `#1B6B45`, red
+  `#B02A20`, amber `#B06A00`, card `#F1F4F8`, green card `#E8F3ED`, body
+  `#1A1A1A`, muted `#555555`. Light-ground cards, rounded corners, soft
+  shadow, matching the deck's card treatment. Mobile-first, capped at
+  42rem so it stays readable on a laptop too.
+- Every colour pairing was checked against WCAG AA and passes. Three
+  failed at first, and the fix was to change how the colours are used
+  rather than what they are — **no palette value was altered**:
+  - The deck's amber reaches only 4.28:1 on white, and no lighter
+    background can raise it, so amber cannot carry small text. It now
+    carries meaning as borders and tints, where the bar is 3:1, and the
+    words use the deck's body colour at 16:1.
+  - Badge text is body colour with a capability-coloured border, for the
+    same reason at 0.7rem.
+  - The disabled button was light-on-grey at 1.67:1; now muted on
+    `#D8DEE6` at 5.51:1.
+- The real-translation / phrase-bank distinction is still carried by
+  heading and badge *text* first, with colour and the solid-vs-dashed
+  edge as redundant reinforcement, so it survives greyscale and a
+  screen reader.
+- **Not verified by me: how it actually looks in a browser.** The
+  contrast ratios are computed and the build is clean, but nobody has
+  seen it rendered.
 
 ## What is known broken or not yet attempted
 
@@ -307,12 +343,11 @@ Added to PLAN.md after the failure was seen live, not predicted.
   `santali_translation` are never written, so the table cannot tell you
   what the teacher was actually shown. Fine for linking corrections;
   not enough to reconstruct a session.
-- The pedagogy step depends on a third-party service that goes down, but
-  the common case is now handled: `models/pedagogy.py` retries a 503
-  twice with a 1s then 3s backoff, and Phase 8.5 keeps an outage from
-  taking the screen down. A 503 that survives three attempts still means
-  no Santali for that submission — the other four languages are
-  unaffected either way.
+- A Gemini 503 that survives all three attempts still means no Santali
+  for that submission. The other four languages are unaffected either
+  way (Phase 8.5), and the teacher sees a scoped error, not a dead
+  screen.
+- Nobody has looked at the Phase 9 styling in a browser yet.
 - For a phrase-bank language, the correction form's "original" is the
   text BOLI was asked to speak, not the phrase bank's target string —
   `/speak` returns audio bytes, not the entry it matched, so the
