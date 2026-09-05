@@ -17,7 +17,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Last commit
 
-`(Phase 6 commit — see git log -1)`
+`af17580 — feat: language select screen, capability-aware rendering`
 
 ## What is confirmed working right now
 
