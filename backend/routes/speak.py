@@ -1,12 +1,15 @@
-"""POST /speak — MMS-TTS wav bytes. Wired in Phase 1, phrase-bank gate Phase 2.
+"""POST /speak — MMS-TTS wav bytes.
 
-This route is where the honesty boundary is enforced in code: for
-hoc/unr/kru/sck, text that isn't a known phrase-bank entry gets a
-phrase_bank_only response, never synthesised anyway.
+The phrase-bank gate for hoc/unr/kru/sck lands here in PLAN.md Phase 2;
+today this route speaks whatever text it is given. TTS itself is real
+for all four languages — it is *translation* into them that does not
+exist (PRD.md §4).
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
+
+from models import tts
 
 router = APIRouter()
 
@@ -18,4 +21,14 @@ class SpeakRequest(BaseModel):
 
 @router.post("/speak")
 def speak(req: SpeakRequest):
-    raise HTTPException(501, "TTS not wired yet — PLAN.md Phase 1.")
+    if req.lang == "sat":
+        raise HTTPException(
+            501,
+            "No text-to-speech checkpoint exists for Santali, from us or anyone "
+            "else. Santali is translation-only — see /translate.",
+        )
+    try:
+        wav = tts.synthesize(req.text, req.lang)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return Response(content=wav, media_type="audio/wav")

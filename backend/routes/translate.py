@@ -1,4 +1,4 @@
-"""POST /translate — Hindi -> Santali (sat_Olck) ONLY. Wired in Phase 1.
+"""POST /translate — Hindi -> Santali (sat_Olck) ONLY.
 
 Any other target is a hard 501, never a silent fall-through: PRD.md §4,
 RULES.md §2. There is no translation model for Ho/Mundari/Kurukh/Sadri.
@@ -7,14 +7,27 @@ RULES.md §2. There is no translation model for Ho/Mundari/Kurukh/Sadri.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from models import translation
+
 router = APIRouter()
 
 
 class TranslateRequest(BaseModel):
     text: str
-    target: str
+    target: str = "sat_Olck"
 
 
 @router.post("/translate")
 def translate(req: TranslateRequest):
-    raise HTTPException(501, "Translation not wired yet — PLAN.md Phase 1.")
+    if req.target not in translation.SUPPORTED_TARGETS:
+        raise HTTPException(
+            501,
+            f"No translation model exists for '{req.target}'. Santali (sat_Olck) is "
+            "the only language here with a parallel corpus. Ho, Mundari, Kurukh and "
+            "Sadri are served by the curated phrase bank via /speak instead.",
+        )
+    try:
+        translated = translation.translate(req.text, req.target)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"translated": translated, "target": req.target}

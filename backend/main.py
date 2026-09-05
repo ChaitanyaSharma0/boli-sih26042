@@ -4,13 +4,30 @@ Scope boundary (PRD.md §4): Santali is the only language with real
 translation. Ho/Mundari/Kurukh/Sadri are phrase-bank + TTS only.
 """
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 
-from routes import correct, languages, ocr, pedagogy, speak, translate
+from dotenv import load_dotenv
 
-app = FastAPI(title="BOLI", version="0.1.0")
+load_dotenv()  # HF_TOKEN must be in the environment before any model loads
+
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+
+from models import translation, tts  # noqa: E402
+from routes import correct, languages, ocr, pedagogy, speak, translate  # noqa: E402
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load every model once at startup, never per request (ARCHITECTURE.md §4).
+    # Costs ~a minute on a cold HF cache; makes each teacher request seconds.
+    translation.warmup()
+    tts.warmup()
+    yield
+
+
+app = FastAPI(title="BOLI", version="0.1.0", lifespan=lifespan)
 
 # ponytail: wide-open CORS, fine for a single-teacher demo backend with no
 # auth (ARCHITECTURE.md §7). Lock to the deployed frontend origin in Phase 10.

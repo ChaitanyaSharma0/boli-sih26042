@@ -108,3 +108,26 @@ line, stop and ask, don't guess in the impressive direction.
   the model card — inspect `tokenizer.get_vocab()` before assuming
   input format. Ho/Mundari (`hoc`/`unr`) expect **Odia script**, not
   Devanagari.
+
+- **`IndicTransToolkit` from master does not install on Windows.** Its
+  `processor.py` was Cythonised in Feb 2025, so `pip install git+...`
+  now wants MSVC 14+ build tools, and PyPI ships no Windows wheel. Use
+  the last pure-Python commit instead (v1.0.2):
+  `pip install --no-build-isolation --no-deps git+https://github.com/VarunGumma/IndicTransToolkit.git@0c607654e8`
+  `--no-build-isolation` is required because that commit's `setup.py`
+  imports `pkg_resources`, which setuptools >=81 dropped. Install its
+  deps separately: `sacremoses sacrebleu sentencepiece` and
+  `git+https://github.com/VarunGumma/indic_nlp_library`.
+- **Do not pass `token=` to `from_pretrained` for IndicTrans2.** The
+  checkpoint ships remote code, and transformers 4.45.2 drops an
+  explicit token on the `trust_remote_code` download path — so passing
+  a perfectly good token produces a 401 on `configuration_indictrans.py`
+  and `modeling_indictrans.py` that env-var auth does not. Put
+  `HF_TOKEN` in `backend/.env`, call `load_dotenv()` before importing
+  the model module, and pass no token argument at all.
+- `load_dotenv()` with no arguments searches upward from **the calling
+  file's directory**, not the current working directory. A helper script
+  living outside `backend/` silently fails to find `backend/.env`, and
+  the symptom looks like a missing token rather than a missing file.
+- `starlette`'s `TestClient` needs `httpx2` installed, and only says so
+  at import time.

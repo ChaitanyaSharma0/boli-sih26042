@@ -1,10 +1,28 @@
+# Install into a venv from backend/:
+#   python -m venv .venv
+#   ./.venv/Scripts/python.exe -m pip install -r requirements.txt
+# IndicTransToolkit needs --no-build-isolation, see the note at the bottom.
+
 fastapi
 uvicorn[standard]
 python-multipart
 python-dotenv
-transformers==4.45.2
-torch
+httpx2                 # starlette's TestClient dependency, used by test_contrast.py
+
+transformers==4.45.2   # pinned: newer breaks IndicTransToolkit's imports (RULES.md §8)
+torch                  # CPU wheel: --index-url https://download.pytorch.org/whl/cpu
 scipy
-pytesseract
+sentencepiece
+sacremoses
+sacrebleu
+indic-nlp-library-IT2 @ git+https://github.com/VarunGumma/indic_nlp_library
+
+pytesseract            # Phase 3; also needs the Tesseract binary + `hin` pack
 Pillow
-git+https://github.com/VarunGumma/IndicTransToolkit.git
+
+# IndicTransToolkit, pinned to the last pure-Python commit. Master Cythonised
+# processor.py and now needs MSVC to build on Windows. Install it last, with:
+#   pip install --no-build-isolation --no-deps \
+#     git+https://github.com/VarunGumma/IndicTransToolkit.git@0c607654e8
+# (--no-build-isolation because that commit's setup.py imports pkg_resources,
+#  which modern setuptools no longer provides in an isolated build env.)
