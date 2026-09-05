@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+transformers==4.45.2
+torch
+scipy
+pytesseract
+Pillow
+git+https://github.com/VarunGumma/IndicTransToolkit.git

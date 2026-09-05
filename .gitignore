@@ -1,0 +1,17 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# secrets
+.env
+
+# data + generated artefacts
+*.sqlite
+backend/static/audio/*
+!backend/static/audio/.gitkeep
+
+# node
+node_modules/
+dist/

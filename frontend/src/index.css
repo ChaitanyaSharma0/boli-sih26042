@@ -1,0 +1,7 @@
+/* Mobile-first — the primary user is a teacher on a phone (RULES.md §5). */
+body {
+  margin: 0;
+  padding: 1rem;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}

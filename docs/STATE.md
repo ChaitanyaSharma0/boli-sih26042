@@ -13,19 +13,38 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 0 — not yet started`
+`Phase 0 — DONE. Next up: Phase 1 (models load and respond).`
 
 ## Last commit
 
-`(none yet)`
+`scaffold: repo structure, empty routes, empty screens`
 
 ## What is confirmed working right now
 
-*(nothing yet — this section fills in as phases complete)*
+### Phase 0 — Scaffolding — DONE 2026-09-05
+- What works: `backend/` FastAPI app boots, all seven routes register and
+  return `501` with a message naming the PLAN.md phase that wires them.
+  `GET /health` returns `{"ok": true}`. `frontend/` Vite + React scaffold
+  builds clean (`npm run build`) and steps through the three empty screens.
+- Verified by: an in-process TestClient run asserting `/health` plus a 501
+  from every stub route, and a successful `vite build`.
+- Commit: `scaffold: repo structure, empty routes, empty screens`
+- Differences from PLAN.md: none material. `db/schema.sql` is empty as the
+  plan specifies — the tables in DATA_DICTIONARY.md §3 go in at Phase 4.
 
 ## What is known broken or not yet attempted
 
-- Nothing built yet.
+- No model has been loaded from the backend yet. Nothing in `models/` is
+  more than a docstring; the Colab code is still only in
+  `research/sih_2026.ipynb` and has not been ported (Phase 1).
+- `HF_TOKEN` has not been obtained or tested, so IndicTrans2 gated access
+  is unproven from this machine.
+- Heavy deps (`torch`, `transformers==4.45.2`, `IndicTransToolkit`,
+  `pytesseract`) are listed in `backend/requirements.txt` but NOT yet
+  installed here — only `fastapi`, `uvicorn` and `python-multipart` are.
+  Expect the transformers pin and the post-install restart from RULES.md
+  §8 to bite at the start of Phase 1.
+- Tesseract itself (the binary + `hin` language pack) is not installed.
 
 ## Decisions made that aren't obvious from the docs alone
 
@@ -33,6 +52,14 @@ causes redone work or, worse, confidently broken assumptions.
 and won't be captured elsewhere — e.g. "chose Render over HF Space
 because X." Keep entries short and dated.)*
 
+- 2026-09-05 — Frontend navigation is a `useState` step index in
+  `App.jsx`, not `react-router`. The three screens are strictly linear and
+  pass state forward (ARCHITECTURE.md §5), so a router would have added a
+  dependency and prop plumbing for nothing. Add react-router only if a
+  screen ever needs its own shareable URL.
+- 2026-09-05 — Vite scaffold's demo assets (`src/assets/`, `App.css`,
+  `public/icons.svg`, its README) were deleted rather than left in place,
+  so the Phase 9 styling pass starts from a blank sheet.
 - 2026-09-05 — Scope locked: Santali gets real translation, Ho/Mundari/
   Kurukh/Sadri get curated phrase bank only, per PRD.md §4. This was a
   deliberate finding from research (no parallel corpus exists for these
@@ -44,8 +71,9 @@ because X." Keep entries short and dated.)*
 - [ ] `HF_TOKEN` obtained and working
 - [ ] IndicTrans2 gated repo access approved
 - [ ] `transformers==4.45.2` pin confirmed necessary (see RULES.md §8)
-- [ ] Backend running locally
-- [ ] Frontend running locally
+- [x] Backend running locally (boots, routes register, stubs 501 — no
+      models loaded yet)
+- [x] Frontend running locally (`npm run build` clean, three screens step)
 - [ ] Deployed backend URL: *(none yet)*
 - [ ] Deployed frontend URL: *(none yet)*
 
