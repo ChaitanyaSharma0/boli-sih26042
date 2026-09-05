@@ -17,7 +17,7 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Last commit
 
-`(Phase 3 commit — see git log -1)`
+`8c16d74 — feat: ocr and pedagogy routes`
 
 ## What is confirmed working right now
 
