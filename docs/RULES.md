@@ -131,3 +131,16 @@ line, stop and ask, don't guess in the impressive direction.
   the symptom looks like a missing token rather than a missing file.
 - `starlette`'s `TestClient` needs `httpx2` installed, and only says so
   at import time.
+- Tesseract's Windows installer does not add it to PATH, and pytesseract
+  reports that as a bare "not installed". `routes/ocr.py` falls back to
+  `C:\Program Files\Tesseract-OCR	esseract.exe`, with `TESSERACT_CMD`
+  in `.env` overriding both.
+- Tesseract reorders some Devanagari vowel signs: किसान comes back as
+  कस्िान, because the ि matra is drawn before its consonant but encoded
+  after it. The rest of a line reads fine. Do not write an OCR test that
+  demands an exact string match, and do not "fix" this with a
+  reordering hack — `/ocr` returns a confidence flag and the teacher
+  corrects the odd word on screen 1, which is the designed affordance.
+- `gemini-2.5-flash` is closed to new API keys. The 404 body names the
+  current replacement; `GET https://generativelanguage.googleapis.com/v1beta/models`
+  with the key lists what it can actually call. Do not guess a model id.

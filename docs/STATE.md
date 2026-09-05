@@ -13,11 +13,11 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 2 — DONE. Next up: Phase 3 (OCR + pedagogy).`
+`Phase 3 — DONE. Next up: Phase 4 (database + corrections).`
 
 ## Last commit
 
-`d9fabcf — feat: phrase bank enforcement, /languages endpoint`
+`(Phase 3 commit — see git log -1)`
 
 ## What is confirmed working right now
 
@@ -91,8 +91,41 @@ causes redone work or, worse, confidently broken assumptions.
 - `backend/test_contrast.py` re-run after the `/speak` change: still
   PASS (RULES.md §4).
 
+### Phase 3 — OCR + pedagogy — DONE 2026-09-05
+- What works: `POST /ocr` (Tesseract 5.5.3, `hin`) and `POST /simplify`
+  (Gemini, prompt in `models/pedagogy.py`). Verified end to end —
+  rendered image of `किसान खेत में गेहूँ उगाता है` in, adapted Hindi out:
+  - OCR read `कस्िान खेत में गेहूँ उगाता है`, confidence `ok`
+  - concept: "Farmers cultivate food crops in their fields."
+  - adapted: `किसान खेत में काम करता है।` / `वह खेत में धान उगाता है।`
+  - substitution: गेहूँ -> धान, "Paddy (rice) is the main staple crop
+    grown in Jharkhand villages, whereas wheat is less common."
+- `backend/test_ocr_pedagogy.py` re-runs it. The test renders its own
+  image with PIL rather than carrying a photo fixture, so it works on a
+  fresh clone — but that means it tests clean rendered text, not a real
+  phone photo. A real photo will read worse.
+- Readability is measured in `models/pedagogy.py`, not asked of the
+  model. A model counting its own words is a claim; this is a
+  measurement.
+
 ## What is known broken or not yet attempted
 
+- **The pedagogy step's own output is not guaranteed to translate
+  cleanly.** Measured on this run: of the two adapted sentences Gemini
+  produced, `किसान खेत में काम करता है।` translates to clean Ol Chiki, but
+  `वह खेत में धान उगाता है।` still leaks Meetei Mayek (`ꯆꯦꯡ`) — the same
+  धान behaviour recorded in PRD.md §5. So simplification improves the
+  odds, it does not guarantee a clean translation, and the live
+  simplify-then-translate path in Phase 7 can still show contaminated
+  output. Do not paper over this with a post-filter or by tuning the
+  prompt to dodge specific words: the gap is real and PRD.md §4 says
+  the gap is part of the pitch. Phase 8's demo control should use the
+  verified fixed pair rather than whatever the LLM happens to return.
+- **OCR is not exact.** Tesseract reorders some Devanagari vowel signs —
+  किसान reads back as कस्िान — while reporting `confidence: ok`. So the
+  confidence flag catches bad *images*, not bad *encoding*, and the
+  teacher's ability to hand-edit the text on screen 1 is load-bearing,
+  not a nicety. Do not add a reordering hack (RULES.md §8).
 - **The phrase bank holds exactly four entries, one phrase per
   language** — all four are the same Hindi sentence, "पानी हमारा जीवन है".
   So any demo of Ho/Mundari/Kurukh/Sadri audio can only say that one
@@ -101,10 +134,8 @@ causes redone work or, worse, confidently broken assumptions.
   cover more classroom topics.
 - **No phrase-bank entry has been checked by a native speaker.** Every
   `verified` is False and must stay False until one actually is.
-- `/ocr`, `/simplify`, `/correct` and `/corrections/count` are still 501
-  stubs (Phases 3-4).
-- Tesseract (the binary + `hin` language pack) is not installed, and no
-  LLM key is set in `.env` — both needed for Phase 3.
+- `/correct` and `/corrections/count` are still 501 stubs, and
+  `db/schema.sql` is still empty (Phase 4).
 - Frontend is still the three empty Phase 0 screens; nothing calls the
   backend yet.
 - Startup loads all five models before serving, so a cold `uvicorn` boot
@@ -117,6 +148,18 @@ causes redone work or, worse, confidently broken assumptions.
 and won't be captured elsewhere — e.g. "chose Render over HF Space
 because X." Keep entries short and dated.)*
 
+- 2026-09-05 — Only the Gemini provider is implemented in
+  `models/pedagogy.py`, because that is what `LLM_PROVIDER` is set to.
+  Another provider raises a clear error naming the file to change,
+  rather than three client implementations where one is exercised.
+  Model pinned to `gemini-3.6-flash`: `gemini-2.5-flash` is closed to
+  new API keys.
+- 2026-09-05 — The Gemini call uses `responseMimeType: application/json`
+  with a `responseSchema`, so the shape is enforced by the API instead
+  of by parsing markdown fences out of prose.
+- 2026-09-05 — OCR lives in `routes/ocr.py`, not `models/ocr.py`. It is
+  a local library call with no checkpoint to cache, and
+  ARCHITECTURE.md §2 lists only three model wrappers.
 - 2026-09-05 — `/speak`'s phrase-bank lookup matches on either the
   Hindi source or the target text, after collapsing whitespace. Lenient
   about which side the caller sends, strict about there being a match:
@@ -173,6 +216,9 @@ because X." Keep entries short and dated.)*
 - [x] `transformers==4.45.2` pin confirmed necessary (see RULES.md §8)
 - [x] Backend running locally, all five models loading and responding
 - [x] Frontend running locally (`npm run build` clean, three screens step)
+- [x] Tesseract 5.5.3 installed with the `hin` pack (not on PATH; the
+      route falls back to the standard Windows install path)
+- [x] `LLM_API_KEY` + `LLM_PROVIDER=gemini` set and working
 - [ ] Deployed backend URL: *(none yet)*
 - [ ] Deployed frontend URL: *(none yet)*
 

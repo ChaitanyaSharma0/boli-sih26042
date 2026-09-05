@@ -17,7 +17,8 @@ sacremoses
 sacrebleu
 indic-nlp-library-IT2 @ git+https://github.com/VarunGumma/indic_nlp_library
 
-pytesseract            # Phase 3; also needs the Tesseract binary + `hin` pack
+requests               # pedagogy LLM call
+pytesseract            # also needs the Tesseract binary + the `hin` language pack
 Pillow
 
 # IndicTransToolkit, pinned to the last pure-Python commit. Master Cythonised
