@@ -13,11 +13,11 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 6 — DONE. Next up: Phase 7 (frontend result screen).`
+`Phase 7 — DONE. Next up: Phase 8 (Santali contrast demo control).`
 
 ## Last commit
 
-`af17580 — feat: language select screen, capability-aware rendering`
+`(Phase 7 commit — see git log -1)`
 
 ## What is confirmed working right now
 
@@ -174,6 +174,43 @@ causes redone work or, worse, confidently broken assumptions.
   fixture would let the tests pass while the screen lied.
 - **Not verified by me: the screen in a real browser.** No browser
   driver here — same limitation as Phase 5.
+- Confirmed working in a real browser by the user on 2026-09-05: both
+  groups render, badges and explanations show, Santali reads distinctly
+  from the phrase-bank four, and the disabled Next button reads "Pick at
+  least one language".
+
+### Phase 7 — Frontend Result screen — DONE 2026-09-05
+- What works: `screens/Result.jsx` runs `/simplify` -> `/translate`
+  (only where a real model exists) -> `/speak` (only where a voice
+  exists), in sequence per ARCHITECTURE.md §5. Renders the adapted
+  Hindi with substitutions and readability, per-language output, an
+  `<audio>` player per language, and a correction form per result.
+- **The boundary is enforced by construction, not by a check.**
+  `translateTargetFor()` returns null for every phrase-bank language, so
+  the `/translate` request is never built for Ho/Mundari/Kurukh/Sadri.
+  Four tests in `frontend/test/capability.test.js` pin that, including
+  that the API's capability field beats the code map both ways.
+- Verified by driving the exact request sequence against a live backend
+  (scratch database, separate port) using the same `capability.js` the
+  screen imports. Selected Santali + Ho + Kurukh; the resulting call log
+  was:
+
+  ```
+  GET /languages, POST /simplify,
+  POST /translate x2   (Santali only, one per adapted sentence)
+  POST /speak x4       (Ho and Kurukh; Santali skipped, tts=none)
+  GET /corrections/count, POST /correct, GET /corrections/count
+  ```
+
+  Ho and Kurukh were skipped at translate with "no target
+  (phrase_bank)", Santali was skipped at speak with "no voice
+  (tts=none)", both phrase-bank languages returned the
+  `phrase_bank_only` refusal for the teacher's own sentence, and playing
+  a bank phrase returned real audio (124,986 and 127,034 bytes).
+  `POST /correct` took the count 0 -> 1.
+- **Not verified by me: the screen in a real browser.** Same limitation
+  as Phases 5 and 6 — the request sequence and the pure logic are
+  checked, the rendering and clicking are not.
 
 ## What is known broken or not yet attempted
 
@@ -211,7 +248,25 @@ causes redone work or, worse, confidently broken assumptions.
   paths, so `uvicorn main:app` from the repo root fails on boot. Same
   for the test scripts. Harmless locally, worth fixing in Phase 10
   before it becomes a deploy-day surprise.
-- Screen 3 is still the empty Phase 0 stub (Phase 7).
+- **Live Santali output is shown unlabelled even when contaminated.**
+  Measured during the Phase 7 flow test: the first adapted sentence
+  translated to `... ᱨᱮ ꯆꯦꯡ ᱠᱚ ᱡᱟᱱᱟᱢᱼᱟ ᱾`, with Meetei Mayek in it, and
+  the Result screen renders that exactly like a clean line. The backend
+  has `contains_meetei_mayek()` already but `/translate` does not return
+  a flag, and adding one changes the response shape in
+  DATA_DICTIONARY.md §4. **Open question: should `/translate` return a
+  script-contamination flag so the UI can say "the model does not know
+  this word"?** Not done unilaterally — it needs the doc updated first
+  (RULES.md §6).
+- **Corrections are logged with `lesson_id: 0`.** ARCHITECTURE.md §3
+  defines no endpoint that creates a `lessons` row, so there is no id to
+  send. The corrections are still real and still logged; they are just
+  not linked to a lesson. Either add a lesson-creating endpoint to the
+  contract or make `lesson_id` optional — needs a decision.
+- For a phrase-bank language, the correction form's "original" is the
+  text BOLI was asked to speak, not the phrase bank's target string —
+  `/speak` returns audio bytes, not the entry it matched, so the
+  frontend never learns which entry was used.
 - `frontend/test/capability.test.js` hardcodes a copy of the
   `/languages` response. It is verified to match today, but nothing
   automatically re-checks it — if `/languages` changes shape, the tests
@@ -239,6 +294,21 @@ because X." Keep entries short and dated.)*
   requires a reviewed commit. That flag is exactly the claim RULES.md §2
   says must never be softened quietly, so it does not get a path that
   bypasses review.
+- 2026-09-05 — The Result screen sends the teacher's ORIGINAL Hindi to
+  `/speak` for phrase-bank languages, not the adapted Hindi. The bank is
+  keyed on Hindi source strings, and the adapted text is whatever the
+  LLM produced that run, so it would essentially never match. On a miss
+  the screen renders the refusal and offers the phrases that do exist,
+  each playable.
+- 2026-09-05 — A `/speak` failure for one language is caught per
+  language and rendered in that language's block. One checkpoint failing
+  must not throw away the other languages' results.
+- 2026-09-05 — `models/pedagogy.py` now catches `requests` exceptions
+  and re-raises them as a `RuntimeError` the route turns into a 502 with
+  a readable message. Found the hard way: a real `ReadTimeout` during
+  the Phase 7 flow test escaped as a bare HTTP 500 "Internal Server
+  Error", which is exactly the silent failure RULES.md §3 forbids.
+  `test_ocr_pedagogy.py` now simulates a timeout and asserts the 502.
 - 2026-09-05 — All UI copy about what a language can do lives in
   `frontend/src/capability.js`, not inside the components. Same reason
   the pedagogy prompt lives in one file (RULES.md §3): this text is the

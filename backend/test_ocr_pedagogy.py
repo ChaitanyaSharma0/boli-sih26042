@@ -107,8 +107,35 @@ def test_empty_text_is_rejected():
     assert client.post("/simplify", json={"text": "   "}).status_code == 400
 
 
+def test_network_failure_is_readable_not_a_500():
+    """A timeout reaching the LLM must not surface as a bare 500.
+
+    This was real: a ReadTimeout is not a RuntimeError, so it escaped the
+    wrapper and the teacher got "Internal Server Error" with nothing to
+    act on. RULES.md §3 — fail loudly with a message a teacher can use.
+    """
+    import requests
+
+    from models import pedagogy
+
+    original = pedagogy.requests.post
+
+    def timeout(*args, **kwargs):
+        raise requests.Timeout("simulated")
+
+    pedagogy.requests.post = timeout
+    try:
+        r = client.post("/simplify", json={"text": "किसान खेत में गेहूँ उगाता है"})
+        assert r.status_code == 502, f"expected 502, got {r.status_code}"
+        assert "try again" in r.json()["detail"].lower(), r.json()
+        print(f"timeout  : {r.status_code} — {r.json()['detail']}")
+    finally:
+        pedagogy.requests.post = original
+
+
 if __name__ == "__main__":
     ocr_text = test_ocr_reads_hindi()
     test_simplify(ocr_text)
     test_empty_text_is_rejected()
+    test_network_failure_is_readable_not_a_500()
     print("\nPASS")

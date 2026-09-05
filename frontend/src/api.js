@@ -16,6 +16,16 @@ async function detail(response) {
   }
 }
 
+async function postJson(path, body) {
+  const response = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(await detail(response));
+  return response.json();
+}
+
 // The capability list. The frontend renders what each language can and
 // cannot do from this response and never hardcodes it (RULES.md §5), so a
 // backend change to a language's capability needs no frontend change.
@@ -31,4 +41,48 @@ export async function ocr(file) {
   const response = await fetch(`${BASE}/ocr`, { method: "POST", body: form });
   if (!response.ok) throw new Error(await detail(response));
   return response.json(); // { text, confidence }
+}
+
+// Hindi in, simpler Hindi out. Never crosses a language boundary.
+export function simplify(text) {
+  return postJson("/simplify", { text });
+  // { concept, adapted_hindi, substitutions, readability }
+}
+
+// Santali only. The backend returns 501 for any other target and this
+// wrapper does nothing to soften that — see translateTargetFor().
+export function translate(text, target) {
+  return postJson("/translate", { text, target });
+  // { translated, target }
+}
+
+// /speak answers in one of two shapes, and the difference matters:
+// either wav bytes, or a refusal saying the text is not in the curated
+// phrase bank. Collapsing those two into one "result" is how a caller
+// would end up rendering silence as success (ARCHITECTURE.md §3).
+export async function speak(text, lang) {
+  const response = await fetch(`${BASE}/speak`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, lang }),
+  });
+  if (!response.ok) throw new Error(await detail(response));
+
+  const type = response.headers.get("content-type") ?? "";
+  if (type.startsWith("audio/")) {
+    return { kind: "audio", blob: await response.blob() };
+  }
+  const body = await response.json();
+  return { kind: "phrase_bank_only", ...body }; // { reason, options: [...] }
+}
+
+// Writes one row. Triggers no retraining and changes nothing the teacher
+// sees next (PRD.md §3).
+export function correct({ lessonId, original, corrected, lang }) {
+  return postJson("/correct", {
+    lesson_id: lessonId,
+    original,
+    corrected,
+    lang,
+  });
 }

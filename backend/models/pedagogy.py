@@ -117,21 +117,33 @@ def simplify(text: str) -> dict:
         raise ValueError("Nothing to simplify — the text was empty.")
     _, key = _config()
 
-    response = requests.post(
-        GEMINI_URL.format(model=GEMINI_MODEL),
-        headers={"x-goog-api-key": key, "Content-Type": "application/json"},
-        json={
-            "contents": [
-                {"parts": [{"text": SIMPLIFY_PROMPT.format(text=text.strip())}]}
-            ],
-            "generationConfig": {
-                "responseMimeType": "application/json",
-                "responseSchema": _RESPONSE_SCHEMA,
-                "temperature": 0.2,
+    try:
+        response = requests.post(
+            GEMINI_URL.format(model=GEMINI_MODEL),
+            headers={"x-goog-api-key": key, "Content-Type": "application/json"},
+            json={
+                "contents": [
+                    {"parts": [{"text": SIMPLIFY_PROMPT.format(text=text.strip())}]}
+                ],
+                "generationConfig": {
+                    "responseMimeType": "application/json",
+                    "responseSchema": _RESPONSE_SCHEMA,
+                    "temperature": 0.2,
+                },
             },
-        },
-        timeout=TIMEOUT_S,
-    )
+            timeout=TIMEOUT_S,
+        )
+    except requests.Timeout:
+        # Seen in practice, and it must not surface as a bare 500. A
+        # teacher standing in front of a class needs to know it is worth
+        # trying again (RULES.md §3).
+        raise RuntimeError(
+            f"The simplification service did not answer within {TIMEOUT_S} "
+            "seconds. Check the connection and try again."
+        )
+    except requests.RequestException as e:
+        raise RuntimeError(f"Could not reach the simplification service: {e}")
+
     if not response.ok:
         raise RuntimeError(
             f"The simplification service returned {response.status_code}. "

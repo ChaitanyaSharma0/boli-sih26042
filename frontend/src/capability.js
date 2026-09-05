@@ -69,3 +69,23 @@ export function groupLanguages(list) {
     }))
     .filter((group) => group.items.length > 0);
 }
+
+// IndicTrans2 target codes are script-qualified (sat_Olck) while
+// /languages returns plain ISO codes (sat) and does not carry the target.
+// Until the endpoint does, the mapping lives here — flagged in STATE.md.
+const TRANSLATE_TARGETS = { sat: "sat_Olck" };
+
+// The translate target for a language, or null if it must never be sent
+// to /translate.
+//
+// This is the frontend half of PRD.md §4's boundary. A phrase-bank
+// language returns null unconditionally and before any lookup, so there
+// is no path — not a typo, not a new entry in the map above, not a
+// backend change — by which Ho, Mundari, Kurukh or Sadri reach the
+// translation endpoint. The backend also refuses them with a 501; this
+// is the belt to that pair of braces, and the reason the request is
+// never made in the first place.
+export function translateTargetFor(language) {
+  if (language.translation !== "full") return null;
+  return TRANSLATE_TARGETS[language.code] ?? null;
+}

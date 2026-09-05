@@ -12,6 +12,7 @@ import {
   capabilityBadge,
   describeCapability,
   groupLanguages,
+  translateTargetFor,
 } from "../src/capability.js";
 
 // Exactly what GET /languages returns today, copied from a live response.
@@ -103,4 +104,44 @@ test("an unknown capability gets its own group instead of vanishing", () => {
 test("empty groups are not rendered", () => {
   const onlyBank = LIVE.filter((l) => l.translation === "phrase_bank");
   assert.deepEqual(groupLanguages(onlyBank).map((g) => g.key), ["phrase_bank"]);
+});
+
+// --- the /translate boundary ------------------------------------------
+// PRD.md §4 and RULES.md §2: Ho, Mundari, Kurukh and Sadri have no
+// translation model anywhere. The Result screen builds a /translate
+// request only when translateTargetFor() returns a target, so these
+// assertions are what stops the request being built at all.
+
+test("no phrase-bank language yields a translate target", () => {
+  for (const language of LIVE.filter((l) => l.translation === "phrase_bank")) {
+    assert.equal(
+      translateTargetFor(language),
+      null,
+      `${language.name} must never be sent to /translate — there is no model`,
+    );
+  }
+});
+
+test("Santali yields the script-qualified IndicTrans2 target", () => {
+  const sat = LIVE.find((l) => l.code === "sat");
+  assert.equal(translateTargetFor(sat), "sat_Olck");
+});
+
+test("capability wins over the code map, not the other way round", () => {
+  // Even a language the map knows about is refused if the API says it is
+  // phrase-bank only. The capability field is the authority.
+  assert.equal(
+    translateTargetFor({ code: "sat", translation: "phrase_bank", tts: "full" }),
+    null,
+  );
+  // And a language with no mapping is refused rather than guessed at.
+  assert.equal(
+    translateTargetFor({ code: "brx", translation: "full", tts: "none" }),
+    null,
+  );
+});
+
+test("only one language in the live list is translatable at all", () => {
+  const translatable = LIVE.filter((l) => translateTargetFor(l) !== null);
+  assert.deepEqual(translatable.map((l) => l.code), ["sat"]);
 });
