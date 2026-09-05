@@ -13,11 +13,11 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 1 — DONE. Next up: Phase 2 (phrase bank + /languages).`
+`Phase 2 — DONE. Next up: Phase 3 (OCR + pedagogy).`
 
 ## Last commit
 
-`f671c2c — feat: model routes wired, translation contrast verified via curl`
+`(Phase 2 commit — see git log -1)`
 
 ## What is confirmed working right now
 
@@ -62,15 +62,47 @@ causes redone work or, worse, confidently broken assumptions.
   into a shell command gets mangled to cp1252, and the model then
   returns a run of `ᱼ` that looks like a model bug but is not.
 
+### Phase 2 — Phrase bank + capability endpoint — DONE 2026-09-05
+- What works: `models/phrase_bank.py` holds the four curated entries
+  from DATA_DICTIONARY.md §2 and is the source of truth for them.
+  `POST /speak` now gates hoc/unr/kru/sck through it — text that is not
+  a bank entry returns `{"phrase_bank_only": true, ...}` with the list
+  of phrases that ARE available, and no audio. Lookup accepts either the
+  Hindi source or the target string, so the caller can send either side.
+  `GET /languages` returns the capability list in the DATA_DICTIONARY.md
+  §4 shape.
+- `/languages` derives each capability from the module that implements
+  it — `translation.SUPPORTED_TARGETS`, `phrase_bank.LANGS`,
+  `tts.MODELS` — rather than restating them. A language cannot advertise
+  a capability no code backs; adding a name without a model yields
+  "none", not a false claim.
+- Verified by curl against a live uvicorn:
+  - `GET /languages` -> sat `full`/`none` with the no-TTS note, and
+    hoc/unr/kru/sck all `phrase_bank`/`full`
+  - `POST /speak` `{"text": "किसान खेत में धान उगाता है।", "lang": "hoc"}`
+    -> HTTP 200 `application/json`, `phrase_bank_only: true`, 362 bytes,
+    **no audio**
+  - `POST /speak` `{"text": "पानी हमारा जीवन है", "lang": "hoc"}` ->
+    HTTP 200 `audio/wav`, 132,154 bytes
+- `backend/test_phrase_bank.py` re-runs all of the above plus a check
+  that every one of the four languages speaks its own bank phrase
+  (hoc/unr/kru/sck all returned RIFF/WAVE), and that no entry claims
+  `verified: true`.
+- `backend/test_contrast.py` re-run after the `/speak` change: still
+  PASS (RULES.md §4).
+
 ## What is known broken or not yet attempted
 
-- `/languages`, `/ocr`, `/simplify`, `/correct` and `/corrections/count`
-  are still 501 stubs (Phases 2-4).
-- **The phrase bank does not exist in code yet.** `/speak` currently
-  synthesises whatever text it is handed for hoc/unr/kru/sck. That is
-  not a boundary violation — TTS for those four is genuinely real — but
-  the phrase-bank gate in ARCHITECTURE.md §3 lands in Phase 2, and until
-  it does nothing stops a caller sending arbitrary text.
+- **The phrase bank holds exactly four entries, one phrase per
+  language** — all four are the same Hindi sentence, "पानी हमारा जीवन है".
+  So any demo of Ho/Mundari/Kurukh/Sadri audio can only say that one
+  sentence. Expanding it is allowed and encouraged (DATA_DICTIONARY.md
+  §2 gives the rules), and is probably the cheapest way to make the demo
+  cover more classroom topics.
+- **No phrase-bank entry has been checked by a native speaker.** Every
+  `verified` is False and must stay False until one actually is.
+- `/ocr`, `/simplify`, `/correct` and `/corrections/count` are still 501
+  stubs (Phases 3-4).
 - Tesseract (the binary + `hin` language pack) is not installed, and no
   LLM key is set in `.env` — both needed for Phase 3.
 - Frontend is still the three empty Phase 0 screens; nothing calls the
@@ -85,6 +117,18 @@ causes redone work or, worse, confidently broken assumptions.
 and won't be captured elsewhere — e.g. "chose Render over HF Space
 because X." Keep entries short and dated.)*
 
+- 2026-09-05 — `/speak`'s phrase-bank lookup matches on either the
+  Hindi source or the target text, after collapsing whitespace. Lenient
+  about which side the caller sends, strict about there being a match:
+  anything unmatched is refused. Matching is exact, not fuzzy — a
+  near-miss is a miss, because "close enough" is how unchecked text
+  would get spoken.
+- 2026-09-05 — `/languages` reports `tts: "full"` for the four
+  phrase-bank languages, per ARCHITECTURE.md §3 and DATA_DICTIONARY.md
+  §4. That is about the checkpoint, which really can speak any text in
+  the right script; the limitation that we only have *checked* text for
+  bank phrases is carried by `translation: "phrase_bank"`. Worth
+  re-reading if the UI ever makes that pair look like more than it is.
 - 2026-09-05 — **The contrast is driven by vocabulary, not sentence
   length.** PRD.md §5 and PLAN.md Phase 8 describe it as "long sentence
   vs short sentence", and that framing is imprecise. Verified through
