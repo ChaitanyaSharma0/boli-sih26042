@@ -9,6 +9,16 @@ readability win, it is what keeps the translation clean (PRD.md §5).
 Prompts live here as named constants, never inline in a route file, so
 changing one is a one-line diff in one place (RULES.md §3).
 
+Two providers are supported, chosen by LLM_PROVIDER:
+
+  gemini             Google's REST API, keyed by LLM_API_KEY.
+  openai_compatible  Any OpenAI-shaped /chat/completions endpoint, via
+                     the openai SDK pointed at LLM_BASE_URL, with the
+                     model slug in LLM_MODEL.
+
+Both return the same shape, and the readability numbers are measured
+here either way rather than asked of the model.
+
 This does NOT translate. Hindi goes in and Hindi comes out; the
 honesty boundary in PRD.md §4 is untouched by anything in this file.
 """
@@ -103,8 +113,11 @@ def _split_sentences(text: str) -> list[str]:
     return [s.strip() for s in _SENTENCE_SPLIT.split(text) if s.strip()]
 
 
+PROVIDERS = ("gemini", "openai_compatible")
+
+
 @lru_cache(maxsize=1)
-def _config() -> tuple[str, str]:
+def _config() -> dict:
     provider = (os.getenv("LLM_PROVIDER") or "").strip().lower()
     key = (os.getenv("LLM_API_KEY") or "").strip()
     if not key:
@@ -112,24 +125,34 @@ def _config() -> tuple[str, str]:
             "LLM_API_KEY is not set — the simplification step needs it. See "
             "backend/.env.example."
         )
-    if provider != "gemini":
+    if provider not in PROVIDERS:
         raise RuntimeError(
-            f"LLM_PROVIDER is '{provider or 'unset'}', but only 'gemini' is "
-            "implemented. Add the provider here in models/pedagogy.py rather "
-            "than in a route."
+            f"LLM_PROVIDER is '{provider or 'unset'}', but only "
+            f"{' and '.join(PROVIDERS)} are implemented. Add the provider "
+            "here in models/pedagogy.py rather than in a route."
         )
-    return provider, key
+
+    config = {"provider": provider, "key": key}
+    if provider == "openai_compatible":
+        # Both are required: without them the SDK would silently fall back
+        # to OpenAI's own host and a default model, which is a confusing
+        # way to fail against somebody else's endpoint.
+        for name in ("LLM_BASE_URL", "LLM_MODEL"):
+            value = (os.getenv(name) or "").strip()
+            if not value:
+                raise RuntimeError(
+                    f"{name} is not set. LLM_PROVIDER=openai_compatible needs "
+                    "both LLM_BASE_URL and LLM_MODEL — see backend/.env.example."
+                )
+            config[name.lower()] = value
+    return config
 
 
-def simplify(text: str) -> dict:
-    """Return the DATA_DICTIONARY.md §4 /simplify shape. Raises on failure."""
-    if not text.strip():
-        raise ValueError("Nothing to simplify — the text was empty.")
-    _, key = _config()
-
+def _call_gemini(prompt: str, key: str) -> dict:
+    """Return the model's parsed JSON object. Raises RuntimeError on failure."""
     payload = {
         "contents": [
-            {"parts": [{"text": SIMPLIFY_PROMPT.format(text=text.strip())}]}
+            {"parts": [{"text": prompt}]}
         ],
         "generationConfig": {
             "responseMimeType": "application/json",
@@ -172,9 +195,88 @@ def simplify(text: str) -> dict:
 
     try:
         raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-        result = json.loads(raw)
+        return json.loads(raw)
     except (KeyError, IndexError, ValueError) as e:
         raise RuntimeError(f"Could not read the simplification response: {e}")
+
+
+def _call_openai_compatible(prompt: str, config: dict) -> dict:
+    """Same contract as _call_gemini, against an OpenAI-shaped endpoint."""
+    # Imported here so a gemini-only deployment does not need the SDK.
+    import openai
+
+    client = openai.OpenAI(
+        api_key=config["key"],
+        base_url=config["llm_base_url"],
+        timeout=TIMEOUT_S,
+        max_retries=0,  # retries are handled below, and only for 503
+    )
+
+    for attempt in range(RETRIES + 1):
+        try:
+            # No response_format={"type": "json_object"} on purpose. This
+            # gateway accepts the parameter and then returns a literal
+            # empty {} for some models (measured with claude-haiku-4.5 on
+            # 2026-09-05) — worse than not sending it, because the call
+            # succeeds and the content is gone. Without it the model
+            # returns correct JSON, sometimes inside a markdown fence,
+            # which is stripped below. The prompt already demands JSON.
+            completion = client.chat.completions.create(
+                model=config["llm_model"],
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+            )
+            break
+        except openai.APIStatusError as e:
+            # Same rule as the gemini path: retry only the status that
+            # clears on its own. A bad key or an unknown model fails
+            # identically every time.
+            if e.status_code in RETRY_STATUSES and attempt < RETRIES:
+                time.sleep(BACKOFF_S[attempt])
+                continue
+            attempts = (
+                f" after {RETRIES + 1} attempts"
+                if e.status_code in RETRY_STATUSES
+                else ""
+            )
+            raise RuntimeError(
+                f"The simplification service returned {e.status_code}"
+                f"{attempts}. {str(e)[:200]}"
+            )
+        except openai.APITimeoutError:
+            raise RuntimeError(
+                f"The simplification service did not answer within {TIMEOUT_S} "
+                "seconds. Check the connection and try again."
+            )
+        except openai.APIConnectionError as e:
+            raise RuntimeError(f"Could not reach the simplification service: {e}")
+
+    content = (completion.choices[0].message.content or "").strip()
+    if not content:
+        raise RuntimeError("The simplification service returned an empty reply.")
+
+    # Models routinely wrap JSON in a markdown fence. Strip it rather than
+    # failing on it.
+    if content.startswith("```"):
+        content = re.sub(r"^```[a-zA-Z]*\n?|\n?```$", "", content).strip()
+
+    try:
+        return json.loads(content)
+    except ValueError as e:
+        raise RuntimeError(f"Could not read the simplification response: {e}")
+
+
+def simplify(text: str) -> dict:
+    """Return the DATA_DICTIONARY.md §4 /simplify shape. Raises on failure."""
+    if not text.strip():
+        raise ValueError("Nothing to simplify — the text was empty.")
+
+    config = _config()
+    prompt = SIMPLIFY_PROMPT.format(text=text.strip())
+    if config["provider"] == "gemini":
+        result = _call_gemini(prompt, config["key"])
+    else:
+        result = _call_openai_compatible(prompt, config)
 
     adapted = [s.strip() for s in result.get("adapted_hindi", []) if s.strip()]
     if not adapted:

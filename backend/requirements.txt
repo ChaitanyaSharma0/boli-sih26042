@@ -17,7 +17,8 @@ sacremoses
 sacrebleu
 indic-nlp-library-IT2 @ git+https://github.com/VarunGumma/indic_nlp_library
 
-requests               # pedagogy LLM call
+requests               # pedagogy LLM call (gemini provider)
+openai                 # pedagogy LLM call (openai_compatible provider)
 pytesseract            # also needs the Tesseract binary + the `hin` language pack
 Pillow
 

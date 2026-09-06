@@ -144,3 +144,16 @@ line, stop and ask, don't guess in the impressive direction.
 - `gemini-2.5-flash` is closed to new API keys. The 404 body names the
   current replacement; `GET https://generativelanguage.googleapis.com/v1beta/models`
   with the key lists what it can actually call. Do not guess a model id.
+- **Do not send `response_format={"type": "json_object"}` to an
+  OpenAI-compatible gateway without testing that model.** Measured
+  2026-09-05 against Experiential Labs: `claude-haiku-4.5` accepts the
+  parameter and returns a literal empty `{}`. The call succeeds, so it
+  looks like a model problem rather than a parameter problem. Without it
+  the same model returns correct JSON, sometimes fenced — strip the
+  fence instead. `models/pedagogy.py` does not send it.
+- A gateway listing a model in `/v1/models` does not mean the key can
+  call it. On Experiential Labs, `gpt-5.6-luna` and `deepseek-v4-flash`
+  return `429 free_tier_requires_payment` while `claude-haiku-4.5` works
+  on the same key. Same trap as `gemini-2.5-flash` being listed but
+  404ing: only an actual completion call proves access.
+

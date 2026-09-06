@@ -123,14 +123,15 @@ def test_network_failure_is_readable_not_a_500():
     def timeout(*args, **kwargs):
         raise requests.Timeout("simulated")
 
-    pedagogy.requests.post = timeout
-    try:
-        r = client.post("/simplify", json={"text": "किसान खेत में गेहूँ उगाता है"})
-        assert r.status_code == 502, f"expected 502, got {r.status_code}"
-        assert "try again" in r.json()["detail"].lower(), r.json()
-        print(f"timeout  : {r.status_code} — {r.json()['detail']}")
-    finally:
-        pedagogy.requests.post = original
+    with force_provider(**GEMINI_ENV):
+        pedagogy.requests.post = timeout
+        try:
+            r = client.post("/simplify", json={"text": "किसान खेत में गेहूँ उगाता है"})
+            assert r.status_code == 502, f"expected 502, got {r.status_code}"
+            assert "try again" in r.json()["detail"].lower(), r.json()
+            print(f"timeout  : {r.status_code} — {r.json()['detail']}")
+        finally:
+            pedagogy.requests.post = original
 
 
 class _FakeResponse:
@@ -143,6 +144,47 @@ class _FakeResponse:
         import json as _json
 
         return _json.loads(self.text)
+
+
+from contextlib import contextmanager  # noqa: E402
+
+
+@contextmanager
+def force_provider(**env):
+    """Pin LLM_* for one test and clear the cached config either side.
+
+    _config() is lru_cached, so without the clears a test would either
+    reuse .env's real provider or leak its own into the next test. The
+    gemini-path tests below patch requests.post, which the
+    openai_compatible path never calls — so without this pin they would
+    quietly stop testing anything the moment .env switched provider.
+    """
+    from models import pedagogy
+
+    keys = ("LLM_PROVIDER", "LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL")
+    saved = {k: os.environ.get(k) for k in keys}
+    try:
+        for k in keys:
+            os.environ.pop(k, None)
+        os.environ.update(env)
+        pedagogy._config.cache_clear()
+        yield pedagogy
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        pedagogy._config.cache_clear()
+
+
+GEMINI_ENV = {"LLM_PROVIDER": "gemini", "LLM_API_KEY": "test-key"}
+OPENAI_ENV = {
+    "LLM_PROVIDER": "openai_compatible",
+    "LLM_API_KEY": "test-key",
+    "LLM_BASE_URL": "https://example.invalid/v1",
+    "LLM_MODEL": "test-model",
+}
 
 
 def _with_fake_post(responses):
@@ -193,10 +235,11 @@ def test_503_is_retried_and_can_succeed():
     )
     pedagogy.BACKOFF_S = (0, 0)  # do not actually wait in a test
     try:
-        r = client.post("/simplify", json={"text": "किसान खेत में काम करता है।"})
-        assert r.status_code == 200, r.text
-        assert len(calls) == 3, f"expected 3 attempts, made {len(calls)}"
-        print(f"503      : retried {len(calls) - 1}x then succeeded")
+        with force_provider(**GEMINI_ENV):
+            r = client.post("/simplify", json={"text": "किसान खेत में काम करता है।"})
+            assert r.status_code == 200, r.text
+            assert len(calls) == 3, f"expected 3 attempts, made {len(calls)}"
+            print(f"503      : retried {len(calls) - 1}x then succeeded")
     finally:
         pedagogy.requests.post = original
         pedagogy.BACKOFF_S = (1, 3)
@@ -206,11 +249,12 @@ def test_503_that_never_clears_gives_up():
     pedagogy, original, calls = _with_fake_post([_FakeResponse(503, "busy")])
     pedagogy.BACKOFF_S = (0, 0)
     try:
-        r = client.post("/simplify", json={"text": "किसान खेत में काम करता है।"})
-        assert r.status_code == 502, r.status_code
-        assert len(calls) == 3, f"expected 3 attempts, made {len(calls)}"
-        assert "after 3 attempts" in r.json()["detail"], r.json()
-        print(f"503      : gave up after {len(calls)} attempts, message says so")
+        with force_provider(**GEMINI_ENV):
+            r = client.post("/simplify", json={"text": "किसान खेत में काम करता है।"})
+            assert r.status_code == 502, r.status_code
+            assert len(calls) == 3, f"expected 3 attempts, made {len(calls)}"
+            assert "after 3 attempts" in r.json()["detail"], r.json()
+            print(f"503      : gave up after {len(calls)} attempts, message says so")
     finally:
         pedagogy.requests.post = original
         pedagogy.BACKOFF_S = (1, 3)
@@ -225,13 +269,146 @@ def test_client_errors_are_not_retried():
     for status, label in ((400, "invalid API key"), (404, "retired model")):
         pedagogy, original, calls = _with_fake_post([_FakeResponse(status, "nope")])
         try:
-            r = client.post("/simplify", json={"text": "किसान खेत में काम करता है।"})
-            assert r.status_code == 502, r.status_code
-            assert len(calls) == 1, f"{label}: retried {len(calls)} times, expected 1"
-            assert "attempts" not in r.json()["detail"], r.json()
+            with force_provider(**GEMINI_ENV):
+                r = client.post("/simplify", json={"text": "किसान खेत में काम करता है।"})
+                assert r.status_code == 502, r.status_code
+                assert len(calls) == 1, f"{label}: retried {len(calls)} times, expected 1"
+                assert "attempts" not in r.json()["detail"], r.json()
         finally:
             pedagogy.requests.post = original
         print(f"{status}      : {label} failed fast, 1 call, no retry")
+
+
+# --- the openai_compatible provider ------------------------------------
+# The gateway is faked. These pin the behaviour that actually bit us:
+# response_format is not used, a fenced reply still parses, and only 503
+# is retried.
+
+
+class _FakeOpenAIModule:
+    """Stands in for the openai SDK, with the exception types we catch."""
+
+    class APIStatusError(Exception):
+        def __init__(self, status_code):
+            super().__init__(f"status {status_code}")
+            self.status_code = status_code
+
+    class APITimeoutError(Exception):
+        pass
+
+    class APIConnectionError(Exception):
+        pass
+
+    def __init__(self, replies):
+        self.replies = list(replies)
+        self.calls = []
+        self.kwargs_seen = []
+
+    # openai.OpenAI(...) -> client
+    def OpenAI(self, **kwargs):  # noqa: N802 - mirrors the SDK's name
+        module = self
+
+        class Completions:
+            def create(self, **kw):
+                module.calls.append(kw.get("model"))
+                module.kwargs_seen.append(kw)
+                reply = module.replies[min(len(module.calls) - 1, len(module.replies) - 1)]
+                if isinstance(reply, Exception):
+                    raise reply
+                return _FakeCompletion(reply)
+
+        class Chat:
+            completions = Completions()
+
+        class Client:
+            chat = Chat()
+
+        return Client()
+
+
+class _FakeCompletion:
+    def __init__(self, content):
+        self.choices = [
+            type("C", (), {"message": type("M", (), {"content": content})()})()
+        ]
+
+
+def _run_with_fake_openai(fake, text="किसान खेत में काम करता है।"):
+    import sys
+
+    saved = sys.modules.get("openai")
+    sys.modules["openai"] = fake
+    try:
+        with force_provider(**OPENAI_ENV):
+            return client.post("/simplify", json={"text": text})
+    finally:
+        if saved is None:
+            sys.modules.pop("openai", None)
+        else:
+            sys.modules["openai"] = saved
+
+
+GOOD_JSON = (
+    '{"concept": "c", "adapted_hindi": ["किसान काम करता है।"], "substitutions": []}'
+)
+
+
+def test_openai_compatible_parses_a_fenced_reply():
+    """Models wrap JSON in a markdown fence. That must not be a failure."""
+    fake = _FakeOpenAIModule(["```json\n" + GOOD_JSON + "\n```"])
+    r = _run_with_fake_openai(fake)
+    assert r.status_code == 200, r.text
+    assert r.json()["adapted_hindi"] == ["किसान काम करता है।"], r.json()
+    print("openai   : fenced JSON parsed, 1 call")
+
+
+def test_openai_compatible_does_not_send_response_format():
+    """Measured 2026-09-05: this gateway returns a literal empty {} for
+    some models when response_format is sent. Sending it looks harmless
+    and silently empties the reply, so it must stay unsent."""
+    fake = _FakeOpenAIModule([GOOD_JSON])
+    r = _run_with_fake_openai(fake)
+    assert r.status_code == 200, r.text
+    assert "response_format" not in fake.kwargs_seen[0], fake.kwargs_seen[0]
+    assert fake.kwargs_seen[0]["model"] == "test-model"
+    print("openai   : response_format not sent, model slug from LLM_MODEL")
+
+
+def test_openai_compatible_retries_503_only():
+    busy = _FakeOpenAIModule.APIStatusError(503)
+    fake = _FakeOpenAIModule([busy, busy, GOOD_JSON])
+    from models import pedagogy
+
+    saved, pedagogy.BACKOFF_S = pedagogy.BACKOFF_S, (0, 0)
+    try:
+        r = _run_with_fake_openai(fake)
+        assert r.status_code == 200, r.text
+        assert len(fake.calls) == 3, fake.calls
+        print(f"openai   : 503 retried {len(fake.calls) - 1}x then succeeded")
+
+        # 429 means "add a card", which retrying will never fix.
+        quota = _FakeOpenAIModule.APIStatusError(429)
+        fake429 = _FakeOpenAIModule([quota])
+        r = _run_with_fake_openai(fake429)
+        assert r.status_code == 502, r.status_code
+        assert len(fake429.calls) == 1, f"429 retried {len(fake429.calls)} times"
+        print("openai   : 429 failed fast, 1 call, no retry")
+    finally:
+        pedagogy.BACKOFF_S = saved
+
+
+def test_openai_compatible_requires_base_url_and_model():
+    from models import pedagogy
+
+    for missing in ("LLM_BASE_URL", "LLM_MODEL"):
+        env = {k: v for k, v in OPENAI_ENV.items() if k != missing}
+        with force_provider(**env):
+            try:
+                pedagogy._config()
+                raise AssertionError(f"{missing} missing was accepted")
+            except RuntimeError as e:
+                assert missing in str(e), str(e)
+    print("openai   : missing LLM_BASE_URL / LLM_MODEL each rejected by name")
 
 
 if __name__ == "__main__":
@@ -242,4 +419,8 @@ if __name__ == "__main__":
     test_503_is_retried_and_can_succeed()
     test_503_that_never_clears_gives_up()
     test_client_errors_are_not_retried()
+    test_openai_compatible_parses_a_fenced_reply()
+    test_openai_compatible_does_not_send_response_format()
+    test_openai_compatible_retries_503_only()
+    test_openai_compatible_requires_base_url_and_model()
     print("\nPASS")

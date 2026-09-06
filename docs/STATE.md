@@ -525,12 +525,21 @@ because X." Keep entries short and dated.)*
 - 2026-09-05 — `schema.sql` adds `IF NOT EXISTS` to each `CREATE TABLE`
   so startup can apply it on every boot. The column definitions are
   otherwise exactly DATA_DICTIONARY.md §3.
-- 2026-09-05 — Only the Gemini provider is implemented in
-  `models/pedagogy.py`, because that is what `LLM_PROVIDER` is set to.
-  Another provider raises a clear error naming the file to change,
-  rather than three client implementations where one is exercised.
-  Model pinned to `gemini-3.6-flash`: `gemini-2.5-flash` is closed to
-  new API keys.
+- 2026-09-05 — `models/pedagogy.py` supports two providers, chosen by
+  `LLM_PROVIDER`: `gemini` (Google REST, model pinned to
+  `gemini-3.6-flash` because `gemini-2.5-flash` is closed to new keys)
+  and `openai_compatible` (the openai SDK pointed at `LLM_BASE_URL`,
+  model slug from `LLM_MODEL`). Both go through the same prompt, the
+  same 503-only retry rule, and the same readability measurement. A
+  third provider still raises an error naming the file to change rather
+  than being half-wired.
+- 2026-09-05 — The `openai_compatible` path deliberately does **not**
+  send `response_format={"type": "json_object"}`. Measured against
+  Experiential Labs: `claude-haiku-4.5` accepts it and returns a literal
+  empty `{}` — the call succeeds and the content is simply gone, which
+  reads like a model failure rather than a parameter failure. Without it
+  the model returns correct JSON, sometimes inside a markdown fence,
+  which the code strips. A test asserts the parameter stays unsent.
 - 2026-09-05 — The Gemini call uses `responseMimeType: application/json`
   with a `responseSchema`, so the shape is enforced by the API instead
   of by parsing markdown fences out of prose.
@@ -595,7 +604,10 @@ because X." Keep entries short and dated.)*
 - [x] Frontend running locally (`npm run build` clean, three screens step)
 - [x] Tesseract 5.5.3 installed with the `hin` pack (not on PATH; the
       route falls back to the standard Windows install path)
-- [x] `LLM_API_KEY` + `LLM_PROVIDER=gemini` set and working
+- [x] `LLM_API_KEY` set and valid
+- [ ] `LLM_PROVIDER=openai_compatible` — **provider is wired and
+      verified, but the configured `LLM_MODEL=gpt-5.6-luna` is
+      paywalled**, see blockers
 - [ ] Deployed backend URL: *(none yet)*
 - [ ] Deployed frontend URL: *(none yet)*
 
@@ -615,6 +627,25 @@ the pair must be `धान हाट में बिकता है।` or `�
 `किसान खेत में धान उगाता है।`, which still contaminates.
 
 ## Open questions / blockers
+
+- **`/simplify` is down with the current `.env`, and it is a billing
+  gate, not a bug.** `LLM_PROVIDER=openai_compatible` against
+  `https://api.experientiallabs.ai/v1` now works — the provider was
+  added 2026-09-05 and is verified end to end — but the configured
+  `LLM_MODEL=gpt-5.6-luna` returns
+  `429 free_tier_requires_payment`: "This model's free tier needs a card
+  on file and a small ($1) payment". The key itself is fine, and it is
+  **not** the invalid placeholder from the Phase 8.5 degradation test —
+  that value was only ever passed as a per-process env override and was
+  never written to `.env`.
+  - Same key, same endpoint: `claude-haiku-4.5` works and was used to
+    verify the whole path; `deepseek-v4-flash` is paywalled too. The
+    gate is per model, not per account.
+  - **Decide one:** add a card on Experiential Labs to unlock
+    `gpt-5.6-luna`, or set `LLM_MODEL` to a model the key can already
+    call. Either is a one-line change; neither is code.
+  - Until then, Phase 8.5 holds: Ho, Mundari, Kurukh and Sadri still
+    return audio, and only Santali shows a scoped error.
 
 - **There is still no permanent backend host**, so PRD.md §5's
   "deployed to a permanent public URL" criterion is unmet. The tunnel is

@@ -14,7 +14,7 @@ not silently diverged from.
 | TTS — Kurukh | `facebook/mms-tts-kru` | Expects Devanagari input. |
 | TTS — Sadri | `facebook/mms-tts-sck` | Expects Devanagari input. |
 | TTS — Santali | *(none exists)* | No checkpoint anywhere, from anyone. Do not search for one and swap it in without updating PRD.md and this table. |
-| Pedagogy simplification | LLM API (Claude/GPT/Gemini — see `.env` for which key is active) | Prompt lives in `backend/models/pedagogy.py` |
+| Pedagogy simplification | LLM API, provider chosen by `LLM_PROVIDER`: `gemini` (Google REST) or `openai_compatible` (any OpenAI-shaped `/chat/completions`, via `LLM_BASE_URL` + `LLM_MODEL`) | Prompt lives in `backend/models/pedagogy.py` |
 | OCR | Tesseract, `hin` language pack | Local, no API key needed |
 
 ## 2. Phrase bank — the fixed Hindi → target-language pairs
@@ -152,8 +152,11 @@ more than that — it is not a claim that the translation is right.
 ```
 HF_TOKEN=            # required for IndicTrans2 gated model
 LLM_API_KEY=         # for pedagogy simplification step
-LLM_PROVIDER=        # "anthropic" | "openai" | "gemini"
+LLM_PROVIDER=        # "gemini" | "openai_compatible"
+LLM_BASE_URL=        # openai_compatible only, e.g. https://host/v1
+LLM_MODEL=           # openai_compatible only, the model slug
 DATABASE_PATH=./db/boli.sqlite
+TESSERACT_CMD=       # optional, if tesseract is not on PATH
 ```
 
 Never commit a real `.env`. `.env.example` in the repo has these keys
