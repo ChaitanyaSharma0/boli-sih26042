@@ -60,10 +60,18 @@ export default function CorrectionForm({ lang, original, lessonId }) {
         onChange={(e) => setCorrected(e.target.value)}
       />
       {error && <p className="error">{error}</p>}
-      <button type="submit" disabled={saving || !corrected.trim()}>
+      <button
+        type="submit"
+        className="button button--primary"
+        disabled={saving || !corrected.trim()}
+      >
         {saving ? "Saving…" : "Save correction"}
       </button>
-      <button type="button" onClick={() => setOpen(false)}>
+      <button
+        type="button"
+        className="button button--secondary"
+        onClick={() => setOpen(false)}
+      >
         Cancel
       </button>
     </form>

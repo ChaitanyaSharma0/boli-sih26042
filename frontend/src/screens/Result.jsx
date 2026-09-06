@@ -6,7 +6,11 @@ import {
   speak,
   translate,
 } from "../api";
-import { speaksWithoutPedagogy, translateTargetFor } from "../capability";
+import {
+  nativeName,
+  speaksWithoutPedagogy,
+  translateTargetFor,
+} from "../capability";
 import AudioPlayer from "../components/AudioPlayer";
 import CorrectionForm from "../components/CorrectionForm";
 
@@ -178,15 +182,26 @@ export default function Result({
   }
 
   return (
-    <section>
-      <h2>3. The lesson</h2>
+    <section aria-labelledby="result-heading">
+      <p className="eyebrow">Step 03 · Result</p>
+      <h1 id="result-heading">A lesson, ready to be heard.</h1>
+      <p className="intro">
+        Check the wording and the audio before playing it to the class.
+      </p>
 
-      {stage && <p className="stage">{stage}</p>}
+      <div role="status" aria-live="polite">
+        {stage && (
+          <p className="stage">
+            <span className="spinner" aria-hidden="true" />
+            {stage}
+          </p>
+        )}
+      </div>
       {error && <p className="error">{error}</p>}
 
       {simplifyError && (
-        <div className="group">
-          <h3>Simplified Hindi</h3>
+        <div className="panel">
+          <h2>Simplified Hindi</h2>
           <p className="error">
             The lesson could not be simplified this time. {simplifyError}
           </p>
@@ -197,13 +212,13 @@ export default function Result({
       )}
 
       {adapted && (
-        <div className="group">
-          <h3>Simplified Hindi</h3>
+        <div className="panel panel--simplified">
+          <h2>Simplified Hindi</h2>
           <p className="group-blurb">
             {adapted.concept} — rewritten for a child who does not speak Hindi
             at home. Still Hindi; nothing is translated yet.
           </p>
-          <ol>
+          <ol className="sentence-list" lang="hi">
             {adapted.adapted_hindi.map((sentence, i) => (
               <li key={i}>{sentence}</li>
             ))}
@@ -230,11 +245,24 @@ export default function Result({
         const isBank = language.translation === "phrase_bank";
 
         return (
-          <div
+          <article
             key={language.code}
-            className={"group chip-" + language.translation}
+            className={"panel result-card chip-" + language.translation}
+            aria-labelledby={"result-" + language.code}
           >
-            <h3>{language.name}</h3>
+            <div className="result-heading">
+              <h2 id={"result-" + language.code}>
+                {language.name}
+                {nativeName(language) && (
+                  <span className="chip-native" lang={language.code}>
+                    {nativeName(language)}
+                  </span>
+                )}
+              </h2>
+              <span className="chip-badge">
+                {isBank ? "Phrase bank only" : "AI translation"}
+              </span>
+            </div>
 
             {isBank && (
               <p className="group-blurb">
@@ -254,7 +282,7 @@ export default function Result({
 
             {mine.length > 0 && (
               <>
-                <ol>
+                <ol className="sentence-list translated">
                   {mine.map((t, i) => (
                     <li key={i} lang={language.code}>
                       {t.translated}
@@ -305,8 +333,10 @@ export default function Result({
             {spoken?.kind === "phrase_bank_only" && (
               <>
                 <p className="note">{spoken.reason}</p>
-                <p>What BOLI can say in {language.name} today:</p>
-                <ul>
+                <p className="field-label">
+                  What BOLI can say in {language.name} today
+                </p>
+                <ul className="phrase-options">
                   {spoken.options.map((phrase) => (
                     <li key={phrase.id}>
                       {phrase.hindi_source} —{" "}
@@ -326,11 +356,15 @@ export default function Result({
             {spoken?.kind === "error" && (
               <p className="error">Could not generate audio. {spoken.error}</p>
             )}
-          </div>
+          </article>
         );
       })}
 
-      <button onClick={onBack}>Back</button>
+      <div className="actions">
+        <button className="button button--secondary" onClick={onBack}>
+          <span aria-hidden="true">←</span> Change languages
+        </button>
+      </div>
     </section>
   );
 }

@@ -10,6 +10,16 @@ import { groupLanguages } from "../capability";
 // screen groups by what each language can actually do, so the boundary
 // in PRD.md §4 is visible rather than described in a footnote.
 
+// Which visual treatment a group gets. Derived from the API's
+// `translation` value, like everything else on this screen, so a new
+// capability falls back to the neutral treatment rather than being
+// silently styled as if it were a real model.
+function groupModifier(key) {
+  if (key === "full") return "language-group--ai";
+  if (key === "phrase_bank") return "language-group--bank";
+  return "";
+}
+
 export default function LanguageSelect({
   selectedLangs,
   setSelectedLangs,
@@ -50,54 +60,88 @@ export default function LanguageSelect({
     );
   }
 
+  const header = (
+    <>
+      <p className="eyebrow">Step 02 · Languages</p>
+      <h1 id="languages-heading">Which voices does your class need?</h1>
+    </>
+  );
+
   if (error) {
     return (
-      <section>
-        <h2>2. Languages</h2>
+      <section aria-labelledby="languages-heading">
+        {header}
         <p className="error">Could not load the language list. {error}</p>
-        <button onClick={retry}>Try again</button>
-        <button onClick={onBack}>Back</button>
+        <div className="actions">
+          <button className="button button--secondary" onClick={onBack}>
+            <span aria-hidden="true">←</span> Edit the lesson
+          </button>
+          <button className="button button--primary" onClick={retry}>
+            Try again
+          </button>
+        </div>
       </section>
     );
   }
 
   if (!list) {
     return (
-      <section>
-        <h2>2. Languages</h2>
-        <p>Loading languages…</p>
+      <section aria-labelledby="languages-heading">
+        {header}
+        <p className="intro" role="status">
+          Loading languages…
+        </p>
       </section>
     );
   }
 
   return (
-    <section>
-      <h2>2. Languages</h2>
-      <p>Which mother tongues are in the room? Pick as many as you need.</p>
+    <section aria-labelledby="languages-heading">
+      {header}
+      <p className="intro">
+        Pick as many as you need. What each language can actually do is
+        different, and it is spelled out below.
+      </p>
 
-      {groupLanguages(list).map((group) => (
-        <div key={group.key} className="group">
-          <h3>{group.heading}</h3>
+      {groupLanguages(list).map((group, index) => (
+        <fieldset
+          key={group.key}
+          className={`language-group ${groupModifier(group.key)}`}
+        >
+          <legend>
+            {String(index + 1).padStart(2, "0")} / {group.heading}
+          </legend>
           {group.blurb && <p className="group-blurb">{group.blurb}</p>}
-          {group.items.map((language) => (
-            <LanguageChip
-              key={language.code}
-              language={language}
-              selected={selectedLangs.includes(language.code)}
-              onToggle={toggle}
-            />
-          ))}
-        </div>
+          <div className="language-grid">
+            {group.items.map((language) => (
+              <LanguageChip
+                key={language.code}
+                language={language}
+                selected={selectedLangs.includes(language.code)}
+                onToggle={toggle}
+              />
+            ))}
+          </div>
+        </fieldset>
       ))}
 
-      <button onClick={onNext} disabled={selectedLangs.length === 0}>
-        {selectedLangs.length === 0
-          ? "Pick at least one language"
-          : `Continue with ${selectedLangs.length} language${
-              selectedLangs.length > 1 ? "s" : ""
-            }`}
-      </button>
-      <button onClick={onBack}>Back</button>
+      <div className="actions">
+        <button className="button button--secondary" onClick={onBack}>
+          <span aria-hidden="true">←</span> Edit the lesson
+        </button>
+        <button
+          className="button button--primary"
+          onClick={onNext}
+          disabled={selectedLangs.length === 0}
+        >
+          {selectedLangs.length === 0
+            ? "Pick at least one language"
+            : `Continue with ${selectedLangs.length} language${
+                selectedLangs.length > 1 ? "s" : ""
+              }`}{" "}
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
     </section>
   );
 }

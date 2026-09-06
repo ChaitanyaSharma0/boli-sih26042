@@ -43,8 +43,8 @@ export default function ContrastDemo() {
   }
 
   return (
-    <div className="group demo">
-      <h3>Verified example</h3>
+    <div className="panel demo">
+      <h2>Verified example</h2>
       <p className="group-blurb">
         These two Hindi sentences are fixed, and we have checked what they
         produce. The Santali below is generated live by the model each time
@@ -61,7 +61,11 @@ export default function ContrastDemo() {
               {example.hindi}
             </p>
             <p className="note">{example.why}</p>
-            <button onClick={() => run(example)} disabled={busy !== ""}>
+            <button
+              className="button button--secondary"
+              onClick={() => run(example)}
+              disabled={busy !== ""}
+            >
               {busy === example.key ? "Translating…" : "Translate into Santali"}
             </button>
 

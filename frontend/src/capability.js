@@ -129,3 +129,23 @@ export const VERIFIED_CONTRAST = [
 export function speaksWithoutPedagogy(language) {
   return language.tts === "full" && translateTargetFor(language) === null;
 }
+
+// Native-script names, for display only.
+//
+// Deliberately NOT a capability claim, and deliberately not required:
+// a language missing from this map simply renders without a native
+// label. Nothing here can make the UI say a language does something it
+// cannot — that is still decided entirely by the API's `translation`
+// and `tts` fields (RULES.md §5). If /languages ever carries a native
+// name of its own, delete this and use that.
+const NATIVE_NAMES = {
+  sat: "ᱥᱟᱱᱛᱟᱲᱤ",
+  hoc: "हो",
+  unr: "मुंडारी",
+  kru: "कुड़ुख़",
+  sck: "सादरी",
+};
+
+export function nativeName(language) {
+  return NATIVE_NAMES[language.code] ?? null;
+}

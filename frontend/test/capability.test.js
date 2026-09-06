@@ -14,6 +14,7 @@ import {
   capabilityBadge,
   describeCapability,
   groupLanguages,
+  nativeName,
   speaksWithoutPedagogy,
   translateTargetFor,
 } from "../src/capability.js";
@@ -220,4 +221,19 @@ test("a language with no voice is never spoken, pedagogy or not", () => {
     speaksWithoutPedagogy({ code: "xxx", translation: "phrase_bank", tts: "none" }),
     false,
   );
+});
+
+// --- native names are decoration, never a claim ------------------------
+
+test("a language with no native name still renders", () => {
+  assert.equal(nativeName({ code: "zzz", translation: "full", tts: "none" }), null);
+});
+
+test("every live language has a native name, and none is a capability", () => {
+  for (const language of LIVE) {
+    assert.ok(nativeName(language), `${language.code} has no native name`);
+  }
+  // Changing the native name must not change what the UI claims.
+  const sat = LIVE.find((l) => l.code === "sat");
+  assert.equal(describeCapability({ ...sat, code: "zzz" }), describeCapability(sat));
 });
