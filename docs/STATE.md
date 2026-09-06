@@ -310,7 +310,7 @@ Added to PLAN.md after the failure was seen live, not predicted.
 | | URL |
 |---|---|
 | Frontend (Vercel) | https://frontend-henna-one-93.vercel.app |
-| Backend (Cloudflare Quick Tunnel) | https://linked-johnston-jewelry-nitrogen.trycloudflare.com |
+| Backend (Cloudflare Quick Tunnel) | https://magical-finds-contained-postposted.trycloudflare.com |
 
 **This is not a hosted deployment and must not be described as one.**
 The backend URL forwards to `localhost:8001` on one developer laptop and
@@ -337,6 +337,14 @@ Verified against the real URLs, not localhost:
   the live backend with an invalid key and breaking the demo. It stays
   verified locally. Run it from a machine whose DNS resolves
   `trycloudflare.com` if you want it against the live URL.
+
+**The URL has already churned once.** The first tunnel
+(`linked-johnston-jewelry-nitrogen`) died when the machine's uvicorn and
+cloudflared processes stopped, and the frontend on Vercel kept serving a
+bundle pointing at a dead backend — HTTP 530 — while looking perfectly
+healthy itself. The URL above is the second one, and the Vercel build was
+redone against it. Expect this every single time either process stops.
+That is not a bug to fix; it is what a Quick Tunnel is.
 
 Environment note: this machine's DNS resolver returns NXDOMAIN for
 `*.trycloudflare.com` while 1.1.1.1 resolves it fine, so the tunnel is
