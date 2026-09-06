@@ -260,8 +260,20 @@ def _call_openai_compatible(prompt: str, config: dict) -> dict:
     if content.startswith("```"):
         content = re.sub(r"^```[a-zA-Z]*\n?|\n?```$", "", content).strip()
 
+    # Take the first JSON object and ignore anything after it. Models
+    # routinely append a sentence of explanation, or emit the object then
+    # keep talking; json.loads() rejects the whole reply for that
+    # ("Extra data: line 17 column 1"), which throws away a perfectly good
+    # answer. Seen intermittently with claude-haiku-4.5 on 2026-09-05.
+    start = content.find("{")
+    if start == -1:
+        raise RuntimeError(
+            "The simplification service replied without any JSON: "
+            f"{content[:120]}"
+        )
     try:
-        return json.loads(content)
+        result, _ = json.JSONDecoder().raw_decode(content[start:])
+        return result
     except ValueError as e:
         raise RuntimeError(f"Could not read the simplification response: {e}")
 

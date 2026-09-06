@@ -362,6 +362,31 @@ def test_openai_compatible_parses_a_fenced_reply():
     print("openai   : fenced JSON parsed, 1 call")
 
 
+def test_openai_compatible_ignores_text_after_the_json():
+    """Models append explanations. json.loads() would reject the lot.
+
+    Seen live with claude-haiku-4.5: a valid object followed by prose,
+    which failed as "Extra data: line 17 column 1" and threw away a good
+    answer. The first JSON object wins; the rest is ignored.
+    """
+    for reply in (
+        GOOD_JSON + "\n\nI simplified the vocabulary for young readers.",
+        "Here is the JSON you asked for:\n" + GOOD_JSON,
+        "```json\n" + GOOD_JSON + "\n```\nHope this helps!",
+    ):
+        r = _run_with_fake_openai(_FakeOpenAIModule([reply]))
+        assert r.status_code == 200, (reply[:40], r.text)
+        assert r.json()["adapted_hindi"] == ["किसान काम करता है।"]
+    print("openai   : leading and trailing prose around the JSON ignored")
+
+
+def test_openai_compatible_reply_without_json_is_a_clear_error():
+    r = _run_with_fake_openai(_FakeOpenAIModule(["I cannot help with that."]))
+    assert r.status_code == 502, r.status_code
+    assert "without any JSON" in r.json()["detail"], r.json()
+    print("openai   : a reply with no JSON at all fails with a clear message")
+
+
 def test_openai_compatible_does_not_send_response_format():
     """Measured 2026-09-05: this gateway returns a literal empty {} for
     some models when response_format is sent. Sending it looks harmless
@@ -420,6 +445,8 @@ if __name__ == "__main__":
     test_503_that_never_clears_gives_up()
     test_client_errors_are_not_retried()
     test_openai_compatible_parses_a_fenced_reply()
+    test_openai_compatible_ignores_text_after_the_json()
+    test_openai_compatible_reply_without_json_is_a_clear_error()
     test_openai_compatible_does_not_send_response_format()
     test_openai_compatible_retries_503_only()
     test_openai_compatible_requires_base_url_and_model()

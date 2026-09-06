@@ -277,6 +277,41 @@ Added to PLAN.md after the failure was seen live, not predicted.
   invalid-key degradation run still passes and finishes in 2s, which is
   itself evidence the client error is not retried.
 
+### LLM provider — FINAL CONFIG 2026-09-05
+
+The working configuration, all of it in `backend/.env` (gitignored):
+
+```
+LLM_PROVIDER=openai_compatible
+LLM_BASE_URL=https://api.experientiallabs.ai/v1
+LLM_MODEL=claude-haiku-4.5
+LLM_API_KEY=<the xpl_… key>
+```
+
+- `models/pedagogy.py` supports `gemini` and `openai_compatible`. The
+  gemini path is still implemented and still tested; it is simply not
+  the active provider.
+- **Full suite re-run against this exact config, no overrides:**
+  `test_ocr_pedagogy.py` 14 checks PASS including the live call,
+  `test_contrast.py` PASS, `test_phrase_bank.py` PASS,
+  `test_corrections.py` PASS, frontend 20 tests PASS, lint and build
+  clean.
+- Live sample from that run: `गेहूँ -> धान` ("Wheat is not a major crop
+  in Jharkhand"), readability 6.0 -> 4.8 words per sentence.
+
+Two things this provider needed that Gemini did not, both now pinned by
+tests, both found by running it rather than by reading docs:
+
+1. **Never send `response_format={"type": "json_object"}`.** This
+   gateway accepts it and returns a literal empty `{}` for
+   `claude-haiku-4.5`. The call succeeds and the content is simply gone,
+   so it reads like a model failure rather than a parameter failure.
+2. **Take the first JSON object, ignore anything after it.** The model
+   intermittently appends a sentence of explanation, and `json.loads()`
+   rejects the whole reply — "Extra data: line 17 column 1" — throwing
+   away a perfectly good answer. This bit us once with a real 502 after
+   the model was already working.
+
 ### Phase 9 — Styling pass — DONE 2026-09-05
 - The deck's own palette from its `build.js`, as CSS custom properties
   in `frontend/src/index.css`: navy `#1E3A5F`, green `#1B6B45`, red
@@ -605,9 +640,8 @@ because X." Keep entries short and dated.)*
 - [x] Tesseract 5.5.3 installed with the `hin` pack (not on PATH; the
       route falls back to the standard Windows install path)
 - [x] `LLM_API_KEY` set and valid
-- [ ] `LLM_PROVIDER=openai_compatible` — **provider is wired and
-      verified, but the configured `LLM_MODEL=gpt-5.6-luna` is
-      paywalled**, see blockers
+- [x] `LLM_PROVIDER=openai_compatible`, `LLM_BASE_URL=https://api.experientiallabs.ai/v1`,
+      `LLM_MODEL=claude-haiku-4.5` — working end to end
 - [ ] Deployed backend URL: *(none yet)*
 - [ ] Deployed frontend URL: *(none yet)*
 
@@ -628,24 +662,12 @@ the pair must be `धान हाट में बिकता है।` or `�
 
 ## Open questions / blockers
 
-- **`/simplify` is down with the current `.env`, and it is a billing
-  gate, not a bug.** `LLM_PROVIDER=openai_compatible` against
-  `https://api.experientiallabs.ai/v1` now works — the provider was
-  added 2026-09-05 and is verified end to end — but the configured
-  `LLM_MODEL=gpt-5.6-luna` returns
-  `429 free_tier_requires_payment`: "This model's free tier needs a card
-  on file and a small ($1) payment". The key itself is fine, and it is
-  **not** the invalid placeholder from the Phase 8.5 degradation test —
-  that value was only ever passed as a per-process env override and was
-  never written to `.env`.
-  - Same key, same endpoint: `claude-haiku-4.5` works and was used to
-    verify the whole path; `deepseek-v4-flash` is paywalled too. The
-    gate is per model, not per account.
-  - **Decide one:** add a card on Experiential Labs to unlock
-    `gpt-5.6-luna`, or set `LLM_MODEL` to a model the key can already
-    call. Either is a one-line change; neither is code.
-  - Until then, Phase 8.5 holds: Ho, Mundari, Kurukh and Sadri still
-    return audio, and only Santali shows a scoped error.
+- *(Resolved 2026-09-05 — kept here only as the reason for the model
+  choice.)* `gpt-5.6-luna` and `deepseek-v4-flash` return
+  `429 free_tier_requires_payment` on this key; `claude-haiku-4.5` does
+  not. The decision was to use haiku-class rather than unlock the
+  paywalled model — it is the right size for a single sentence-rewrite
+  call. Nothing is blocked by this now.
 
 - **There is still no permanent backend host**, so PRD.md §5's
   "deployed to a permanent public URL" criterion is unmet. The tunnel is
