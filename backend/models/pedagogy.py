@@ -24,12 +24,19 @@ honesty boundary in PRD.md §4 is untouched by anything in this file.
 """
 
 import json
+import logging
 import os
 import re
 import time
 from functools import lru_cache
 
 import requests
+
+# The message a teacher sees is deliberately short. The reason it failed
+# belongs in the server log, in full — a bare 502 with nothing behind it
+# is undebuggable after the fact, which is how one real production
+# failure became unexplainable (STATE.md).
+log = logging.getLogger(__name__)
 
 # gemini-2.5-flash is closed to new API keys and the 404 names this as the
 # replacement. If this 404s later, GET /v1beta/models lists what the key can
@@ -101,6 +108,36 @@ _RESPONSE_SCHEMA = {
 
 # Devanagari danda, double danda, and the usual ASCII sentence enders.
 _SENTENCE_SPLIT = re.compile(r"[।॥.!?]+")
+
+
+# Long enough to see an upstream error object in full, short enough not
+# to dump a whole model reply into the console on every failure. The
+# teacher-facing messages reuse this with a much smaller limit, so there
+# is one answer to "how much of an upstream body do we show" rather than
+# a different inline slice at every raise.
+_LOG_SNIPPET = 800
+_CLIENT_SNIPPET = 200
+
+
+def _snippet(text: str, limit: int = _LOG_SNIPPET) -> str:
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[:limit] + "... [truncated]"
+
+
+def _upstream_error(label: str, status: int, body: str, retried: bool) -> RuntimeError:
+    """Log the whole upstream failure, return the short version to raise.
+
+    The console gets the full body — that is the entire reason this
+    exists, since a 502 with a truncated message is what made one real
+    production failure unexplainable. Both providers come through here,
+    so the wording lives in one place instead of two that drift.
+    """
+    log.error("%s returned %s: %s", label, status, _snippet(body))
+    attempts = f" after {RETRIES + 1} attempts" if retried else ""
+    return RuntimeError(
+        f"The simplification service returned {status}{attempts}. "
+        f"{_snippet(body, _CLIENT_SNIPPET)}"
+    )
 
 
 def _words_per_sentence(sentences: list[str]) -> float:
@@ -182,15 +219,22 @@ def _call_gemini(prompt: str, key: str) -> dict:
 
         if response.status_code not in RETRY_STATUSES or attempt == RETRIES:
             break
+        # Kept even though nothing is raised: a retry that eventually
+        # succeeds is otherwise completely invisible.
+        log.warning(
+            "%s returned %s on attempt %d/%d, retrying: %s",
+            GEMINI_MODEL, response.status_code, attempt + 1, RETRIES + 1,
+            _snippet(response.text),
+        )
         time.sleep(BACKOFF_S[attempt])
 
     if not response.ok:
-        attempts = ""
-        if response.status_code in RETRY_STATUSES:
-            attempts = f" after {RETRIES + 1} attempts"
-        raise RuntimeError(
-            f"The simplification service returned {response.status_code}"
-            f"{attempts}. {response.text[:200]}"
+        # .text is a property and re-decodes the body on every access.
+        raise _upstream_error(
+            GEMINI_MODEL,
+            response.status_code,
+            response.text,
+            response.status_code in RETRY_STATUSES,
         )
 
     try:
@@ -232,16 +276,18 @@ def _call_openai_compatible(prompt: str, config: dict) -> dict:
             # clears on its own. A bad key or an unknown model fails
             # identically every time.
             if e.status_code in RETRY_STATUSES and attempt < RETRIES:
+                log.warning(
+                    "%s returned %s on attempt %d/%d, retrying: %s",
+                    config["llm_model"], e.status_code, attempt + 1,
+                    RETRIES + 1, _snippet(str(e)),
+                )
                 time.sleep(BACKOFF_S[attempt])
                 continue
-            attempts = (
-                f" after {RETRIES + 1} attempts"
-                if e.status_code in RETRY_STATUSES
-                else ""
-            )
-            raise RuntimeError(
-                f"The simplification service returned {e.status_code}"
-                f"{attempts}. {str(e)[:200]}"
+            raise _upstream_error(
+                f"{config['llm_model']} at {config['llm_base_url']}",
+                e.status_code,
+                str(e),
+                e.status_code in RETRY_STATUSES,
             )
         except openai.APITimeoutError:
             raise RuntimeError(
@@ -269,7 +315,7 @@ def _call_openai_compatible(prompt: str, config: dict) -> dict:
     if start == -1:
         raise RuntimeError(
             "The simplification service replied without any JSON: "
-            f"{content[:120]}"
+            f"{_snippet(content, _CLIENT_SNIPPET)}"
         )
     try:
         result, _ = json.JSONDecoder().raw_decode(content[start:])

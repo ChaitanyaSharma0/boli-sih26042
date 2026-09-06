@@ -157,3 +157,23 @@ line, stop and ask, don't guess in the impressive direction.
   on the same key. Same trap as `gemini-2.5-flash` being listed but
   404ing: only an actual completion call proves access.
 
+## 9. Logging
+
+- **A route that catches a server-side error and converts it to a 5xx
+  must log it.** Starlette re-raises uncaught exceptions and uvicorn
+  prints a full traceback for free, so most routes are already covered.
+  The blind spot is the `except ...: raise HTTPException(5xx)` shape —
+  a returned HTTPException is a normal response and logs nothing. That
+  is how one real production 502 became unexplainable after the fact:
+  `152.59.84.149 POST /simplify 502` with an empty console behind it.
+  `routes/pedagogy.py` is the pattern to copy.
+- Do not add a central 5xx exception handler for this. It would serve
+  one call site and would immediately need a special case to stop
+  reporting the deliberate 501 boundary refusals in `translate.py` and
+  `speak.py` as errors.
+- Root logging is configured at **WARNING**, not INFO. At INFO every
+  library that propagates to root joins in — httpx logs one line per
+  outbound request, measured at one per successful `/simplify` — which
+  buries the failures the logging exists to surface. Nothing in this app
+  logs below WARNING.
+

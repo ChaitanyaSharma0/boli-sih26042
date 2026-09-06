@@ -4,8 +4,33 @@ Scope boundary (PRD.md §4): Santali is the only language with real
 translation. Ho/Mundari/Kurukh/Sadri are phrase-bank + TTS only.
 """
 
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+# uvicorn configures its own loggers but leaves the root logger without a
+# handler, so a module logger's output would go nowhere. Without this, the
+# error logging in models/pedagogy.py is silently discarded and a 502
+# still leaves an empty console.
+#
+# WARNING, not INFO: this sets the level for every library that propagates
+# to root. At INFO, httpx logs a line per outbound request — measured at
+# one per successful /simplify — and transformers chatters through model
+# warmup, which buries the failures this logging exists to surface.
+# Nothing in this app logs below WARNING.
+#
+# The timestamp is the point: the failure that prompted this was
+# unexplainable *after the fact*, and a line you cannot place in time
+# cannot be matched to a teacher's report or to the access-log entry for
+# the same request.
+#
+# ponytail: basicConfig silently no-ops if root already has a handler,
+# which happens under `uvicorn --log-config` or gunicorn. Add force=True
+# if that ever bites.
+logging.basicConfig(
+    level=logging.WARNING,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+)
 
 from dotenv import load_dotenv
 
