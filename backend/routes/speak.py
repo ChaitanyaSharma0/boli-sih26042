@@ -10,6 +10,7 @@ string is exactly the plausible-looking-but-wrong output the phrase bank
 exists to avoid.
 """
 
+import base64
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 
@@ -33,6 +34,7 @@ def speak(req: SpeakRequest):
         )
 
     text = req.text
+    matched_target = None
     if req.lang in phrase_bank.LANGS:
         entry = phrase_bank.lookup(req.lang, text)
         if entry is None:
@@ -47,9 +49,17 @@ def speak(req: SpeakRequest):
                 "options": phrase_bank.options(req.lang),
             }
         text = entry["target_text"]
+        matched_target = entry["target_text"]
 
     try:
         wav = tts.synthesize(text, req.lang)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    return Response(content=wav, media_type="audio/wav")
+
+    headers = {}
+    if matched_target:
+        # Phase 12: Base64-encode since HTTP headers cannot hold non-ASCII script
+        b64_target = base64.b64encode(matched_target.encode("utf-8")).decode("ascii")
+        headers["X-Target-Text"] = b64_target
+
+    return Response(content=wav, media_type="audio/wav", headers=headers)

@@ -104,7 +104,18 @@ export async function speak(text, lang) {
 
   const type = response.headers.get("content-type") ?? "";
   if (type.startsWith("audio/")) {
-    return { kind: "audio", blob: await response.blob() };
+    let targetText = null;
+    const headerVal = response.headers.get("x-target-text");
+    if (headerVal) {
+      try {
+        const binary = atob(headerVal);
+        const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+        targetText = new TextDecoder().decode(bytes);
+      } catch {
+        targetText = null;
+      }
+    }
+    return { kind: "audio", blob: await response.blob(), targetText };
   }
   const body = await response.json();
   return { kind: "phrase_bank_only", ...body }; // { reason, options: [...] }

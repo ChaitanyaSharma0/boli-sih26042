@@ -75,6 +75,7 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Target-Text", "x-target-text"],
 )
 
 # Resolved against this file, not the working directory: the app must

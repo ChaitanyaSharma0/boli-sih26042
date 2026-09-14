@@ -10,8 +10,8 @@ const STEPS = ["Capture", "Languages", "Result"];
 
 function Stepper({ step }) {
   return (
-    <nav className="progress" aria-label="Lesson progress">
-      <ol>
+    <nav className="progress-container" aria-label="Lesson progress">
+      <ol className="progress">
         {STEPS.map((label, index) => (
           <li
             key={label}
@@ -76,7 +76,10 @@ export default function App() {
             <small>One lesson. More voices.</small>
           </span>
         </span>
-        <span className="event-label">SIH26042</span>
+        <span className="event-badge">
+          <span className="dot" aria-hidden="true" />
+          SIH26042 · Smart Education
+        </span>
       </header>
 
       <Stepper step={step} />

@@ -14,10 +14,8 @@ import {
 } from "../capability";
 import AudioPlayer from "../components/AudioPlayer";
 import CorrectionForm from "../components/CorrectionForm";
+import PrintWorksheet from "../components/PrintWorksheet";
 
-// Screen 3 — the lesson, adapted, translated where that is real, and
-// spoken where a voice exists.
-// Supports single sentences or whole chapter multi-sentence extraction.
 export default function Result({
   hindiText,
   grade = 2,
@@ -33,11 +31,10 @@ export default function Result({
   const [translations, setTranslations] = useState([]);
   const [audio, setAudio] = useState({});
   const [lessonId, setLessonId] = useState(null);
-  // Scoped to the languages that needed pedagogy — never fatal.
   const [simplifyError, setSimplifyError] = useState("");
-  // Multi-sentence chapter processing results
   const [chapterResults, setChapterResults] = useState([]);
   const [isZipping, setIsZipping] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +87,7 @@ export default function Result({
             try {
               const result = await speak(text, language.code);
               if (cancelled) return;
+              // result may contain { kind: "audio", blob, targetText } via Phase 12 header
               currentAudio[language.code] = { ...result, text };
               if (idx === 0) {
                 setAudio((prev) => ({
@@ -119,7 +117,7 @@ export default function Result({
           setStage(
             sentenceList.length > 1
               ? `Simplifying sentence ${idx + 1} of ${sentenceList.length} (Class ${grade})…`
-              : `Simplifying lesson (Class ${grade})…`
+              : `Simplifying lesson for Class ${grade}…`
           );
           let simplified = null;
           try {
@@ -199,27 +197,39 @@ export default function Result({
     setIsZipping(true);
     try {
       const zip = new JSZip();
-      let summaryText = "BOLI — Mother-Tongue Lesson Pack\n";
-      summaryText += `Grade / Class Level: Class ${grade}\n`;
-      summaryText += `Total Sentences: ${chapterResults.length}\n\n`;
+      let summaryText = "BOLI — Multilingual Classroom Lesson Pack\n";
+      summaryText += `Grade Level: Class ${grade}\n`;
+      summaryText += `Total Sentences: ${chapterResults.length || 1}\n\n`;
 
       const audioFolder = zip.folder("audio");
+      const resultsToExport =
+        chapterResults.length > 0
+          ? chapterResults
+          : [
+              {
+                sentenceIndex: 0,
+                sourceText: hindiText,
+                adapted,
+                translations,
+                audio,
+              },
+            ];
 
-      chapterResults.forEach((item, idx) => {
-        summaryText += "===============================\n";
+      resultsToExport.forEach((item, idx) => {
+        summaryText += `==============================================\n`;
         summaryText += `Sentence ${idx + 1}: ${item.sourceText}\n`;
         if (item.adapted) {
           summaryText += `Concept: ${item.adapted.concept}\n`;
           summaryText += `Simplified Hindi: ${item.adapted.adapted_hindi.join(" ")}\n`;
           if (item.adapted.substitutions?.length > 0) {
-            summaryText += "Substitutions:\n";
+            summaryText += `Cultural Substitutions:\n`;
             item.adapted.substitutions.forEach((sub) => {
               summaryText += `  - ${sub.from} -> ${sub.to} (${sub.why})\n`;
             });
           }
         }
         if (item.translations?.length > 0) {
-          summaryText += "Translations:\n";
+          summaryText += `Translations:\n`;
           item.translations.forEach((t) => {
             summaryText += `  [${t.name}]: ${t.translated}\n`;
           });
@@ -236,7 +246,7 @@ export default function Result({
       });
 
       zip.file("summary.txt", summaryText);
-      zip.file("data.json", JSON.stringify(chapterResults, null, 2));
+      zip.file("data.json", JSON.stringify(resultsToExport, null, 2));
 
       const htmlContent = `<!DOCTYPE html>
 <html lang="hi">
@@ -244,18 +254,18 @@ export default function Result({
   <meta charset="UTF-8">
   <title>BOLI — Offline Classroom Pack</title>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; line-height: 1.6; }
     h1 { color: #1E3A5F; }
-    .card { background: #F1F4F8; padding: 1.2rem; margin-bottom: 1.2rem; border-radius: 8px; border-left: 5px solid #1B6B45; }
-    .meta { color: #666; font-size: 0.9rem; }
-    .trans-box { margin-top: 0.5rem; padding: 0.5rem; background: #fff; border-radius: 4px; }
+    .card { background: #F1F4F8; padding: 1.25rem; margin-bottom: 1.25rem; border-radius: 10px; border-left: 5px solid #1B6B45; }
+    .meta { color: #555; font-size: 0.9rem; }
+    .trans-box { margin-top: 0.6rem; padding: 0.6rem; background: #fff; border-radius: 6px; }
     audio { display: block; margin-top: 0.5rem; width: 100%; }
   </style>
 </head>
 <body>
   <h1>BOLI — Offline Classroom Lesson</h1>
-  <p class="meta">Class ${grade} · Zero-Connectivity Offline Classroom Pack</p>
-  ${chapterResults
+  <p class="meta">Class ${grade} · Zero-Connectivity Classroom Player</p>
+  ${resultsToExport
     .map(
       (item, idx) => `
     <div class="card">
@@ -279,7 +289,7 @@ export default function Result({
         .map(
           ([langCode, a]) => `
         <div class="trans-box">
-          <strong>Audio (${langCode}):</strong> <em>${a.text || ""}</em>
+          <strong>Audio (${langCode}):</strong> <em>${a.targetText || a.text || ""}</em>
           <audio controls src="audio/sentence_${idx + 1}_${langCode}.wav"></audio>
         </div>`
         )
@@ -305,8 +315,6 @@ export default function Result({
     }
   }
 
-  // Play one phrase from the bank, when the teacher's own sentence was not
-  // in it. Same /speak route, same rules — just a phrase that will match.
   async function playPhrase(lang, phrase) {
     try {
       const result = await speak(phrase.hindi_source, lang);
@@ -324,11 +332,41 @@ export default function Result({
 
   return (
     <section aria-labelledby="result-heading">
-      <p className="eyebrow">Step 03 · Result</p>
+      <p className="eyebrow">Step 03 · Lesson Audio & Output</p>
       <h1 id="result-heading">A lesson, ready to be heard.</h1>
       <p className="intro">
-        Check the wording and the audio before playing it to the class.
+        Check the wording and listen to the audio before presenting to your class.
       </p>
+
+      {/* Top Action Toolbar */}
+      <div className="result-toolbar">
+        <div className="result-toolbar-meta">
+          <strong>Class {grade} Lesson</strong>
+          {chapterResults.length > 1 && (
+            <span style={{ marginLeft: "0.5rem", color: "var(--text-light)" }}>
+              ({chapterResults.length} chapter sentences)
+            </span>
+          )}
+        </div>
+
+        <div className="result-toolbar-actions">
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() => setIsPrintModalOpen(true)}
+          >
+            🖨️ Print Worksheet (with QR)
+          </button>
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={handleDownloadOfflinePack}
+            disabled={isZipping || stage !== ""}
+          >
+            {isZipping ? "Creating ZIP…" : "📦 Download Offline Pack (.zip)"}
+          </button>
+        </div>
+      </div>
 
       <div role="status" aria-live="polite">
         {stage && (
@@ -340,62 +378,49 @@ export default function Result({
       </div>
       {error && <p className="error">{error}</p>}
 
-      <div style={{ margin: "1rem 0", display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-        <button
-          type="button"
-          className="button button--primary"
-          onClick={handleDownloadOfflinePack}
-          disabled={isZipping || chapterResults.length === 0}
-        >
-          {isZipping ? "Packaging ZIP…" : "📦 Download Offline Pack (.zip)"}
-        </button>
-        {chapterResults.length > 1 && (
-          <span style={{ fontSize: "0.9rem", color: "#555" }}>
-            Chapter mode: {chapterResults.length} sentences processed (Class {grade})
-          </span>
-        )}
-      </div>
-
       {chapterResults.length > 1 ? (
-        <div className="chapter-results-list" style={{ display: "grid", gap: "1.2rem" }}>
+        /* Multi-sentence Chapter Mode */
+        <div className="chapter-results-list" style={{ display: "grid", gap: "1.5rem" }}>
           {chapterResults.map((item, idx) => (
-            <div
+            <article
               key={idx}
               className="panel"
-              style={{
-                borderLeft: "4px solid var(--accent, #1B6B45)",
-                padding: "1rem",
-              }}
+              style={{ borderLeft: "5px solid var(--green)" }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+              <div className="panel-header">
                 <span className="eyebrow" style={{ margin: 0 }}>
                   Sentence {idx + 1} of {chapterResults.length}
                 </span>
-                <span style={{ fontSize: "0.8rem", color: "#666" }}>Class {grade}</span>
+                <span className="group-tag group-tag--ai">Class {grade}</span>
               </div>
-              <p style={{ fontWeight: "bold", fontSize: "1.05rem", margin: "0.25rem 0" }} lang="hi">
+
+              <p style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0.25rem 0 0.75rem 0" }} lang="hi">
                 {item.sourceText}
               </p>
 
               {item.adapted && (
-                <div style={{ margin: "0.75rem 0", padding: "0.5rem", background: "rgba(0,0,0,0.03)", borderRadius: "4px" }}>
-                  <p style={{ margin: "0 0 0.25rem 0", fontSize: "0.85rem", color: "#555" }}>
-                    Concept: {item.adapted.concept}
-                  </p>
-                  <p style={{ margin: 0, fontWeight: 500 }} lang="hi">
+                <div style={{ margin: "0.75rem 0", padding: "0.75rem", background: "var(--card-subtle)", borderRadius: "var(--radius-md)" }}>
+                  <span className="concept-badge">Concept: {item.adapted.concept}</span>
+                  <p style={{ margin: "0.35rem 0 0 0", fontWeight: 600 }} lang="hi">
                     {item.adapted.adapted_hindi.join(" ")}
                   </p>
                 </div>
               )}
 
               {item.translations?.length > 0 && (
-                <div style={{ marginTop: "0.5rem" }}>
+                <div style={{ marginTop: "1rem" }}>
                   {item.translations.map((t, tIdx) => (
-                    <div key={tIdx} style={{ fontSize: "0.95rem", margin: "0.25rem 0" }}>
-                      <strong>{t.name}:</strong> <span lang={t.code}>{t.translated}</span>
+                    <div key={tIdx} className="hero-script-display">
+                      <div className="lang-card-header">
+                        <span className="lang-name">{t.name}</span>
+                        <span className="chip-badge chip-badge--full">AI translation</span>
+                      </div>
+                      <div className="target-script-large" lang={t.code}>
+                        {t.translated}
+                      </div>
                       {t.contaminated && (
-                        <span className="warn" style={{ display: "block", fontSize: "0.8rem" }}>
-                          (Script contamination detected)
+                        <span className="warn">
+                          The model does not recognise a word in this sentence, so part of this line is in the wrong script.
                         </span>
                       )}
                     </div>
@@ -404,30 +429,34 @@ export default function Result({
               )}
 
               {item.audio && Object.keys(item.audio).length > 0 && (
-                <div style={{ marginTop: "0.75rem", display: "grid", gap: "0.5rem" }}>
+                <div style={{ marginTop: "1rem" }}>
                   {Object.entries(item.audio).map(([langCode, a]) => {
                     const langObj = chosen.find((c) => c.code === langCode);
                     const langName = langObj ? langObj.name : langCode;
                     return (
-                      <div key={langCode}>
+                      <div key={langCode} style={{ marginBottom: "0.75rem" }}>
                         {a.kind === "audio" && (
-                          <>
-                            <AudioPlayer blob={a.blob} label={`${langName} audio`} />
-                            {a.text && (
-                              <p className="note" style={{ margin: "0.2rem 0" }} lang={langCode}>
-                                Spoken ({langName}): {a.text}
-                              </p>
+                          <div className="hero-script-display" style={{ borderLeft: "4px solid var(--amber)" }}>
+                            <div className="lang-card-header">
+                              <span className="lang-name">{langName}</span>
+                              <span className="chip-badge chip-badge--phrase_bank">Phrase bank voice</span>
+                            </div>
+                            {/* Phase 12: Prominent native script display */}
+                            {a.targetText ? (
+                              <div className="target-script-large" lang={langCode}>
+                                {a.targetText}
+                              </div>
+                            ) : (
+                              <div className="target-script-large" lang="hi">
+                                {a.text}
+                              </div>
                             )}
-                          </>
+                            <AudioPlayer blob={a.blob} label={`${langName} spoken audio`} />
+                          </div>
                         )}
                         {a.kind === "phrase_bank_only" && (
-                          <p className="note" style={{ margin: "0.2rem 0" }}>
-                            {langName}: Not in phrase bank today.
-                          </p>
-                        )}
-                        {a.kind === "error" && (
-                          <p className="error" style={{ margin: "0.2rem 0" }}>
-                            {langName}: {a.error}
+                          <p className="note" style={{ margin: "0.25rem 0" }}>
+                            {langName}: Phrase bank only.
                           </p>
                         )}
                       </div>
@@ -435,10 +464,11 @@ export default function Result({
                   })}
                 </div>
               )}
-            </div>
+            </article>
           ))}
         </div>
       ) : (
+        /* Single Sentence Mode */
         <>
           {simplifyError && (
             <div className="panel">
@@ -452,154 +482,159 @@ export default function Result({
             </div>
           )}
 
-      {adapted && (
-        <div className="panel panel--simplified">
-          <h2>Simplified Hindi</h2>
-          <p className="group-blurb">
-            {adapted.concept} — rewritten for a child who does not speak Hindi
-            at home. Still Hindi; nothing is translated yet.
-          </p>
-          <ol className="sentence-list" lang="hi">
-            {adapted.adapted_hindi.map((sentence, i) => (
-              <li key={i}>{sentence}</li>
-            ))}
-          </ol>
-          {adapted.substitutions.length > 0 && (
-            <ul className="subs">
-              {adapted.substitutions.map((s, i) => (
-                <li key={i}>
-                  <strong>{s.from}</strong> → <strong>{s.to}</strong> — {s.why}
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="note">
-            About {adapted.readability.before_wps} words per sentence before,{" "}
-            {adapted.readability.after_wps} after.
-          </p>
-        </div>
-      )}
-
-      {chosen.map((language) => {
-        const mine = translations.filter((t) => t.code === language.code);
-        const spoken = audio[language.code];
-        const isBank = language.translation === "phrase_bank";
-
-        return (
-          <article
-            key={language.code}
-            className={"panel result-card chip-" + language.translation}
-            aria-labelledby={"result-" + language.code}
-          >
-            <div className="result-heading">
-              <h2 id={"result-" + language.code}>
-                {language.name}
-                {nativeName(language) && (
-                  <span className="chip-native" lang={language.code}>
-                    {nativeName(language)}
-                  </span>
-                )}
-              </h2>
-              <span className="chip-badge">
-                {isBank ? "Phrase bank only" : "AI translation"}
-              </span>
-            </div>
-
-            {isBank && (
+          {adapted && (
+            <div className="panel panel--simplified">
+              <div className="panel-header">
+                <h2>Simplified Hindi <span lang="hi">(आसान हिंदी)</span></h2>
+                <span className="concept-badge">Class {grade}</span>
+              </div>
               <p className="group-blurb">
-                No translation model exists for {language.name}. Anything below
-                comes from the curated phrase bank, not from translating your
-                sentence — and it is pending validation by a native speaker.
+                <strong>Concept:</strong> {adapted.concept} — rewritten for a child whose mother tongue is not Hindi.
               </p>
-            )}
-
-            {simplifyError && !isBank && (
-              <p className="error">
-                No {language.name} translation this time: it depends on the
-                simplification step, which failed. The other languages on this
-                page were not affected.
-              </p>
-            )}
-
-            {mine.length > 0 && (
-              <>
-                <ol className="sentence-list translated">
-                  {mine.map((t, i) => (
-                    <li key={i} lang={language.code}>
-                      {t.translated}
-                      {t.contaminated && (
-                        <span className="warn">
-                          The model does not recognise a word in this sentence,
-                          so part of this line is in the wrong script. Try
-                          simpler, more local wording.
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ol>
-                <CorrectionForm
-                  lang={language.code}
-                  original={mine.map((t) => t.translated).join(" ")}
-                  lessonId={lessonId}
-                />
-              </>
-            )}
-
-            {language.tts === "none" && (
-              <p className="note">
-                {language.note ?? "There is no voice for this language."} This is
-                text only.
-              </p>
-            )}
-
-            {spoken?.kind === "audio" && (
-              <>
-                <AudioPlayer
-                  blob={spoken.blob}
-                  label={language.name + " audio"}
-                />
-                <p className="note" lang={language.code}>
-                  Spoken: {spoken.text}
-                </p>
-                {isBank && (
-                  <CorrectionForm
-                    lang={language.code}
-                    original={spoken.text}
-                    lessonId={lessonId}
-                  />
-                )}
-              </>
-            )}
-
-            {spoken?.kind === "phrase_bank_only" && (
-              <>
-                <p className="note">{spoken.reason}</p>
-                <p className="field-label">
-                  What BOLI can say in {language.name} today
-                </p>
-                <ul className="phrase-options">
-                  {spoken.options.map((phrase) => (
-                    <li key={phrase.id}>
-                      {phrase.hindi_source} —{" "}
-                      <span lang={language.code}>{phrase.target_text}</span>{" "}
-                      <button
-                        className="link"
-                        onClick={() => playPhrase(language.code, phrase)}
-                      >
-                        Play
-                      </button>
+              <ol className="sentence-list" lang="hi">
+                {adapted.adapted_hindi.map((sentence, i) => (
+                  <li key={i}>{sentence}</li>
+                ))}
+              </ol>
+              {adapted.substitutions.length > 0 && (
+                <ul className="subs">
+                  {adapted.substitutions.map((s, i) => (
+                    <li key={i}>
+                      <strong>{s.from}</strong> → <strong>{s.to}</strong> — {s.why}
                     </li>
                   ))}
                 </ul>
-              </>
-            )}
+              )}
+              <p className="note">
+                Readability: {adapted.readability.before_wps} words/sentence originally →{" "}
+                <strong>{adapted.readability.after_wps} words/sentence</strong> adapted.
+              </p>
+            </div>
+          )}
 
-            {spoken?.kind === "error" && (
-              <p className="error">Could not generate audio. {spoken.error}</p>
-            )}
-          </article>
-        );
-      })}
+          {chosen.map((language) => {
+            const mine = translations.filter((t) => t.code === language.code);
+            const spoken = audio[language.code];
+            const isBank = language.translation === "phrase_bank";
+
+            return (
+              <article
+                key={language.code}
+                className={"panel result-card chip-" + language.translation}
+                aria-labelledby={"result-" + language.code}
+              >
+                <div className="result-heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <h2 id={"result-" + language.code} style={{ margin: 0 }}>
+                    {language.name}{" "}
+                    {nativeName(language) && (
+                      <span className="lang-native" lang={language.code}>
+                        ({nativeName(language)})
+                      </span>
+                    )}
+                  </h2>
+                  <span className={`chip-badge chip-badge--${language.translation}`}>
+                    {isBank ? "Phrase bank only" : "AI translation"}
+                  </span>
+                </div>
+
+                {isBank && (
+                  <p className="group-desc" style={{ marginTop: "0.5rem" }}>
+                    No translation model exists for {language.name}. Anything below comes from the curated phrase bank, not from translating your sentence — and it is pending validation by a native speaker.
+                  </p>
+                )}
+
+                {simplifyError && !isBank && (
+                  <p className="error">
+                    No {language.name} translation this time: it depends on the simplification step, which failed. The other languages on this page were not affected.
+                  </p>
+                )}
+
+                {mine.length > 0 && (
+                  <>
+                    <div className="hero-script-display">
+                      {mine.map((t, i) => (
+                        <div key={i}>
+                          <div className="target-script-large" lang={language.code}>
+                            {t.translated}
+                          </div>
+                          {t.contaminated && (
+                            <span className="warn">
+                              The model does not recognise a word in this sentence, so part of this line is in the wrong script. Try simpler, more local wording.
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <CorrectionForm
+                      lang={language.code}
+                      original={mine.map((t) => t.translated).join(" ")}
+                      lessonId={lessonId}
+                    />
+                  </>
+                )}
+
+                {language.tts === "none" && (
+                  <p className="note">
+                    {language.note ?? "There is no voice for this language."} This is text only.
+                  </p>
+                )}
+
+                {spoken?.kind === "audio" && (
+                  <>
+                    <div className="hero-script-display" style={{ borderLeft: "4px solid var(--amber)" }}>
+                      <span className="field-label" style={{ fontSize: "0.8rem" }}>
+                        Spoken Phrase (Real Target Script):
+                      </span>
+                      {/* Phase 12: Prominent target script */}
+                      <div className="target-script-large" lang={language.code}>
+                        {spoken.targetText || spoken.text}
+                      </div>
+                      <AudioPlayer
+                        blob={spoken.blob}
+                        label={language.name + " audio"}
+                      />
+                    </div>
+                    {isBank && (
+                      <CorrectionForm
+                        lang={language.code}
+                        original={spoken.targetText || spoken.text}
+                        lessonId={lessonId}
+                      />
+                    )}
+                  </>
+                )}
+
+                {spoken?.kind === "phrase_bank_only" && (
+                  <div style={{ marginTop: "0.75rem" }}>
+                    <p className="note">{spoken.reason}</p>
+                    <p className="field-label" style={{ marginTop: "0.5rem" }}>
+                      What BOLI can say in {language.name} today:
+                    </p>
+                    <ul className="phrase-options" style={{ paddingLeft: "1.2rem", margin: "0.25rem 0" }}>
+                      {spoken.options.map((phrase) => (
+                        <li key={phrase.id} style={{ marginBottom: "0.35rem" }}>
+                          {phrase.hindi_source} —{" "}
+                          <strong lang={language.code}>{phrase.target_text}</strong>{" "}
+                          <button
+                            type="button"
+                            className="button button--secondary"
+                            style={{ padding: "0.15rem 0.5rem", fontSize: "0.75rem", marginLeft: "0.5rem" }}
+                            onClick={() => playPhrase(language.code, phrase)}
+                          >
+                            ▶ Play
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {spoken?.kind === "error" && (
+                  <p className="error">Could not generate audio. {spoken.error}</p>
+                )}
+              </article>
+            );
+          })}
         </>
       )}
 
@@ -608,6 +643,17 @@ export default function Result({
           <span aria-hidden="true">←</span> Change languages
         </button>
       </div>
+
+      {/* Printable Worksheet Modal with QR Code */}
+      <PrintWorksheet
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        hindiText={hindiText}
+        adapted={adapted}
+        translations={translations}
+        grade={grade}
+        audio={audio}
+      />
     </section>
   );
 }
