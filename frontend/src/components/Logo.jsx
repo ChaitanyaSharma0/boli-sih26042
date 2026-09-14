@@ -13,29 +13,29 @@ export default function Logo({ size = "medium", showTagline = true }) {
           className="boli-svg-logo"
         >
           <defs>
-            {/* Primary emerald gradient */}
+            {/* Primary emerald-to-forest gradient */}
             <linearGradient id="emblemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#1B6B45" />
-              <stop offset="60%" stopColor="#125032" />
-              <stop offset="100%" stopColor="#0B3822" />
+              <stop offset="60%" stopColor="#114B30" />
+              <stop offset="100%" stopColor="#082A1B" />
             </linearGradient>
 
             {/* Inner glow highlight */}
             <linearGradient id="borderHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#34D399" stopOpacity="0.8" />
-              <stop offset="50%" stopColor="#1B6B45" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#052E16" stopOpacity="0.6" />
+              <stop offset="0%" stopColor="#34D399" stopOpacity="0.85" />
+              <stop offset="50%" stopColor="#1B6B45" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#064E3B" stopOpacity="0.7" />
             </linearGradient>
 
-            {/* Amber soundwave accent */}
-            <linearGradient id="amberWave" x1="0%" y1="0%" x2="100%" y2="100%">
+            {/* Warm amber gradient for voice spark */}
+            <linearGradient id="voiceAmber" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#FBBF24" />
               <stop offset="100%" stopColor="#D97706" />
             </linearGradient>
 
-            {/* Glow filter */}
+            {/* Emerald glow filter */}
             <filter id="logoGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#1B6B45" floodOpacity="0.35" />
+              <feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#1B6B45" floodOpacity="0.4" />
             </filter>
           </defs>
 
@@ -59,39 +59,60 @@ export default function Logo({ size = "medium", showTagline = true }) {
             strokeWidth="1.2"
           />
 
-          {/* Radiating soundwave arcs (Voice/Acoustics) */}
+          {/* Left Side: Textbook Lesson Page (Curved Open Book) */}
           <path
-            d="M34 14C36.8 17 38 20.5 38 24.5C38 28.5 36.8 32 34 35"
-            stroke="#34D399"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            opacity="0.85"
-            className="wave-outer"
+            d="M22.5 16C17 15 12 17 9.5 18.5V34.5C12 33 17 31 22.5 32V16Z"
+            fill="#FFFFFF"
+            fillOpacity="0.92"
+            className="book-page"
           />
+          {/* Subtle lesson lines on book page */}
           <path
-            d="M30 18C31.8 20 32.5 22.2 32.5 24.5C32.5 26.8 31.8 29 30 31"
-            stroke="url(#amberWave)"
-            strokeWidth="2.2"
+            d="M13 22.5C15.5 21.8 18 21.8 20 22.2M13 26.5C15.5 25.8 18 25.8 20 26.2"
+            stroke="#114B30"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+          />
+
+          {/* Center Spine */}
+          <path
+            d="M23 15V33"
+            stroke="#34D399"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+
+          {/* Right Side: Acoustic Sound Waves (Voice radiating from the textbook) */}
+          {/* Wave 1: Immediate voice frequency */}
+          <path
+            d="M27 20C29.2 21.8 30.2 23.5 30.2 25.5C30.2 27.5 29.2 29.2 27 31"
+            stroke="#34D399"
+            strokeWidth="2.4"
             strokeLinecap="round"
             className="wave-inner"
           />
 
-          {/* Amber voice broadcast spark */}
-          <circle cx="37" cy="11" r="2" fill="#FBBF24" />
+          {/* Wave 2: Mid audio wave */}
+          <path
+            d="M31.5 17C34.5 19.5 35.8 22.2 35.8 25.5C35.8 28.8 34.5 31.5 31.5 34"
+            stroke="url(#voiceAmber)"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            className="wave-mid"
+          />
 
-          {/* Central Devanagari 'बो' glyph */}
-          <text
-            x="19"
-            y="32"
-            fill="#FFFFFF"
-            fontSize="23"
-            fontWeight="800"
-            textAnchor="middle"
-            fontFamily="'Noto Sans Devanagari', 'Yatra One', system-ui, sans-serif"
-            style={{ textShadow: "0 2px 6px rgba(0,0,0,0.4)" }}
-          >
-            बो
-          </text>
+          {/* Wave 3: Outer sound broadcast wave */}
+          <path
+            d="M36 14C39.8 17.5 41.5 21.2 41.5 25.5C41.5 29.8 39.8 33.5 36 37"
+            stroke="#34D399"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            opacity="0.8"
+            className="wave-outer"
+          />
+
+          {/* Golden Knowledge & Voice Spark */}
+          <circle cx="23" cy="11.5" r="2.2" fill="url(#voiceAmber)" />
         </svg>
       </div>
 

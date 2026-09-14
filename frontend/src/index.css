@@ -132,14 +132,23 @@ body {
   transform-origin: 24px 24px;
 }
 
+.wave-mid {
+  transition: transform 0.25s ease, stroke 0.25s ease;
+  transform-origin: 24px 24px;
+}
+
 .boli-brand-container:hover .wave-outer {
   opacity: 1;
   stroke: #6ee7b7;
   transform: scale(1.08);
 }
 
+.boli-brand-container:hover .wave-mid {
+  transform: scale(1.06);
+}
+
 .boli-brand-container:hover .wave-inner {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .boli-brand-text {
