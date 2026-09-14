@@ -18,12 +18,13 @@ log = logging.getLogger(__name__)
 
 class SimplifyRequest(BaseModel):
     text: str
+    grade: int = 2
 
 
 @router.post("/simplify")
 def simplify(req: SimplifyRequest):
     try:
-        return pedagogy.simplify(req.text)
+        return pedagogy.simplify(req.text, grade=req.grade)
     except ValueError as e:
         raise HTTPException(400, str(e))
     except RuntimeError as e:

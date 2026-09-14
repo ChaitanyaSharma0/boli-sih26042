@@ -43,10 +43,34 @@ export async function ocr(file) {
   return response.json(); // { text, confidence }
 }
 
-// Hindi in, simpler Hindi out. Never crosses a language boundary.
-export function simplify(text) {
-  return postJson("/simplify", { text });
+// Hindi in, simpler Hindi out. Supports grade 1-5 (defaults to Class 2).
+export function simplify(text, grade = 2) {
+  return postJson("/simplify", { text, grade });
   // { concept, adapted_hindi, substitutions, readability }
+}
+
+// Chapter extraction: upload a PDF or TXT chapter file to extract sentences.
+export async function extractChapter(file) {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch(`${BASE}/chapter/extract`, {
+    method: "POST",
+    body: form,
+  });
+  if (!response.ok) throw new Error(await detail(response));
+  return response.json(); // { filename, sentences: [...], count }
+}
+
+// ASR: speech-to-text via Meta MMS Hindi ASR.
+export async function transcribeAudio(audioBlob) {
+  const form = new FormData();
+  form.append("file", audioBlob, "recording.wav");
+  const response = await fetch(`${BASE}/asr`, {
+    method: "POST",
+    body: form,
+  });
+  if (!response.ok) throw new Error(await detail(response));
+  return response.json(); // { text }
 }
 
 // Santali only. The backend returns 501 for any other target and this
