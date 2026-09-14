@@ -95,42 +95,102 @@ body {
   margin-bottom: 1.5rem;
 }
 
+.boli-brand-container {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.boli-logo-emblem {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
+}
+
+.boli-brand-container:hover .boli-logo-emblem {
+  transform: translateY(-1px) scale(1.04);
+}
+
+.boli-svg-logo {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Soundwave acoustic pulse */
+.wave-outer {
+  transition: transform 0.3s ease, stroke 0.3s ease, opacity 0.3s ease;
+  transform-origin: 24px 24px;
+}
+
+.wave-inner {
+  transition: transform 0.2s ease, stroke 0.2s ease;
+  transform-origin: 24px 24px;
+}
+
+.boli-brand-container:hover .wave-outer {
+  opacity: 1;
+  stroke: #6ee7b7;
+  transform: scale(1.08);
+}
+
+.boli-brand-container:hover .wave-inner {
+  transform: scale(1.05);
+}
+
+.boli-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.boli-brand-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  line-height: 1;
+}
+
+.boli-brand-name {
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.boli-voice-chip {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  border-radius: 6px;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.15);
+}
+
+.boli-brand-tagline {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+}
+
+/* Legacy fallback support */
 .brand {
   display: flex;
   align-items: center;
   gap: 0.85rem;
   text-decoration: none;
-}
-
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 3.1rem;
-  height: 3.1rem;
-  border-radius: 14px 14px 14px 4px;
-  background: linear-gradient(135deg, var(--green), var(--green-dark));
-  color: #ffffff;
-  font-size: 1.5rem;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(27, 107, 69, 0.25);
-}
-
-.brand strong {
-  display: block;
-  color: var(--navy);
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1.1;
-}
-
-.brand small {
-  display: block;
-  margin-top: 0.15rem;
-  color: var(--text-light);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
 }
 
 .event-badge {

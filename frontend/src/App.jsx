@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import Capture from "./screens/Capture";
 import LanguageSelect from "./screens/LanguageSelect";
 import Result from "./screens/Result";
+import Logo from "./components/Logo";
 
 // ponytail: three linear screens, so a step index replaces a router.
 // Add react-router only if a screen ever needs its own shareable URL.
@@ -67,15 +68,7 @@ export default function App() {
       </a>
 
       <header className="app-header">
-        <span className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            बो
-          </span>
-          <span>
-            <strong>BOLI</strong>
-            <small>One lesson. More voices.</small>
-          </span>
-        </span>
+        <Logo size="medium" showTagline={true} />
         <span className="event-badge">
           <span className="dot" aria-hidden="true" />
           SIH26042 · Smart Education
