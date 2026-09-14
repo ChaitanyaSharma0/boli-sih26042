@@ -662,6 +662,24 @@ the pair must be `धान हाट में बिकता है।` or `�
 
 ## Open questions / blockers
 
+- **`/simplify` is down again, and it is billing, not code.** The
+  Experiential Labs key now returns
+  `429 "Complete the $1 card verification to spend platform credits"`
+  even for `claude-haiku-4.5`, which worked earlier on 2026-09-05. So
+  this is a credit gate on the account rather than the per-model gate
+  hit before. Santali translation is unavailable until it is cleared;
+  Phase 8.5 holds, so Ho, Mundari, Kurukh and Sadri still produce audio
+  and only Santali shows a scoped error.
+- **`/speak` does not say which phrase it spoke.** It returns wav bytes
+  only, so on a phrase-bank hit the frontend cannot show the Odia or
+  Devanagari that was actually spoken and falls back to naming the Hindi
+  it sent ("The Ho phrase for …"). Accurate but incomplete: the spoken
+  text cannot get the large target-script treatment the rest of the app
+  gives real target-language output. Tracked as PLAN.md Phase 12,
+  **deliberately gated on the billing fix above**. The trap to remember
+  is CORS — custom response headers are invisible to the browser without
+  `expose_headers`, even with `allow_origins=["*"]`.
+
 - *(Resolved 2026-09-05 — kept here only as the reason for the model
   choice.)* `gpt-5.6-luna` and `deepseek-v4-flash` return
   `429 free_tier_requires_payment` on this key; `claude-haiku-4.5` does

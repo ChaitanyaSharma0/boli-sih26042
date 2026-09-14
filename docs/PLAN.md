@@ -169,6 +169,40 @@ better than a file that vanishes.
   out loud rather than papered over.
 - **Commit: "feat: corrections persist to a hf dataset"**
 
+## Phase 12 — /speak returns the phrase it actually spoke (optional)
+
+**Blocked on: the Experiential Labs billing gate being cleared.** Do not
+start this while `/simplify` is down — see STATE.md. Not urgent; the
+current wording is accurate, just incomplete.
+
+`POST /speak` returns wav bytes and nothing else, so on a phrase-bank hit
+the frontend never learns which entry matched. The result card therefore
+shows the Hindi that was *sent* — honestly labelled "The Ho phrase for
+<hindi>", but it cannot give the spoken text the large target-script
+treatment that the rest of the app gives real target-language output.
+
+- Return the matched entry alongside the audio as response headers, so
+  the documented "audio/wav binary" body shape in ARCHITECTURE.md §3 is
+  unchanged:
+  - `X-Phrase-Target` — the target string, **base64 of UTF-8**. HTTP
+    headers are latin-1, so raw Odia or Devanagari cannot be sent.
+  - `X-Phrase-Id` and `X-Phrase-Verified` — so the UI can keep saying
+    "pending validation" from data rather than from a hardcoded string.
+- **Add `expose_headers` to the CORS middleware in `backend/main.py`.**
+  `allow_origins=["*"]` does not make custom response headers readable:
+  without `Access-Control-Expose-Headers` the browser hides them and the
+  frontend sees nothing, with no error. This is the step most likely to
+  waste an hour.
+- Headers are absent when there was no phrase-bank match — a translated
+  language being spoken, or a refusal — so the frontend must treat them
+  as optional and keep the current fallback.
+- Then in `frontend/src/screens/Result.jsx`, set `textIsTarget: true`
+  when the header is present and restore the `.target-text` hero
+  treatment. The fallback path stays for when it is not.
+- Document the headers in ARCHITECTURE.md §3 and DATA_DICTIONARY.md §4
+  **before** writing the code (RULES.md §6).
+- **Commit: "feat: /speak reports which phrase it spoke"**
+
 ---
 
 ## If time runs out before Phase 10
