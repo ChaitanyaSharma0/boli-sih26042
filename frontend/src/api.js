@@ -16,8 +16,20 @@ async function detail(response) {
   }
 }
 
+// fetch rejects with "Failed to fetch" when the server is unreachable,
+// which tells a teacher nothing. Say what happened instead.
+const UNREACHABLE = "Couldn't reach the server. Check it is running and try again.";
+
+async function send(path, init) {
+  try {
+    return await fetch(`${BASE}${path}`, init);
+  } catch {
+    throw new Error(UNREACHABLE);
+  }
+}
+
 async function postJson(path, body) {
-  const response = await fetch(`${BASE}${path}`, {
+  const response = await send(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -30,7 +42,7 @@ async function postJson(path, body) {
 // cannot do from this response and never hardcodes it (RULES.md §5), so a
 // backend change to a language's capability needs no frontend change.
 export async function languages() {
-  const response = await fetch(`${BASE}/languages`);
+  const response = await send("/languages");
   if (!response.ok) throw new Error(await detail(response));
   return response.json(); // [{ code, name, translation, tts, note }]
 }
@@ -38,7 +50,7 @@ export async function languages() {
 export async function ocr(file) {
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(`${BASE}/ocr`, { method: "POST", body: form });
+  const response = await send("/ocr", { method: "POST", body: form });
   if (!response.ok) throw new Error(await detail(response));
   return response.json(); // { text, confidence }
 }
@@ -71,7 +83,7 @@ export function createLesson({ sourceText, sourceType, languages }) {
 // phrase bank. Collapsing those two into one "result" is how a caller
 // would end up rendering silence as success (ARCHITECTURE.md §3).
 export async function speak(text, lang) {
-  const response = await fetch(`${BASE}/speak`, {
+  const response = await send("/speak", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text, lang }),

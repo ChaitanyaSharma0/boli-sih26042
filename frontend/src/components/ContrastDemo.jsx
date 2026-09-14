@@ -36,14 +36,14 @@ export default function ContrastDemo() {
 
   if (!open) {
     return (
-      <button className="link" onClick={() => setOpen(true)}>
-        Why simplifying matters — see the verified example
+      <button className="demo-open" onClick={() => setOpen(true)}>
+        Why simplifying matters: see the verified example
       </button>
     );
   }
 
   return (
-    <div className="panel demo">
+    <div className="work demo">
       <h2>Verified example</h2>
       <p className="group-blurb">
         These two Hindi sentences are fixed, and we have checked what they

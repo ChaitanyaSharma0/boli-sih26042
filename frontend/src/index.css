@@ -1,399 +1,486 @@
-/* BOLI — visual language shared with the SIH deck (PLAN.md Phase 9).
-   The palette values are the deck's own, taken from its build.js, so the
-   app and the slides read as one product rather than two designs from
-   two different days.
+/* BOLI — a working tool for a teacher standing in front of a class, on a
+   phone, mid-lesson. Every decision here serves getting from "type a
+   sentence" to "play the audio" quickly, and showing honestly what each
+   language can and cannot do.
 
-   Mobile-first throughout: the primary user is a teacher holding a phone
-   at the front of a classroom (PRD.md §2, RULES.md §5).
+   The palette is the SIH deck's own, so the app, the slides and the
+   prototype videos read as one product. Only the neutrals are new.
 
    Two rules this file does not bend:
-   - Colour is never the only carrier of meaning. The real-translation vs
-     phrase-bank distinction is in the group heading and the badge text
-     first; colour and the solid-vs-dashed edge are redundant.
-   - The deck's amber reaches only 4.28:1 on white, under the 4.5:1 WCAG
-     AA needs for text, and no lighter background can raise it. Amber is
-     therefore an accent — borders and tints, where the bar is 3:1 — and
-     never the colour of words. */
+
+   - Colour never carries meaning alone. Real-translation vs phrase-bank is
+     in the section heading, the badge text and the sentence first; the
+     edge style and colour are redundant reinforcement.
+   - The deck's amber is 4.28:1 on white and no lighter ground lifts it
+     past 4.5:1, so amber is an accent — edges, tints, never words. */
 
 :root {
+  /* Deck identity */
   --navy: #1e3a5f;
   --green: #1b6b45;
-  --red: #b02a20;
   --amber: #b06a00;
+  --red: #b02a20;
 
-  --card: #f1f4f8;
-  --card-green: #e8f3ed;
-  --amber-tint: #fdf6ea;
-  --red-tint: #fdf3f2;
+  /* Surfaces */
+  --paper: #ffffff;
+  --surface: #f1f4f8;
+  --surface-green: #e8f3ed;
+  --surface-amber: #fdf6ea;
+  --surface-red: #fdf3f2;
 
-  --text: #1a1a1a;
-  --muted: #555555;
-  --line: #d3dae3;
+  /* Neutrals: ink is navy-tinted so body text sits with the brand rather
+     than against it; slate is cooled to match. */
+  --ink: #16202b;
+  --slate: #55606e;
+  --edge: #dce3ec;
 
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 1px 3px rgba(30, 58, 95, 0.12);
-  --shadow-raised: 0 4px 12px rgba(30, 58, 95, 0.16);
+  --radius: 10px;
+  --radius-sm: 6px;
+
+  /* One shadow, used only on things the app produced. */
+  --lift: 0 1px 2px rgba(22, 32, 43, 0.06), 0 2px 8px rgba(22, 32, 43, 0.06);
+
+  --step: 0.25rem;
+  --measure: 34rem;
+
+  --ui:
+    "IBM Plex Sans Devanagari", system-ui, -apple-system, "Segoe UI",
+    "Nirmala UI", sans-serif;
+  --display: "Tiro Devanagari Hindi", Georgia, serif;
+  /* Ol Chiki has effectively one good face; keep it in the stack wherever
+     Santali output can appear. */
+  --script: "Noto Sans Ol Chiki", "IBM Plex Sans Devanagari", "Nirmala UI",
+    sans-serif;
 }
 
 * {
   box-sizing: border-box;
+  /* Grid and flex children default to min-width:auto, which is what let the
+     step rail push the whole document wider than a 390px phone. */
+  min-width: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  background: #fff;
-  color: var(--text);
-  font-family:
-    system-ui, -apple-system, "Segoe UI", "Noto Sans Devanagari",
-    "Noto Sans Ol Chiki", sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--ui);
+  font-size: 1rem;
   line-height: 1.55;
 }
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
+  color: inherit;
 }
 
 :focus-visible {
   outline: 3px solid var(--navy);
-  outline-offset: 3px;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 main:focus {
   outline: none;
 }
 
+/* --- Shell ------------------------------------------------------------
+   Left-anchored working column. On a wide screen it sits against a left
+   gutter with the space left open — a console, not a landing page. */
 .app-shell {
-  width: min(100% - 2rem, 46rem);
-  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding-inline: 1rem;
 }
 
-/* --- Header ----------------------------------------------------------- */
+.app-shell > * {
+  width: 100%;
+  max-width: var(--measure);
+}
+
+main {
+  flex: 1;
+  padding-block: 1.25rem 2rem;
+}
+
+/* --- Header ------------------------------------------------------------ */
 .app-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding-block: 1.5rem;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
+  gap: 0.6rem;
+  padding-block: 1rem 0.85rem;
 }
 
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 14px 14px 14px 4px;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 12px 12px 12px 3px;
   background: var(--green);
-  color: #fff;
-  font-size: 1.35rem;
-  font-weight: 800;
+  color: var(--paper);
+  font-family: var(--display);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding-bottom: 0.15rem;
 }
 
-.brand strong {
-  display: block;
+.brand-name {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  line-height: 1.1;
   color: var(--navy);
-  font-size: 1.4rem;
-  letter-spacing: 0.07em;
-  line-height: 1.15;
+  letter-spacing: 0.01em;
 }
 
-.brand small {
+.brand-line {
   display: block;
-  margin-top: 0.15rem;
-  color: var(--muted);
-  font-size: 0.7rem;
+  color: var(--slate);
+  font-size: 0.75rem;
+  line-height: 1.3;
 }
 
-.event-label {
-  padding: 0.4rem 0.55rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  color: var(--navy);
-  font-size: 0.7rem;
-  font-weight: 700;
+/* --- Step rail ---------------------------------------------------------
+   A real sequence, so it is numbered. Scrolls rather than stretching the
+   document if it ever runs out of room. */
+.rail {
+  border-block: 1px solid var(--edge);
+}
+
+.rail ol {
+  display: flex;
+  gap: 1.1rem;
+  margin: 0;
+  padding: 0.6rem 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.rail ol::-webkit-scrollbar {
+  display: none;
+}
+
+.rail li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--slate);
+  font-size: 0.8rem;
   white-space: nowrap;
 }
 
-/* --- Stepper ---------------------------------------------------------- */
-.progress {
-  border-block: 1px solid var(--line);
-  margin-bottom: 1.75rem;
-}
-
-.progress ol {
+.rail-num {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0.9rem 0;
-  list-style: none;
-}
-
-.progress li {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  color: var(--muted);
-  font-size: 0.75rem;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  background: var(--paper);
+  font-size: 0.72rem;
   font-weight: 600;
 }
 
-.step-number {
-  display: grid;
-  place-items: center;
-  flex: 0 0 1.6rem;
-  height: 1.6rem;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--card);
-  font-size: 0.8rem;
-}
-
-.progress .is-current {
+.rail .is-current {
   color: var(--navy);
-  font-weight: 800;
+  font-weight: 600;
 }
 
-.is-current .step-number {
+.is-current .rail-num {
   background: var(--navy);
   border-color: var(--navy);
-  color: #fff;
+  color: var(--paper);
 }
 
-.is-done .step-number {
-  background: var(--card-green);
+.is-done .rail-num {
+  background: var(--surface-green);
   border-color: var(--green);
   color: var(--green);
 }
 
-/* --- Page headings ---------------------------------------------------- */
-.eyebrow {
-  margin: 0 0 0.7rem;
-  color: var(--green);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
+/* --- Headings and prose ------------------------------------------------ */
 h1 {
-  max-width: 34ch;
-  margin: 0;
+  margin: 0 0 0.5rem;
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 6.5vw, 2.1rem);
+  font-weight: 400;
+  line-height: 1.2;
   color: var(--navy);
-  font-size: clamp(1.7rem, 5.5vw, 2.4rem);
-  line-height: 1.15;
-  letter-spacing: -0.03em;
 }
 
 h2 {
   margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
   color: var(--navy);
-  font-size: 1.15rem;
 }
 
 h3 {
-  margin: 0 0 0.25rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--navy);
-  font-size: 1.05rem;
 }
 
 .intro {
-  margin: 0.9rem 0 1.5rem;
-  color: var(--muted);
-  font-size: 1rem;
-  line-height: 1.7;
+  margin: 0 0 1.25rem;
+  color: var(--slate);
+  line-height: 1.6;
 }
 
-/* --- Cards ------------------------------------------------------------
-   The deck's card treatment: light ground, rounded corners, a shadow
-   soft enough to lift the card without announcing itself. */
-.panel,
-.group {
-  margin-top: 1.25rem;
-  padding: 1.15rem;
-  background: var(--card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.panel--simplified {
-  background: var(--card-green);
-  border-left: 4px solid var(--green);
-}
-
-.section-title,
-.result-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-bottom: 0.75rem;
-}
-
-.field-label,
-label {
-  display: block;
+.section-label {
+  margin: 1.5rem 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--navy);
-  font-size: 0.82rem;
-  font-weight: 700;
 }
 
-.field-label span[lang="hi"] {
-  color: var(--muted);
-  font-weight: 500;
+.section-note {
+  margin: 0 0 0.7rem;
+  color: var(--slate);
+  font-size: 0.88rem;
+  line-height: 1.6;
 }
 
-.group-blurb {
-  margin: 0.2rem 0 0.85rem;
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.7;
+/* --- Surfaces ----------------------------------------------------------
+   Exactly two. A working surface for things you act on, a result surface
+   for things the app produced. Nothing else gets a shadow. */
+.work {
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
 }
 
-/* --- Form controls ---------------------------------------------------- */
+.result {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--paper);
+  border: 1px solid var(--edge);
+  border-left: 4px solid var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--lift);
+}
+
+/* --- Capability ---------------------------------------------------------
+   Derived from the API's `translation` field, never from a language code,
+   so the styling and the words cannot drift apart. */
+.cap-full {
+  border-left-color: var(--green);
+  border-left-style: solid;
+}
+
+.cap-phrase_bank {
+  border-left-color: var(--amber);
+  border-left-style: dashed;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.12rem 0.4rem;
+  border: 1px solid var(--slate);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cap-full .badge {
+  border-color: var(--green);
+  background: var(--surface-green);
+}
+
+.cap-phrase_bank .badge {
+  border-color: var(--amber);
+  background: var(--surface-amber);
+}
+
+/* --- Form controls ------------------------------------------------------ */
+.field-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.field-label .in-script {
+  color: var(--slate);
+  font-weight: 400;
+}
+
 textarea {
   display: block;
   width: 100%;
-  margin-top: 0.5rem;
-  padding: 0.85rem;
-  border: 1px solid var(--muted);
+  padding: 0.75rem;
+  border: 1px solid var(--slate);
   border-radius: var(--radius-sm);
-  background: #fff;
-  color: var(--text);
-  font-size: 1.1rem;
-  line-height: 1.8;
+  background: var(--paper);
+  font-size: 1.15rem;
+  line-height: 1.7;
   resize: vertical;
 }
 
 textarea::placeholder {
-  color: var(--muted);
+  color: var(--slate);
   opacity: 1;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin: 1.2rem 0;
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+textarea:hover {
+  border-color: var(--navy);
 }
 
-.divider::before,
-.divider::after {
+textarea:disabled {
+  background: var(--surface);
+  color: var(--slate);
+  cursor: not-allowed;
+}
+
+.or {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.9rem 0;
+  color: var(--slate);
+  font-size: 0.78rem;
+}
+
+.or::before,
+.or::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--line);
+  background: var(--edge);
 }
 
+/* The optional path, so it is drawn as optional. */
 .photo-button {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.7rem;
   width: 100%;
-  padding: 0.9rem;
+  padding: 0.8rem;
   border: 1px dashed var(--navy);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--paper);
   color: var(--navy);
   text-align: left;
   cursor: pointer;
 }
 
-.photo-button strong,
-.photo-button small {
-  display: block;
+.photo-button:hover:not(:disabled) {
+  background: var(--surface-green);
+  border-color: var(--green);
+  color: var(--green);
 }
 
-.photo-button strong {
-  font-size: 0.9rem;
+.photo-button:active:not(:disabled) {
+  background: var(--surface);
 }
 
-.photo-button small {
-  margin-top: 0.2rem;
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.5;
+.photo-button:disabled {
+  border-color: var(--edge);
+  color: var(--slate);
+  cursor: progress;
 }
 
 .photo-icon {
-  font-size: 1.6rem;
+  flex: none;
+  color: var(--navy);
 }
 
-/* --- Buttons ---------------------------------------------------------- */
+.photo-button:hover:not(:disabled) .photo-icon {
+  color: var(--green);
+}
+
+.photo-button strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.photo-button small {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--slate);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+/* --- Buttons ------------------------------------------------------------ */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
   min-height: 3rem;
-  padding: 0.75rem 1rem;
+  padding: 0.7rem 1.1rem;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .button--primary {
   background: var(--green);
-  color: #fff;
-  box-shadow: var(--shadow);
+  color: var(--paper);
+}
+
+.button--primary:hover:not(:disabled) {
+  background: #17593a;
+}
+
+.button--primary:active:not(:disabled) {
+  background: #124a30;
 }
 
 .button--secondary {
-  background: #fff;
+  background: var(--paper);
   border-color: var(--navy);
   color: var(--navy);
 }
 
-.button:hover:not(:disabled),
-.photo-button:hover:not(:disabled) {
-  box-shadow: var(--shadow-raised);
+.button--secondary:hover:not(:disabled) {
+  background: var(--surface);
 }
 
-.button:disabled,
-.photo-button:disabled {
-  background: #d8dee6;
-  border-color: transparent;
-  color: var(--muted);
-  box-shadow: none;
+.button--secondary:active:not(:disabled) {
+  background: var(--edge);
+}
+
+.button:disabled {
+  background: var(--surface);
+  border-color: var(--edge);
+  color: var(--slate);
   cursor: not-allowed;
 }
 
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  margin-top: 1.5rem;
+.button[aria-busy="true"] {
+  cursor: progress;
 }
 
-/* An inline action that is a real button for accessibility but reads as
-   a link. */
+/* A real button that reads as a link. */
 .link {
-  width: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
+  padding: 0.35rem 0;
   border: none;
   background: none;
-  box-shadow: none;
   color: var(--navy);
+  font-size: 0.9rem;
   font-weight: 600;
+  text-align: left;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -403,95 +490,83 @@ textarea::placeholder {
   color: var(--green);
 }
 
-/* --- Messages --------------------------------------------------------- */
+/* --- Action bar ---------------------------------------------------------
+   Sticky, not fixed: it stays in the document, so when the on-screen
+   keyboard shrinks the layout viewport the bar rides above it instead of
+   sitting behind it. */
+.actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+  padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  background: var(--paper);
+  border-top: 1px solid var(--edge);
+}
+
+.actions .button {
+  flex: 1;
+}
+
+.actions .button--secondary {
+  flex: 0 1 8rem;
+}
+
+/* With the on-screen keyboard open the viewport is short, and a bar pinned
+   to the bottom lands on top of the very field being typed into — measured
+   at a 420px viewport, where it covered the Hindi box. Below this height it
+   goes back into normal flow, so the field stays fully visible and the
+   button is a short scroll away. */
+@media (max-height: 34rem) {
+  .actions {
+    position: static;
+    border-top: none;
+  }
+}
+
+/* --- Messages -----------------------------------------------------------
+   Each one says in words what it is; the colour is reinforcement. */
 .note,
-.error,
-.warn {
-  padding: 0.55rem 0.8rem;
-  border-left: 4px solid;
+.warn,
+.error {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   font-size: 0.88rem;
-  line-height: 1.65;
+  line-height: 1.6;
 }
 
 .note {
-  border-color: #9aa7b6;
-  background: #fff;
-  color: var(--muted);
+  border-color: var(--slate);
+  background: var(--surface);
+  color: var(--slate);
+}
+
+/* A limitation, not a failure — so amber, not red. The words are ink; the
+   amber is the edge and the tint. */
+.warn {
+  border-color: var(--amber);
+  background: var(--surface-amber);
+  color: var(--ink);
 }
 
 .error {
   border-color: var(--red);
-  background: var(--red-tint);
+  background: var(--surface-red);
   color: var(--red);
 }
 
-/* A translation the model could not fully handle. Never styled like clean
-   output — DATA_DICTIONARY.md §4, ARCHITECTURE.md §3. Amber, not red: the
-   request worked, the model's coverage did not. The words use the deck's
-   body colour at 16:1; amber carries the signal as a border and tint. */
-.warn {
-  display: block;
-  margin-top: 0.4rem;
-  border-color: var(--amber);
-  background: var(--amber-tint);
-  color: var(--text);
-  font-size: 0.85rem;
-}
-
 .stage {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--muted);
-  font-style: italic;
+  margin: 0 0 0.75rem;
+  color: var(--slate);
+  font-size: 0.9rem;
 }
 
-.spinner {
-  flex: 0 0 1rem;
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid var(--line);
-  border-top-color: var(--navy);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* --- Language groups and chips ---------------------------------------- */
-.language-group {
-  min-width: 0;
-  margin: 0 0 1.25rem;
-  padding: 1rem;
-  border-radius: var(--radius);
-}
-
-.language-group--ai {
-  border: 2px solid var(--navy);
-}
-
-/* Dashed = a fixed phrase list, no translation model. Amber for a known
-   limitation, not red: nothing here is broken. */
-.language-group--bank {
-  border: 2px dashed var(--amber);
-  background: var(--amber-tint);
-}
-
-.language-group legend {
-  max-width: 100%;
-  padding-inline: 0.45rem;
-  color: var(--navy);
-  font-size: 0.85rem;
-  font-weight: 800;
-  line-height: 1.6;
-}
-
-.language-grid {
+/* --- Language chips ----------------------------------------------------- */
+.chip-list {
   display: grid;
   gap: 0.6rem;
 }
@@ -499,31 +574,17 @@ textarea::placeholder {
 .chip {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  min-width: 0;
-  padding: 0.85rem;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-left-width: 5px;
-  border-radius: var(--radius-sm);
-  font-weight: normal;
+  gap: 0.7rem;
+  padding: 0.8rem;
+  background: var(--paper);
+  border: 1px solid var(--edge);
+  border-left: 4px solid var(--edge);
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
-/* Solid green edge = a real model translates this language. */
-.chip-full {
-  border-left-color: var(--green);
-  border-left-style: solid;
-}
-
-.chip-phrase_bank {
-  border-left-color: var(--amber);
-  border-left-style: dashed;
-}
-
-.chip-selected {
-  background: var(--card-green);
-  border-color: var(--green);
+.chip:hover {
+  background: var(--surface);
 }
 
 .chip:focus-within {
@@ -531,171 +592,226 @@ textarea::placeholder {
   outline-offset: 2px;
 }
 
+.chip-selected {
+  background: var(--surface-green);
+  border-color: var(--green);
+}
+
+.chip-selected.cap-phrase_bank {
+  border-color: var(--amber);
+  background: var(--surface-amber);
+}
+
 .chip input {
   flex: none;
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 1.25rem;
+  height: 1.25rem;
   margin-top: 0.15rem;
   accent-color: var(--navy);
+}
+
+.chip input:disabled ~ .chip-body {
+  opacity: 0.55;
 }
 
 .chip-body {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
-  min-width: 0;
+  gap: 0.3rem;
 }
 
-.chip-name {
+.chip-head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.45rem;
-  color: var(--navy);
+}
+
+.chip-name {
   font-size: 1.05rem;
   font-weight: 600;
+  color: var(--navy);
 }
 
-.chip-native {
-  color: var(--muted);
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-/* Badge text stays the body colour at every size; the capability colour is
-   carried by the border, which only has to clear the 3:1 non-text bar. */
-.chip-badge {
-  display: inline-block;
-  padding: 0.15rem 0.45rem;
-  border: 1px solid var(--muted);
-  border-radius: 5px;
-  color: var(--text);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.chip-full .chip-badge {
-  border-color: var(--green);
-  background: var(--card-green);
-}
-
-.chip-phrase_bank .chip-badge {
-  border-color: var(--amber);
-  background: var(--amber-tint);
+.in-script {
+  font-family: var(--script);
+  color: var(--slate);
+  font-size: 0.95rem;
 }
 
 .chip-detail {
-  font-size: 0.88rem;
-  line-height: 1.65;
+  font-size: 0.87rem;
+  line-height: 1.55;
 }
 
 .chip-note {
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-style: italic;
+  color: var(--slate);
+  font-size: 0.84rem;
 }
 
-.chip input:disabled ~ .chip-body {
-  opacity: 0.6;
-}
-
-/* --- Result cards ------------------------------------------------------ */
-.result-card {
-  background: #fff;
-  border: 2px solid var(--navy);
-  border-left-width: 5px;
-}
-
-.result-card.chip-phrase_bank {
-  border: 2px dashed var(--amber);
-  background: var(--amber-tint);
-}
-
-.result-heading h2 {
+/* --- Results ------------------------------------------------------------ */
+.result-head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  margin-bottom: 0.6rem;
 }
 
-.sentence-list {
+/* The point of the whole app: the target script is the largest thing on
+   the screen, not the English chrome around it. */
+.target-text {
+  font-family: var(--script);
+  font-size: 1.25rem;
+  line-height: 1.95;
   margin: 0.5rem 0;
-  padding-left: 1.2rem;
 }
 
-.sentence-list li {
-  margin: 0.35rem 0;
-  font-size: 1.05rem;
-  line-height: 1.9;
+/* The Hindi we asked with, not the language that was spoken — so it is
+   deliberately not given the large target-script treatment. /speak returns
+   only audio, so the matched phrase-bank string never reaches the client. */
+.asked-for {
+  margin: 0.4rem 0;
+  color: var(--slate);
+  font-size: 0.92rem;
 }
 
-.sentence-list.translated li {
-  font-size: 1.15rem;
+.sentences {
+  margin: 0.4rem 0;
+  padding-left: 1.15rem;
 }
 
-.subs li {
-  color: var(--muted);
-  font-size: 0.88rem;
+.sentences li {
+  margin: 0.3rem 0;
+  line-height: 1.8;
+}
+
+.sentences.target li {
+  font-family: var(--script);
+  font-size: 1.2rem;
+  line-height: 1.95;
 }
 
 .phrase-options {
-  padding-left: 1.2rem;
+  margin: 0.4rem 0;
+  padding-left: 1.15rem;
 }
 
 .phrase-options li {
-  margin: 0.4rem 0;
-  line-height: 1.8;
+  margin: 0.45rem 0;
+  line-height: 1.7;
 }
 
+/* The one motion moment in the app: audio becoming playable is the payoff,
+   so it gets a single reveal and nothing else animates. */
 audio {
   display: block;
   width: 100%;
-  margin-top: 0.5rem;
+  margin: 0.5rem 0;
+  animation: ready 180ms ease-out;
 }
 
-/* --- The contrast demo -------------------------------------------------- */
+@keyframes ready {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+/* --- Simplified Hindi ---------------------------------------------------
+   Evidence for what the pedagogy step did. The one-line summary is open by
+   default because it is the argument; the full working is behind a toggle. */
+.summary-line {
+  margin: 0.3rem 0 0;
+  font-size: 0.95rem;
+}
+
+.swap {
+  font-weight: 600;
+  color: var(--navy);
+}
+
+details.detail {
+  margin-top: 0.6rem;
+}
+
+details.detail summary {
+  padding: 0.35rem 0;
+  color: var(--navy);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+details.detail summary:hover {
+  color: var(--green);
+}
+
+.subs {
+  margin: 0.4rem 0;
+  padding-left: 1.15rem;
+  color: var(--slate);
+  font-size: 0.87rem;
+}
+
+.subs li {
+  margin: 0.3rem 0;
+  line-height: 1.6;
+}
+
+/* --- Contrast demo ------------------------------------------------------
+   Evidence for a judge, not a step for a teacher, so it is deliberately
+   quieter than everything above it and sits after the primary action. */
+.demo {
+  margin-top: 1.5rem;
+}
+
+.demo-open {
+  padding: 0.35rem 0;
+  border: none;
+  background: none;
+  color: var(--slate);
+  font-size: 0.85rem;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.demo-open:hover {
+  color: var(--navy);
+}
+
 .demo-case {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--line);
+  padding-top: 0.9rem;
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--edge);
 }
 
-.demo-case p[lang="sat"] {
-  padding: 0.6rem 0.8rem;
-  background: var(--card-green);
-  border-radius: var(--radius-sm);
-  font-size: 1.1rem;
-  line-height: 1.9;
+.demo-source {
+  margin: 0.2rem 0 0.4rem;
+  font-size: 1.05rem;
+  line-height: 1.7;
 }
 
-/* --- Footer, skip link -------------------------------------------------- */
+/* --- Footer ------------------------------------------------------------- */
 .app-footer {
-  margin-top: 2.5rem;
-  padding: 1.25rem 0 2rem;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
+  padding: 1rem 0 1.5rem;
+  border-top: 1px solid var(--edge);
+  color: var(--slate);
   font-size: 0.78rem;
-  line-height: 1.8;
+  line-height: 1.7;
 }
 
 .app-footer strong {
   color: var(--navy);
 }
 
-.app-footer span {
-  display: block;
-  margin-top: 0.25rem;
-}
-
+/* --- Skip link ---------------------------------------------------------- */
 .skip-link:not(:focus) {
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
@@ -703,47 +819,50 @@ audio {
 
 .skip-link:focus {
   position: fixed;
-  top: 0.75rem;
-  left: 0.75rem;
-  z-index: 100;
-  padding: 0.75rem;
-  background: #fff;
+  top: 0.6rem;
+  left: 0.6rem;
+  z-index: 20;
+  padding: 0.6rem 0.8rem;
+  background: var(--paper);
   border: 2px solid var(--navy);
   color: var(--navy);
+  font-weight: 600;
 }
 
-/* --- Wider screens ------------------------------------------------------ */
-@media (min-width: 40rem) {
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- Wider screens ------------------------------------------------------
+   The column stays left-anchored; the extra room is left as room. */
+@media (min-width: 48rem) {
   .app-shell {
-    width: min(100% - 4rem, 46rem);
+    padding-inline: 2.5rem;
   }
 
-  .panel,
-  .group,
-  .language-group {
-    padding: 1.5rem;
-  }
-
-  .language-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .progress li {
-    font-size: 0.85rem;
+  main {
+    padding-block: 1.75rem 2.5rem;
   }
 
   .actions {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .actions--end {
-    justify-content: flex-end;
+    position: static;
+    justify-content: flex-start;
+    padding-bottom: 0.75rem;
+    border-top: none;
   }
 
   .actions .button {
-    width: auto;
-    min-width: 12rem;
+    flex: 0 0 auto;
+    min-width: 11rem;
+  }
+
+  .chip-list {
+    gap: 0.7rem;
   }
 }
 

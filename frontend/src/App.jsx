@@ -8,9 +8,11 @@ import Result from "./screens/Result";
 
 const STEPS = ["Capture", "Languages", "Result"];
 
-function Stepper({ step }) {
+// The three screens are a genuine sequence, so they are numbered. Nothing
+// else in the app is.
+function Rail({ step }) {
   return (
-    <nav className="progress" aria-label="Lesson progress">
+    <nav className="rail" aria-label="Progress">
       <ol>
         {STEPS.map((label, index) => (
           <li
@@ -20,10 +22,11 @@ function Stepper({ step }) {
             }
             aria-current={index === step ? "step" : undefined}
           >
-            <span className="step-number" aria-hidden="true">
+            <span className="rail-num" aria-hidden="true">
               {index < step ? "✓" : index + 1}
             </span>
             <span>{label}</span>
+            {index < step && <span className="sr-only">, done</span>}
           </li>
         ))}
       </ol>
@@ -44,9 +47,8 @@ export default function App() {
   // screen 3 consumes both (ARCHITECTURE.md §5).
   function go(nextStep) {
     setStep(nextStep);
-    // Moving between screens replaces the whole page: send focus to the
-    // new content so a keyboard or screen-reader user is not left on a
-    // button that no longer exists.
+    // The whole page changes, so move focus to the new content — otherwise
+    // a keyboard or screen-reader user is left on a button that is gone.
     requestAnimationFrame(() => {
       mainRef.current?.focus();
       window.scrollTo({ top: 0 });
@@ -63,19 +65,16 @@ export default function App() {
       </a>
 
       <header className="app-header">
-        <span className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            बो
-          </span>
-          <span>
-            <strong>BOLI</strong>
-            <small>One lesson. More voices.</small>
-          </span>
+        <span className="brand-mark" aria-hidden="true">
+          बो
         </span>
-        <span className="event-label">SIH26042</span>
+        <span>
+          <span className="brand-name">BOLI</span>
+          <span className="brand-line">One lesson, more voices</span>
+        </span>
       </header>
 
-      <Stepper step={step} />
+      <Rail step={step} />
 
       <main id="main-content" ref={mainRef} tabIndex={-1}>
         {step === 0 && (
@@ -104,15 +103,13 @@ export default function App() {
         )}
       </main>
 
-      {/* The scope boundary is on every screen, including the chrome.
-          Santali is the only one of these languages with a translation
-          model; the other four are a curated phrase bank (PRD.md §4). */}
+      {/* The scope boundary belongs on every screen, including the chrome
+          (PRD.md §4). */}
       <footer className="app-footer">
-        <strong>BOLI</strong> · Built for Jharkhand's multilingual classrooms
-        <span>
-          Santali: real AI translation, no voice · Ho, Mundari, Kurukh, Sadri:
-          curated phrase bank only, pending validation
-        </span>
+        <strong>BOLI</strong> — built for Jharkhand's multilingual classrooms.
+        Santali is really translated and has no voice. Ho, Mundari, Kurukh and
+        Sadri are spoken from a curated phrase bank, pending validation by a
+        native speaker.
       </footer>
     </div>
   );

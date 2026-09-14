@@ -82,7 +82,7 @@ export default function Result({
             if (cancelled) return;
             setAudio((prev) => ({
               ...prev,
-              [language.code]: { ...result, text },
+              [language.code]: { ...result, text, textIsTarget: false },
             }));
           } catch (e) {
             if (cancelled) return;
@@ -171,7 +171,7 @@ export default function Result({
       const result = await speak(phrase.hindi_source, lang);
       setAudio((prev) => ({
         ...prev,
-        [lang]: { ...result, text: phrase.target_text },
+        [lang]: { ...result, text: phrase.target_text, textIsTarget: true },
       }));
     } catch (e) {
       setAudio((prev) => ({
@@ -181,116 +181,118 @@ export default function Result({
     }
   }
 
+  // Languages that can produce audio come first: that is what the teacher
+  // is waiting for, and it is also the order the requests complete in.
+  const ordered = [...chosen].sort(
+    (a, b) => Number(b.tts === "full") - Number(a.tts === "full"),
+  );
+
   return (
     <section aria-labelledby="result-heading">
-      <p className="eyebrow">Step 03 · Result</p>
-      <h1 id="result-heading">A lesson, ready to be heard.</h1>
-      <p className="intro">
-        Check the wording and the audio before playing it to the class.
-      </p>
+      <h1 id="result-heading">Ready to play</h1>
 
       <div role="status" aria-live="polite">
-        {stage && (
-          <p className="stage">
-            <span className="spinner" aria-hidden="true" />
-            {stage}
-          </p>
-        )}
+        {stage && <p className="stage">{stage}</p>}
       </div>
       {error && <p className="error">{error}</p>}
 
-      {simplifyError && (
-        <div className="panel">
-          <h2>Simplified Hindi</h2>
-          <p className="error">
-            The lesson could not be simplified this time. {simplifyError}
-          </p>
-          <p className="note">
-            Anything below that does not need this step is unaffected.
-          </p>
-        </div>
-      )}
-
-      {adapted && (
-        <div className="panel panel--simplified">
-          <h2>Simplified Hindi</h2>
-          <p className="group-blurb">
-            {adapted.concept} — rewritten for a child who does not speak Hindi
-            at home. Still Hindi; nothing is translated yet.
-          </p>
-          <ol className="sentence-list" lang="hi">
-            {adapted.adapted_hindi.map((sentence, i) => (
-              <li key={i}>{sentence}</li>
-            ))}
-          </ol>
-          {adapted.substitutions.length > 0 && (
-            <ul className="subs">
-              {adapted.substitutions.map((s, i) => (
-                <li key={i}>
-                  <strong>{s.from}</strong> → <strong>{s.to}</strong> — {s.why}
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="note">
-            About {adapted.readability.before_wps} words per sentence before,{" "}
-            {adapted.readability.after_wps} after.
-          </p>
-        </div>
-      )}
-
-      {chosen.map((language) => {
+      {ordered.map((language) => {
         const mine = translations.filter((t) => t.code === language.code);
         const spoken = audio[language.code];
         const isBank = language.translation === "phrase_bank";
+        const native = nativeName(language);
 
         return (
           <article
             key={language.code}
-            className={"panel result-card chip-" + language.translation}
-            aria-labelledby={"result-" + language.code}
+            className={`result cap-${language.translation}`}
+            aria-labelledby={`result-${language.code}`}
           >
-            <div className="result-heading">
-              <h2 id={"result-" + language.code}>
-                {language.name}
-                {nativeName(language) && (
-                  <span className="chip-native" lang={language.code}>
-                    {nativeName(language)}
-                  </span>
-                )}
-              </h2>
-              <span className="chip-badge">
+            <div className="result-head">
+              <h2 id={`result-${language.code}`}>{language.name}</h2>
+              {native && (
+                <span className="in-script" lang={language.code}>
+                  {native}
+                </span>
+              )}
+              <span className="badge">
                 {isBank ? "Phrase bank only" : "AI translation"}
               </span>
             </div>
 
-            {isBank && (
-              <p className="group-blurb">
-                No translation model exists for {language.name}. Anything below
-                comes from the curated phrase bank, not from translating your
-                sentence — and it is pending validation by a native speaker.
-              </p>
+            {spoken?.kind === "audio" && (
+              <>
+                <AudioPlayer
+                  blob={spoken.blob}
+                  label={`${language.name} audio`}
+                />
+                {spoken.textIsTarget ? (
+                  <p className="target-text" lang={language.code}>
+                    {spoken.text}
+                  </p>
+                ) : (
+                  <p className="asked-for">
+                    The {language.name} phrase for{" "}
+                    <span lang="hi">{spoken.text}</span>
+                  </p>
+                )}
+                {/* Only claim something was spoken when it actually was. */}
+                {isBank && (
+                  <p className="section-note">
+                    From the curated phrase bank, not translated from your
+                    sentence. No native speaker has checked it yet.
+                  </p>
+                )}
+              </>
+            )}
+
+            {spoken?.kind === "phrase_bank_only" && (
+              <>
+                <p className="note">{spoken.reason}</p>
+                <p className="field-label">
+                  What BOLI can say in {language.name} today
+                </p>
+                <ul className="phrase-options">
+                  {spoken.options.map((phrase) => (
+                    <li key={phrase.id}>
+                      {phrase.hindi_source} —{" "}
+                      <span className="in-script" lang={language.code}>
+                        {phrase.target_text}
+                      </span>{" "}
+                      <button
+                        className="link"
+                        onClick={() => playPhrase(language.code, phrase)}
+                      >
+                        Play this one
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {spoken?.kind === "error" && (
+              <p className="error">Couldn't make the audio. {spoken.error}</p>
             )}
 
             {simplifyError && !isBank && (
               <p className="error">
-                No {language.name} translation this time: it depends on the
-                simplification step, which failed. The other languages on this
-                page were not affected.
+                No {language.name} this time: it needs the simplification step,
+                which failed. The other languages here were not affected.
               </p>
             )}
 
             {mine.length > 0 && (
               <>
-                <ol className="sentence-list translated">
+                <ol className="sentences target" lang={language.code}>
                   {mine.map((t, i) => (
-                    <li key={i} lang={language.code}>
+                    <li key={i}>
                       {t.translated}
                       {t.contaminated && (
                         <span className="warn">
-                          The model does not recognise a word in this sentence,
-                          so part of this line is in the wrong script. Try
-                          simpler, more local wording.
+                          The model doesn't know a word in this sentence, so
+                          part of this line is in the wrong script. Try simpler,
+                          more local wording.
                         </span>
                       )}
                     </li>
@@ -311,58 +313,72 @@ export default function Result({
               </p>
             )}
 
-            {spoken?.kind === "audio" && (
-              <>
-                <AudioPlayer
-                  blob={spoken.blob}
-                  label={language.name + " audio"}
-                />
-                <p className="note" lang={language.code}>
-                  Spoken: {spoken.text}
-                </p>
-                {isBank && (
-                  <CorrectionForm
-                    lang={language.code}
-                    original={spoken.text}
-                    lessonId={lessonId}
-                  />
-                )}
-              </>
-            )}
-
-            {spoken?.kind === "phrase_bank_only" && (
-              <>
-                <p className="note">{spoken.reason}</p>
-                <p className="field-label">
-                  What BOLI can say in {language.name} today
-                </p>
-                <ul className="phrase-options">
-                  {spoken.options.map((phrase) => (
-                    <li key={phrase.id}>
-                      {phrase.hindi_source} —{" "}
-                      <span lang={language.code}>{phrase.target_text}</span>{" "}
-                      <button
-                        className="link"
-                        onClick={() => playPhrase(language.code, phrase)}
-                      >
-                        Play
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-
-            {spoken?.kind === "error" && (
-              <p className="error">Could not generate audio. {spoken.error}</p>
+            {spoken?.kind === "audio" && isBank && (
+              <CorrectionForm
+                lang={language.code}
+                original={spoken.text}
+                lessonId={lessonId}
+              />
             )}
           </article>
         );
       })}
 
+      {/* The pedagogy step's evidence. The headline swap stays open, because
+          it is the argument the whole approach rests on; the full working is
+          one click away. */}
+      {(adapted || simplifyError) && (
+        <div className="work">
+          <h2>What we changed in the Hindi</h2>
+          {simplifyError ? (
+            <p className="error">
+              Couldn't simplify the lesson this time. {simplifyError}
+            </p>
+          ) : (
+            <>
+              <p className="summary-line">
+                {adapted.substitutions.length > 0 && (
+                  <>
+                    <span className="swap" lang="hi">
+                      {adapted.substitutions[0].from} → {adapted.substitutions[0].to}
+                    </span>
+                    {", and "}
+                  </>
+                )}
+                {adapted.adapted_hindi.length} shorter sentence
+                {adapted.adapted_hindi.length === 1 ? "" : "s"}
+                {adapted.readability &&
+                  ` (${adapted.readability.before_wps} words per sentence down to ${adapted.readability.after_wps})`}
+                .
+              </p>
+              <details className="detail">
+                <summary>See the full rewrite</summary>
+                <ol className="sentences" lang="hi">
+                  {adapted.adapted_hindi.map((sentence, i) => (
+                    <li key={i}>{sentence}</li>
+                  ))}
+                </ol>
+                {adapted.substitutions.length > 0 && (
+                  <ul className="subs">
+                    {adapted.substitutions.map((s, i) => (
+                      <li key={i}>
+                        <span lang="hi">
+                          {s.from} → {s.to}
+                        </span>{" "}
+                        — {s.why}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </details>
+            </>
+          )}
+        </div>
+      )}
+
       <div className="actions">
         <button className="button button--secondary" onClick={onBack}>
-          <span aria-hidden="true">←</span> Change languages
+          Back
         </button>
       </div>
     </section>

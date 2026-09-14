@@ -3,7 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- interactive-widget=resizes-content keeps the sticky action bar above
+         the on-screen keyboard instead of behind it: the default
+         (resizes-visual) leaves the layout viewport at full height, so a
+         bottom-anchored bar ends up under the keyboard on Android Chrome. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"
+    />
+
+    <!-- IBM Plex Sans Devanagari: UI text, Latin and Devanagari on matched
+         metrics. Tiro Devanagari Hindi: wordmark and screen titles only.
+         Noto Sans Ol Chiki: Santali output — without it Ol Chiki renders as
+         tofu on most machines. Only the weights actually used are requested. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Devanagari:wght@400;500;600;700&family=Tiro+Devanagari+Hindi&family=Noto+Sans+Ol+Chiki&display=swap"
+      rel="stylesheet"
+    />
+
     <title>BOLI</title>
   </head>
   <body>

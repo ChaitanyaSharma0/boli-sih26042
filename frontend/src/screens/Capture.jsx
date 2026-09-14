@@ -40,25 +40,26 @@ export default function Capture({
 
   return (
     <section aria-labelledby="capture-heading">
-      <p className="eyebrow">Step 01 · Capture</p>
-      <h1 id="capture-heading">Start with a Hindi lesson.</h1>
+      <h1 id="capture-heading">Type the lesson line</h1>
       <p className="intro">
-        Type a sentence from the textbook, or photograph the page. You can
-        check and fix the text before continuing.
+        One sentence from the textbook. Photograph the page instead if that is
+        quicker — the text comes back editable either way.
       </p>
 
-      <div className="panel">
-        <div className="section-title">
-          <label className="field-label" htmlFor="hindi">
-            Hindi sentence <span lang="hi">हिंदी वाक्य</span>
-          </label>
-        </div>
-
+      <div className="work">
+        <label className="field-label" htmlFor="hindi">
+          Hindi sentence
+          <span className="in-script" lang="hi">
+            हिंदी वाक्य
+          </span>
+        </label>
         <textarea
           id="hindi"
           lang="hi"
-          rows={4}
+          rows={3}
+          autoFocus
           value={hindiText}
+          disabled={reading}
           onChange={(e) => {
             setHindiText(e.target.value);
             // Editing a photographed line keeps it "ocr" — it did come off
@@ -68,9 +69,9 @@ export default function Capture({
           placeholder="किसान खेत में गेहूँ उगाता है।"
         />
 
-        <div className="divider">
-          <span>or use a photo</span>
-        </div>
+        <p className="or">
+          <span>or</span>
+        </p>
 
         <input
           ref={fileInput}
@@ -86,39 +87,56 @@ export default function Capture({
           type="button"
           className="photo-button"
           disabled={reading}
+          aria-busy={reading}
           onClick={() => fileInput.current?.click()}
         >
-          <span className="photo-icon" aria-hidden="true">
-            ▣
-          </span>
+          <svg
+            className="photo-icon"
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            aria-hidden="true"
+          >
+            <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1.1-1.8A1 1 0 0 1 8.7 4.7h6.6a1 1 0 0 1 .9.5L17.3 7h2.2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z" />
+            <circle cx="12" cy="12.7" r="3.4" />
+          </svg>
           <span>
             <strong>
-              {reading ? "Reading the photo…" : "Photograph or upload a page"}
+              {reading ? "Reading the photo…" : "Photograph the page"}
             </strong>
-            <small>The text comes back editable — check it before continuing.</small>
+            <small>
+              {reading
+                ? "This takes a moment."
+                : "Uses the camera on a phone."}
+            </small>
           </span>
         </button>
 
         {ocrConfidence && (
           <p className="note">
             {ocrConfidence === "low"
-              ? "That photo was hard to read. Check the text above carefully before continuing."
-              : "Text read from the photo. Check it above — OCR can misread Hindi letters."}
+              ? "That photo was hard to read. Check the text above before you continue."
+              : "Read from the photo. Check it above — OCR misreads some Hindi letters."}
           </p>
         )}
         {error && <p className="error">{error}</p>}
       </div>
 
-      <div className="actions actions--end">
+      <div className="actions">
         <button
           className="button button--primary"
           onClick={onNext}
           disabled={!hindiText.trim()}
         >
-          Choose languages <span aria-hidden="true">→</span>
+          Choose languages
         </button>
       </div>
 
+      {/* Judge-facing, not teacher-facing: it sits after the primary action
+          so it never interrupts type -> choose -> play. */}
       <ContrastDemo />
     </section>
   );
