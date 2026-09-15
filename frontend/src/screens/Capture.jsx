@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
 import { ocr, extractChapter, transcribeAudio } from "../api";
 import ContrastDemo from "../components/ContrastDemo";
+import TextLoop from "../components/motion/TextLoop";
+import Spotlight from "../components/motion/Spotlight";
+import Tilt from "../components/motion/Tilt";
 
 export default function Capture({
   hindiText,
@@ -192,7 +195,16 @@ export default function Capture({
         <span>PRIMARY TEXTBOOK TO SPOKEN MOTHER TONGUE</span>
       </div>
       <h1 id="capture-heading" className="screen-title">
-        Start with a Hindi primary lesson.
+        Turn Hindi primary lessons into spoken{" "}
+        <TextLoop
+          items={[
+            "Santali (ᱥᱟᱱᱛᱟᱲᱤ)",
+            "Ho (𑢹𑣉 ᱡᱟᱜᱟᱨ)",
+            "Mundari (मुंडारी)",
+            "Kurukh (कुड़ुख़)",
+            "Sadri (नागपुरी)",
+          ]}
+        />
       </h1>
       <p className="screen-subtitle">
         Bridge early classroom comprehension for tribal children in Jharkhand. Transform textbook lessons into spoken mother-tongue audio with authentic village phonetics.
@@ -247,7 +259,9 @@ export default function Capture({
         )}
       </div>
 
-      <div className="panel sun-card-shadow">
+      <div className="panel sun-card-shadow" style={{ position: "relative" }}>
+        {/* Pointer Spotlight Layer */}
+        <Spotlight size={360} color="rgba(254, 166, 25, 0.12)" />
         {/* Target Grade Level Selector with Pedagogy Guidance */}
         <div className="grade-selector-container">
           <div className="field-label">
@@ -528,51 +542,57 @@ export default function Capture({
 
       {/* Classroom Pedagogy Feature Bento Grid */}
       <div className="classroom-bento-grid">
-        <div className="bento-card">
-          <div className="bento-icon-box bg-primary-light">
-            <span className="material-symbols-outlined text-2xl text-primary">translate</span>
+        <Tilt rotationFactor={7}>
+          <div className="bento-card">
+            <div className="bento-icon-box bg-primary-light">
+              <span className="material-symbols-outlined text-2xl text-primary">translate</span>
+            </div>
+            <h3 className="bento-title">Authentic Tribal Phonetics</h3>
+            <p className="bento-desc">
+              Preserves authentic glottal stops and pitch in Santhali (Ol Chiki), Ho (Warang Chiti), Kudukh, Mundari, Khortha, and Sadri/Nagpuri.
+            </p>
+            <div className="bento-footer">
+              <span className="bento-tag text-primary">6 Mother Tongues</span>
+              <span className="material-symbols-outlined text-sm text-primary">verified</span>
+            </div>
           </div>
-          <h3 className="bento-title">Authentic Tribal Phonetics</h3>
-          <p className="bento-desc">
-            Preserves authentic glottal stops and pitch in Santhali (Ol Chiki), Ho (Warang Chiti), Kudukh, Mundari, Khortha, and Sadri/Nagpuri.
-          </p>
-          <div className="bento-footer">
-            <span className="bento-tag text-primary">6 Mother Tongues</span>
-            <span className="material-symbols-outlined text-sm text-primary">verified</span>
-          </div>
-        </div>
+        </Tilt>
 
-        <div className="bento-card">
-          <div className="bento-icon-box bg-secondary-light">
-            <span className="material-symbols-outlined text-2xl text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
-              speaker_group
-            </span>
+        <Tilt rotationFactor={7}>
+          <div className="bento-card">
+            <div className="bento-icon-box bg-secondary-light">
+              <span className="material-symbols-outlined text-2xl text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                speaker_group
+              </span>
+            </div>
+            <h3 className="bento-title">Offline Classroom Speaker Sync</h3>
+            <p className="bento-desc">
+              Zero internet required. Broadcast high-volume synthesized tribal audio directly to portable Bluetooth classroom megaphones during circle drills.
+            </p>
+            <div className="bento-footer">
+              <span className="bento-tag text-secondary">Offline Cache Ready</span>
+              <span className="material-symbols-outlined text-sm text-secondary">bluetooth</span>
+            </div>
           </div>
-          <h3 className="bento-title">Offline Classroom Speaker Sync</h3>
-          <p className="bento-desc">
-            Zero internet required. Broadcast high-volume synthesized tribal audio directly to portable Bluetooth classroom megaphones during circle drills.
-          </p>
-          <div className="bento-footer">
-            <span className="bento-tag text-secondary">Offline Cache Ready</span>
-            <span className="material-symbols-outlined text-sm text-secondary">bluetooth</span>
-          </div>
-        </div>
+        </Tilt>
 
-        <div className="bento-card">
-          <div className="bento-icon-box bg-tertiary-light">
-            <span className="material-symbols-outlined text-2xl text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>
-              record_voice_over
-            </span>
+        <Tilt rotationFactor={7}>
+          <div className="bento-card">
+            <div className="bento-icon-box bg-tertiary-light">
+              <span className="material-symbols-outlined text-2xl text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                record_voice_over
+              </span>
+            </div>
+            <h3 className="bento-title">Interactive Classroom Echo</h3>
+            <p className="bento-desc">
+              Spaced repetition designed for 6–8 year olds. The engine speaks a phrase in Mundari or Santhali, prompts students to chant, and reinforces bilingual vocabulary.
+            </p>
+            <div className="bento-footer">
+              <span className="bento-tag text-tertiary">Chant & Repeat Logic</span>
+              <span className="material-symbols-outlined text-sm text-tertiary">graphic_eq</span>
+            </div>
           </div>
-          <h3 className="bento-title">Interactive Classroom Echo</h3>
-          <p className="bento-desc">
-            Spaced repetition designed for 6–8 year olds. The engine speaks a phrase in Mundari or Santhali, prompts students to chant, and reinforces bilingual vocabulary.
-          </p>
-          <div className="bento-footer">
-            <span className="bento-tag text-tertiary">Chant & Repeat Logic</span>
-            <span className="material-symbols-outlined text-sm text-tertiary">graphic_eq</span>
-          </div>
-        </div>
+        </Tilt>
       </div>
 
       {/* Platform Trust & Support Footer */}

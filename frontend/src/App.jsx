@@ -3,6 +3,7 @@ import Capture from "./screens/Capture";
 import LanguageSelect from "./screens/LanguageSelect";
 import Result from "./screens/Result";
 import Logo from "./components/Logo";
+import Dock from "./components/motion/Dock";
 
 // ponytail: three linear screens, so a step index replaces a router.
 // Add react-router only if a screen ever needs its own shareable URL.
@@ -65,6 +66,78 @@ export default function App() {
   const next = () => go(Math.min(step + 1, 2));
   const back = () => go(Math.max(step - 1, 0));
 
+  // Audio chime for teacher to verify classroom bluetooth or wired speakers
+  function playSpeakerChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5 bright chime
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const startTime = ctx.currentTime + idx * 0.1;
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.18, startTime + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.36);
+      });
+    } catch {
+      // AudioContext unavailable or restricted by browser policy
+    }
+  }
+
+  const dockItems = [
+    {
+      id: "capture-step",
+      icon: "edit_note",
+      title: "Step 1: Capture Lesson",
+      badge: "1",
+      active: step === 0,
+      onClick: () => go(0),
+    },
+    {
+      id: "languages-step",
+      icon: "translate",
+      title: "Step 2: Tribal Dialects",
+      badge: "2",
+      active: step === 1,
+      onClick: () => go(1),
+    },
+    {
+      id: "audio-step",
+      icon: "record_voice_over",
+      title: "Step 3: Listen & Speak",
+      badge: "3",
+      active: step === 2,
+      onClick: () => go(2),
+    },
+    {
+      id: "speaker-test",
+      icon: "volume_up",
+      title: "Speaker Chime Test",
+      badge: "Test",
+      active: false,
+      onClick: playSpeakerChime,
+    },
+    {
+      id: "reset-lesson",
+      icon: "restart_alt",
+      title: "Start New Lesson",
+      active: false,
+      onClick: () => {
+        setHindiText("");
+        setChapterSentences([]);
+        go(0);
+      },
+    },
+  ];
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
@@ -124,6 +197,8 @@ export default function App() {
           />
         )}
       </main>
+
+      <Dock items={dockItems} />
 
       {/* The scope boundary is on every screen, including the chrome.
           Santali is the only one of these languages with a translation

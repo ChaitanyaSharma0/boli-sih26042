@@ -1473,7 +1473,8 @@ body {
   .actions,
   .platform-trust-footer,
   .mic-btn,
-  .result-actions-bar {
+  .result-actions-bar,
+  .classroom-dock-container {
     display: none !important;
   }
 
@@ -1483,4 +1484,185 @@ body {
     border: 1px solid #e2e8f0 !important;
     box-shadow: none !important;
   }
+}
+
+/* ==========================================================================
+   Motion Primitives System (Smooth Micro-Interactions)
+   ========================================================================== */
+
+/* 1. TextLoop (Spring 3D flip) */
+.text-loop-wrapper {
+  display: inline-flex;
+  position: relative;
+  overflow: hidden;
+  vertical-align: bottom;
+  height: 1.3em;
+  padding: 0 0.25rem;
+}
+
+.text-loop-item {
+  display: inline-block;
+  animation: text-loop-flip 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  color: var(--secondary);
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: var(--secondary-container);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+@keyframes text-loop-flip {
+  0% {
+    opacity: 0;
+    transform: translateY(70%) rotateX(65deg);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+    filter: blur(0);
+  }
+}
+
+/* 2. Tilt Card Physics */
+.tilt-card-container {
+  will-change: transform;
+  transform-style: preserve-3d;
+  transition: transform 0.1s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* 3. Spotlight Pointer Glow */
+.spotlight-layer {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* 4. Apple-Style Magnification Dock for Teachers */
+.classroom-dock-container {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  max-width: 95vw;
+  pointer-events: none;
+}
+
+.classroom-dock {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(255, 248, 244, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(244, 230, 218, 0.9);
+  border-radius: var(--radius-full);
+  box-shadow: 0 12px 36px -4px rgba(87, 78, 69, 0.2), 0 4px 12px -2px rgba(87, 78, 69, 0.08);
+  pointer-events: auto;
+  transition: all 0.2s ease;
+}
+
+.dock-item {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--outline-variant);
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  box-shadow: 0 3px 8px rgba(87, 78, 69, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), background 0.15s ease, color 0.15s ease;
+}
+
+.dock-item:hover,
+.dock-item.is-active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.dock-icon {
+  font-size: 1.35rem;
+}
+
+.dock-tooltip {
+  position: absolute;
+  top: -38px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--on-surface);
+  color: #ffffff;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  animation: dock-tooltip-pop 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dock-tooltip-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.dock-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--secondary-container);
+  color: var(--on-secondary-fixed);
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-full);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 5. TextRoll (3D hover flip) */
+.text-roll-wrapper {
+  display: inline-flex;
+  overflow: hidden;
+  height: 1.25em;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.text-roll-char {
+  display: inline-flex;
+  flex-direction: column;
+  transform: translateY(0);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.text-roll-wrapper:hover .text-roll-char {
+  transform: translateY(-50%);
+}
+
+.char-front,
+.char-back {
+  display: inline-block;
+  height: 1.25em;
+  line-height: 1.25;
+}
+
+.char-back {
+  color: var(--secondary);
 }
