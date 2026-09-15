@@ -198,9 +198,18 @@ export default function App() {
       <footer className="app-footer sun-card-shadow">
         <div className="footer-top-row">
           <div className="footer-brand-initiative">
-            <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-              spa
-            </span>
+            <img
+              src="/logo.png"
+              alt="BOLI"
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 6,
+                objectFit: "cover",
+                background: "#381c05",
+                display: "inline-block",
+              }}
+            />
             <strong>BOLI बोली</strong>
             <span>· Jharkhand Multilingual Primary Initiative (DIET Pilot)</span>
           </div>
