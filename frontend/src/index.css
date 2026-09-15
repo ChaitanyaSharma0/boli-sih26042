@@ -1,34 +1,56 @@
 /* ==========================================================================
-   BOLI — Neo-Brutalist SaaS & Education Design System
-   Colors: Primary Yellow #ffe17c · Charcoal #171e19 · Sage #b7c6c2 · White #ffffff · Black #000000
-   Strict 2px solid black borders · Hard offset shadows (0 blur) · Tactile push interactions
+   BOLI — Mother-Tongue Learning Aid for Jharkhand Classrooms
+   SIH26042 · Government of Jharkhand · Smart Education · Team LARPERS
+   Design: Enterprise Voice AI & Modern EdTech (Retell AI + MaestroClass style)
+   Palette: Deep Navy #1E3A5F · Forest Green #1B6B45 · Warm Amber #B06A00 · Slate #F8FAFC
    ========================================================================== */
 
 :root {
-  --yellow: #ffe17c;
-  --charcoal: #171e19;
-  --sage: #b7c6c2;
-  --white: #ffffff;
-  --black: #000000;
+  /* Brand Identity */
+  --navy: #1e3a5f;
+  --navy-dark: #11243b;
+  --navy-light: #2b5080;
+  --navy-tint: #f0f4f9;
 
-  --bg: #ffe17c;
+  --green: #1b6b45;
+  --green-dark: #124b30;
+  --green-light: #258f5d;
+  --green-tint: #edf7f1;
+
+  --amber: #b06a00;
+  --amber-dark: #8c5300;
+  --amber-tint: #fef7ed;
+
+  --red: #b02a20;
+  --red-tint: #fef2f2;
+
+  /* Surfaces & Neutral Hierarchy */
+  --bg: #f8fafc;
   --card: #ffffff;
-  --text: #000000;
-  --text-muted: #2f3e37;
+  --card-subtle: #f1f5f9;
+  --card-hover: #f8fafc;
+  
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-light: #64748b;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
 
-  --border: 2px solid #000000;
-  --shadow-sm: 2px 2px 0px 0px #000000;
-  --shadow-md: 4px 4px 0px 0px #000000;
-  --shadow-lg: 8px 8px 0px 0px #000000;
-  --shadow-xl: 12px 12px 0px 0px #000000;
-
-  --font-sans: 'Cabinet Grotesk', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "Noto Sans Devanagari", "Noto Sans Ol Chiki", sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
-
-  --radius-btn: 10px;
-  --radius-card: 16px;
+  /* Geometry & Elevation */
+  --radius-xl: 18px;
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 6px;
   --radius-full: 9999px;
+
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Noto Sans Devanagari", "Noto Sans Ol Chiki", Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
 }
 
 * {
@@ -38,22 +60,20 @@
 
 body {
   margin: 0;
-  background-color: var(--yellow);
-  background-image: radial-gradient(rgba(0, 0, 0, 0.12) 1.5px, transparent 1.5px);
-  background-size: 32px 32px;
-  color: var(--black);
+  background-color: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ==========================================================================
-   Layout Shell & Neo-Brutalist Navigation Bar
+   Layout Shell & Header Bar
    ========================================================================== */
 
 .app-shell {
-  width: min(100% - 2.5rem, 54rem);
+  width: min(100% - 2.5rem, 52rem);
   margin-inline: auto;
   padding-bottom: 5rem;
   min-height: 100vh;
@@ -65,356 +85,308 @@ body {
   position: absolute;
   top: -9999px;
   left: 1rem;
-  background: var(--black);
-  color: var(--yellow);
+  background: var(--navy);
+  color: #fff;
   padding: 0.5rem 1rem;
-  border: var(--border);
-  box-shadow: var(--shadow-sm);
-  font-weight: 700;
+  border-radius: var(--radius-sm);
   z-index: 1000;
 }
 .skip-link:focus {
   top: 1rem;
 }
 
-/* Brutalist Top Nav */
-.brutalist-nav {
-  position: sticky;
-  top: 1.25rem;
-  z-index: 100;
-  margin: 1.25rem auto 3rem;
-  width: 100%;
+/* Clean Header Bar */
+.app-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 1.4rem;
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-lg);
+  gap: 1.5rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 2.25rem;
 }
 
-.nav-left {
+.header-brand {
   display: flex;
   align-items: center;
 }
 
-.nav-center {
+.header-stepper {
   display: flex;
   align-items: center;
 }
 
-.nav-right {
+.header-meta {
   display: flex;
   align-items: center;
 }
 
-/* Stepper within Brutalist Nav */
-.brutalist-nav .progress-container {
+/* Progress Stepper */
+.progress-container {
   margin: 0;
   padding: 0;
 }
 
-.brutalist-nav .progress {
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  list-style: none;
+  padding: 0.25rem;
+  margin: 0;
+  background: var(--card-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+}
+
+.progress li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  color: var(--text-light);
+  transition: all 0.2s ease;
+}
+
+.progress li.is-current {
+  background: #ffffff;
+  color: var(--navy);
+  box-shadow: var(--shadow-sm);
+}
+
+.progress li.is-done {
+  color: var(--green);
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.08);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.progress li.is-current .step-number {
+  background: var(--navy);
+  color: #ffffff;
+}
+
+.progress li.is-done .step-number {
+  background: var(--green);
+  color: #ffffff;
+}
+
+/* Live Engine Status Badge */
+.live-engine-badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.brutalist-nav .progress li {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.85rem;
-  font-weight: 700;
-  border: var(--border);
+  padding: 0.35rem 0.75rem;
+  background: var(--green-tint);
+  border: 1px solid rgba(27, 107, 69, 0.25);
   border-radius: var(--radius-full);
-  background: var(--white);
-  color: var(--charcoal);
-  box-shadow: 2px 2px 0px 0px #000000;
-  transition: all 0.15s ease;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--green-dark);
+  letter-spacing: 0.02em;
 }
 
-.brutalist-nav .progress li.is-current {
-  background: var(--yellow);
-  box-shadow: 3px 3px 0px 0px #000000;
-  transform: translate(-1px, -1px);
+.engine-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(27, 107, 69, 0.6);
+  animation: pulse-dot 2s ease-in-out infinite;
 }
 
-.brutalist-nav .progress li.is-done {
-  background: var(--sage);
-}
-
-/* Brutalist Badge */
-.brutalist-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.85rem;
-  background: var(--charcoal);
-  color: var(--yellow);
-  border: var(--border);
-  border-radius: var(--radius-full);
-  font-size: 0.82rem;
-  font-weight: 800;
-  box-shadow: var(--shadow-sm);
-  letter-spacing: 0.04em;
-}
-
-.badge-bolt {
-  color: var(--yellow);
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.8); opacity: 0.6; }
 }
 
 /* ==========================================================================
-   Hero Typography & Neo-Brutalist Eyebrow
+   Hero Typography (Clean, Authentic, Grounded)
    ========================================================================== */
 
-.brutalist-badge-pill {
-  display: inline-block;
-  padding: 0.4rem 1rem;
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--radius-full);
-  box-shadow: var(--shadow-sm);
-  font-size: 0.82rem;
+.section-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--text-light);
+  margin-bottom: 0.65rem;
+}
+
+.eyebrow-tag {
+  padding: 0.15rem 0.45rem;
+  background: var(--navy-tint);
+  color: var(--navy);
+  border-radius: 4px;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--black);
-  margin-bottom: 1.25rem;
 }
 
-.brutalist-hero-title {
-  font-size: clamp(2.4rem, 5vw, 4rem) !important;
-  font-weight: 900 !important;
-  line-height: 1.1 !important;
-  letter-spacing: -0.03em !important;
-  color: var(--black) !important;
-  margin-bottom: 1rem;
-  max-width: 820px;
+.screen-title {
+  font-size: clamp(1.85rem, 3.8vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: var(--navy);
+  margin-bottom: 0.6rem;
 }
 
-.brutalist-stroke-word {
-  display: inline-block;
-  color: var(--white);
-  -webkit-text-stroke: 2.5px var(--black);
-  text-shadow: 4px 4px 0px var(--black);
-  font-weight: 900;
-}
-
-.brutalist-hero-subtitle {
-  font-size: 1.2rem;
+.screen-subtitle {
+  font-size: 1.05rem;
   line-height: 1.6;
-  color: var(--charcoal);
-  max-width: 660px;
-  margin-bottom: 2.25rem;
-  font-weight: 600;
+  color: var(--text-muted);
+  max-width: 620px;
+  margin-bottom: 1.85rem;
 }
 
 /* ==========================================================================
-   Neo-Brutalist Cockpit Panel & Inputs
+   Card Panel & Mode Switcher
    ========================================================================== */
 
 .panel {
-  background: var(--white) !important;
-  border: var(--border) !important;
-  border-radius: var(--radius-card) !important;
-  padding: 2rem !important;
-  box-shadow: var(--shadow-lg) !important;
-  margin-bottom: 2rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1.75rem;
 }
 
 /* Segmented Mode Switch */
 .segmented-control {
   display: flex;
-  gap: 0.65rem;
-  margin-bottom: 1.75rem;
+  padding: 0.25rem;
+  background: var(--card-subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
   width: fit-content;
 }
 
 .segmented-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.4rem;
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--radius-btn);
-  color: var(--black);
-  font-size: 0.95rem;
-  font-weight: 800;
-  box-shadow: var(--shadow-md);
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.15s ease;
 }
 
 .segmented-btn:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px 0px #000;
+  color: var(--navy);
 }
 
 .segmented-btn.active {
-  background: var(--charcoal) !important;
-  color: var(--yellow) !important;
-  transform: translate(4px, 4px);
-  box-shadow: 0px 0px 0px 0px #000 !important;
+  background: #ffffff;
+  color: var(--navy);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Grade-Level Selector */
 .grade-selector-container {
-  margin-bottom: 1.6rem;
+  margin-bottom: 1.35rem;
 }
 
 .field-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--black);
-  margin-bottom: 0.65rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.5rem;
 }
 
 .grade-pills {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
 .grade-pill {
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--radius-btn);
-  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--line);
+  background: var(--card);
+  padding: 0.6rem 0.25rem;
+  border-radius: var(--radius-md);
   text-align: center;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--black);
-  box-shadow: var(--shadow-sm);
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.15s ease;
 }
 
 .grade-pill:hover {
-  transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0px 0px #000;
-  background: var(--sage);
+  border-color: var(--navy-light);
+  color: var(--navy);
+  background: var(--card-subtle);
 }
 
 .grade-pill.active {
-  background: var(--yellow) !important;
-  color: var(--black) !important;
-  transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px 0px #000 !important;
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(30, 58, 95, 0.2);
 }
 
 .grade-info-tag {
   display: block;
-  margin-top: 0.6rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--charcoal);
-  font-family: var(--font-mono);
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+  color: var(--amber-dark);
+  font-weight: 500;
 }
 
-/* Textarea */
+/* Form Fields & Textarea */
 textarea {
   width: 100%;
-  padding: 1.15rem;
-  border: var(--border);
-  border-radius: var(--radius-btn);
-  background: var(--white);
-  font-size: 1.15rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  font-size: 1.05rem;
   line-height: 1.6;
-  color: var(--black);
-  box-shadow: var(--shadow-md);
+  color: var(--text);
   resize: vertical;
-  transition: all 0.15s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 textarea:focus {
   outline: none;
-  background: #fffaea;
-  box-shadow: var(--shadow-lg);
-  transform: translate(-1px, -1px);
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12);
 }
 
 /* ==========================================================================
-   Neo-Brutalist Push Buttons
+   Voice Waveforms & Microphones (Retell AI Inspired)
    ========================================================================== */
 
-.button--primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  background: var(--black) !important;
-  color: var(--white) !important;
-  padding: 0.95rem 1.85rem !important;
-  border: var(--border) !important;
-  border-radius: var(--radius-btn) !important;
-  font-size: 1rem !important;
-  font-weight: 900 !important;
-  letter-spacing: 0.02em !important;
-  box-shadow: var(--shadow-lg) !important;
-  cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-}
-
-.button--primary:hover:not(:disabled) {
-  transform: translate(4px, 4px) !important;
-  box-shadow: var(--shadow-md) !important;
-  background: var(--charcoal) !important;
-}
-
-.button--primary:active:not(:disabled) {
-  transform: translate(8px, 8px) !important;
-  box-shadow: 0px 0px 0px 0px #000 !important;
-}
-
-.button--primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: var(--shadow-sm) !important;
-}
-
-.button--secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--white);
-  color: var(--black);
-  padding: 0.85rem 1.5rem;
-  border: var(--border);
-  border-radius: var(--radius-btn);
-  font-size: 0.95rem;
-  font-weight: 800;
-  box-shadow: var(--shadow-md);
-  cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.button--secondary:hover:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px 0px #000;
-  background: var(--sage);
-}
-
-.button--secondary:active:not(:disabled) {
-  transform: translate(4px, 4px);
-  box-shadow: 0px 0px 0px 0px #000;
-}
-
-/* Mic Toolbar & Actions */
 .input-toolbar {
   display: flex;
-  gap: 0.85rem;
+  gap: 0.75rem;
   align-items: center;
-  margin-top: 1rem;
+  margin-top: 0.85rem;
   flex-wrap: wrap;
 }
 
@@ -422,58 +394,194 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.65rem 1.15rem;
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--radius-btn);
-  color: var(--black);
-  font-size: 0.9rem;
-  font-weight: 800;
-  box-shadow: var(--shadow-md);
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  color: var(--navy);
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-xs);
 }
 
 .mic-btn:hover:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px 0px #000;
-  background: var(--sage);
-}
-
-.mic-btn:active:not(:disabled) {
-  transform: translate(4px, 4px);
-  box-shadow: 0px 0px 0px 0px #000;
+  border-color: var(--navy);
+  background: var(--card-subtle);
 }
 
 .mic-btn.recording {
-  background: #ff5f57 !important;
-  color: var(--white) !important;
-  animation: brutalist-shake 0.4s ease infinite alternate;
+  border-color: var(--red);
+  background: var(--red-tint);
+  color: var(--red);
+  box-shadow: 0 0 12px rgba(176, 42, 32, 0.2);
 }
 
-@keyframes brutalist-shake {
-  0% { transform: translate(2px, 2px); }
-  100% { transform: translate(3px, 1px); }
+/* Retell-Style Voice Equalizer Bars */
+.voice-wave-bars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 16px;
 }
 
-/* Chapter Extracted Box */
+.voice-wave-bars .bar {
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  background: var(--red);
+  border-radius: 2px;
+  animation: wave-bar 1s ease-in-out infinite alternate;
+}
+
+.voice-wave-bars .bar:nth-child(1) { animation-delay: 0.1s; }
+.voice-wave-bars .bar:nth-child(2) { animation-delay: 0.3s; }
+.voice-wave-bars .bar:nth-child(3) { animation-delay: 0.15s; }
+.voice-wave-bars .bar:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes wave-bar {
+  0% { transform: scaleY(0.25); }
+  100% { transform: scaleY(1); }
+}
+
+/* ==========================================================================
+   Buttons & Primary Actions
+   ========================================================================== */
+
+.button--primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--navy) !important;
+  color: #ffffff !important;
+  padding: 0.75rem 1.4rem !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.25);
+  transition: all 0.15s ease;
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--navy-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(30, 58, 95, 0.35);
+}
+
+.button--primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button--primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.button--secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffffff;
+  color: var(--navy);
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.button--secondary:hover:not(:disabled) {
+  border-color: var(--navy);
+  background: var(--card-subtle);
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.actions--end {
+  justify-content: flex-end;
+}
+
+.actions--split {
+  justify-content: space-between;
+}
+
+/* ==========================================================================
+   Chapter PDF Extracted List
+   ========================================================================== */
+
+.upload-card-btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--card-subtle);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.upload-card-btn:hover {
+  border-color: var(--green);
+  background: var(--green-tint);
+}
+
+.upload-icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  font-size: 1.25rem;
+  color: var(--green);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.upload-card-btn strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--navy);
+}
+
+.upload-card-btn small {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 0.15rem;
+}
+
 .extracted-box {
   margin-top: 1.25rem;
-  padding: 1.25rem;
-  background: var(--sage);
-  border: var(--border);
-  border-radius: var(--radius-btn);
-  box-shadow: var(--shadow-md);
+  padding: 1.15rem;
+  background: var(--green-tint);
+  border: 1px solid rgba(27, 107, 69, 0.25);
+  border-radius: var(--radius-md);
 }
 
 .extracted-box-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.65rem;
-  color: var(--black);
-  font-weight: 900;
-  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  color: var(--green-dark);
+  font-weight: 700;
+  font-size: 0.88rem;
 }
 
 .extracted-list {
@@ -481,100 +589,95 @@ textarea:focus {
   padding-left: 1.25rem;
   max-height: 160px;
   overflow-y: auto;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--black);
+  font-size: 0.9rem;
+  color: var(--text);
 }
 
 .extracted-list li {
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
 }
 
 /* ==========================================================================
-   Screen 2: Language Selection Cards (Neo-Brutalist Grid)
+   Screen 2: Language Selection (Dialogflow / Retell Style)
    ========================================================================== */
 
 .language-group {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2.25rem;
 }
 
 .language-group-header {
-  margin-bottom: 1.15rem;
+  margin-bottom: 1rem;
 }
 
 .language-group-header h2 {
-  font-size: 1.4rem;
-  font-weight: 900;
-  color: var(--black);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--navy);
 }
 
 .language-group-header p {
-  font-size: 0.92rem;
-  color: var(--charcoal);
-  font-weight: 600;
-  margin-top: 0.25rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
 }
 
 .language-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .language-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 1.35rem;
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.15s ease;
 }
 
 .language-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-lg);
-  background: #fffdf5;
+  border-color: var(--navy-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .language-card--checked {
-  background: var(--yellow) !important;
-  border: 3px solid #000000 !important;
-  transform: translate(2px, 2px);
-  box-shadow: var(--shadow-sm) !important;
+  border-color: var(--navy) !important;
+  background: var(--navy-tint) !important;
+  box-shadow: 0 4px 16px rgba(30, 58, 95, 0.12) !important;
 }
 
 .language-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.5rem;
 }
 
 .language-name {
-  font-size: 1.25rem;
-  font-weight: 900;
-  color: var(--black);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--navy);
 }
 
 .native-badge {
-  font-size: 0.82rem;
-  padding: 0.25rem 0.65rem;
-  border: var(--border);
+  font-size: 0.8rem;
+  padding: 0.2rem 0.55rem;
   border-radius: var(--radius-full);
-  background: var(--sage);
-  color: var(--black);
-  font-weight: 800;
-  box-shadow: 2px 2px 0px 0px #000;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  color: var(--green-dark);
+  font-weight: 700;
 }
 
 .language-detail {
-  font-size: 0.9rem;
-  color: var(--charcoal);
-  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
@@ -583,161 +686,147 @@ textarea:focus {
    ========================================================================== */
 
 .result-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
 }
 
 .result-actions-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
   flex-wrap: wrap;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
 }
 
 .action-pill-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.85rem 1.4rem;
-  border: var(--border);
-  border-radius: var(--radius-btn);
-  font-size: 0.95rem;
-  font-weight: 900;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-md);
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.15s ease;
+  border: none;
 }
 
 .action-pill-btn.primary {
-  background: var(--black);
-  color: var(--white);
+  background: var(--green);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(27, 107, 69, 0.25);
 }
 
 .action-pill-btn.primary:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px 0px #000;
-  background: var(--charcoal);
+  background: var(--green-dark);
+  transform: translateY(-1px);
 }
 
 .action-pill-btn.secondary {
-  background: var(--white);
-  color: var(--black);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  color: var(--navy);
+  box-shadow: var(--shadow-xs);
 }
 
 .action-pill-btn.secondary:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px 0px #000;
-  background: var(--sage);
+  border-color: var(--navy);
+  background: var(--card-subtle);
 }
 
-/* Native Script Hero Section */
+/* Native Script Hero Card */
 .native-script-hero {
-  margin-bottom: 1.75rem;
-  padding: 1.6rem;
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-lg);
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .native-script-text {
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: var(--black);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--navy);
   line-height: 1.4;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.5rem;
 }
 
 /* Spoken Audio Controls */
 .phrase-audio-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 1.4rem;
-  background: var(--sage);
-  border: var(--border);
-  color: var(--black);
-  border-radius: var(--radius-btn);
-  font-weight: 800;
-  box-shadow: var(--shadow-md);
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  background: var(--green-tint);
+  border: 1px solid rgba(27, 107, 69, 0.3);
+  color: var(--green-dark);
+  border-radius: var(--radius-md);
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.15s ease;
 }
 
 .phrase-audio-btn:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px 0px #000;
-  background: var(--yellow);
+  background: var(--green);
+  color: #ffffff;
+  border-color: var(--green);
 }
 
 /* Lesson Cards */
 .lesson-card {
-  padding: 1.75rem;
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-lg);
-  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.25rem;
 }
 
 /* Cultural Substitutions */
 .contrast-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem 0.75rem;
-  background: var(--yellow);
-  border: var(--border);
-  border-radius: var(--radius-full);
-  font-size: 0.85rem;
-  color: var(--black);
-  font-weight: 800;
-  box-shadow: 2px 2px 0px 0px #000;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  background: var(--amber-tint);
+  border: 1px solid rgba(176, 106, 0, 0.25);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--amber-dark);
+  font-weight: 700;
 }
 
 /* ==========================================================================
-   Floating Government / SIH Badge Card (Bottom-Right)
+   Platform Trust Footer (Realistic & Grounded)
    ========================================================================== */
 
-.floating-govt-badge {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 90;
+.platform-trust-footer {
+  margin-top: 3.5rem;
+  padding: 1.25rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.15rem;
-  background: var(--white);
-  border: var(--border);
-  border-radius: var(--radius-btn);
-  box-shadow: var(--shadow-lg);
-  pointer-events: auto;
-  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  gap: 1rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
 }
 
-.floating-govt-badge:hover {
-  transform: translate(2px, 2px);
-  box-shadow: var(--shadow-md);
-  background: var(--yellow);
+.trust-icon {
+  font-size: 1.5rem;
 }
 
-.govt-badge-icon {
-  font-size: 1.4rem;
-}
-
-.floating-govt-badge strong {
+.platform-trust-footer strong {
   display: block;
   font-size: 0.85rem;
-  font-weight: 900;
-  color: var(--black);
+  color: var(--navy);
+  font-weight: 800;
 }
 
-.floating-govt-badge small {
+.platform-trust-footer span {
   display: block;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--charcoal);
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
 /* ==========================================================================
@@ -747,21 +836,21 @@ textarea:focus {
 @media print {
   body {
     background: #ffffff !important;
-    background-image: none !important;
   }
 
-  .brutalist-nav,
+  .app-header-bar,
   .segmented-control,
   .actions,
-  .floating-govt-badge,
-  .mic-btn {
+  .platform-trust-footer,
+  .mic-btn,
+  .result-actions-bar {
     display: none !important;
   }
 
   .panel,
   .lesson-card,
   .native-script-hero {
-    border: 1px solid #000000 !important;
+    border: 1px solid #e2e8f0 !important;
     box-shadow: none !important;
   }
 }

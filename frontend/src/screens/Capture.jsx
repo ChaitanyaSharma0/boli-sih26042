@@ -118,14 +118,15 @@ export default function Capture({
 
   return (
     <section aria-labelledby="capture-heading">
-      <div className="brutalist-badge-pill">
-        <span>⚡ NEW: AI Mother-Tongue Assistant 2.0</span>
+      <div className="section-eyebrow">
+        <span className="eyebrow-tag">STEP 01</span>
+        <span>PRIMARY TEXTBOOK TO SPOKEN MOTHER TONGUE</span>
       </div>
-      <h1 id="capture-heading" className="brutalist-hero-title">
-        Start with a Hindi lesson. Turn it into <span className="brutalist-stroke-word">Spoken</span> mother tongues.
+      <h1 id="capture-heading" className="screen-title">
+        Start with a Hindi primary lesson.
       </h1>
-      <p className="brutalist-hero-subtitle">
-        Type a primary textbook sentence, record classroom speech, or upload a full chapter PDF to generate spoken lessons for languages with zero commercial TTS.
+      <p className="screen-subtitle">
+        Type a sentence, record classroom speech via Meta MMS ASR, or upload a textbook PDF to synthesize spoken audio in Jharkhand's tribal languages.
       </p>
 
       {/* Mode Selector */}
@@ -207,13 +208,22 @@ export default function Capture({
                 onClick={isRecording ? stopRecording : startRecording}
                 disabled={transcribing || reading}
               >
-                <span>{isRecording ? "⏹" : "🎤"}</span>
+                {isRecording ? (
+                  <span className="voice-wave-bars" aria-hidden="true">
+                    <span className="bar" />
+                    <span className="bar" />
+                    <span className="bar" />
+                    <span className="bar" />
+                  </span>
+                ) : (
+                  <span>🎙️</span>
+                )}
                 <span>
                   {isRecording
-                    ? "Recording Hindi… Click to stop"
+                    ? "Listening Hindi… Click to stop"
                     : transcribing
                     ? "Transcribing voice…"
-                    : "Speak Hindi (Mic)"}
+                    : "Speak Hindi (Meta MMS)"}
                 </span>
               </button>
 
@@ -315,11 +325,11 @@ export default function Capture({
 
       <ContrastDemo />
 
-      <div className="floating-govt-badge" aria-label="Project certification">
-        <span className="govt-badge-icon">🏛️</span>
-        <div className="govt-badge-text">
+      <div className="platform-trust-footer">
+        <span className="trust-icon">🏛️</span>
+        <div>
           <strong>Smart Education · SIH26042</strong>
-          <small>Government of Jharkhand · Primary Classrooms</small>
+          <span>Government of Jharkhand · Primary School Mother-Tongue Learning</span>
         </div>
       </div>
     </section>

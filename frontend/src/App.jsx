@@ -67,16 +67,17 @@ export default function App() {
         Skip to content
       </a>
 
-      <header className="brutalist-nav">
-        <div className="nav-left">
+      <header className="app-header-bar">
+        <div className="header-brand">
           <Logo size="small" showTagline={true} />
         </div>
-        <div className="nav-center">
+        <div className="header-stepper">
           <Stepper step={step} />
         </div>
-        <div className="nav-right">
-          <span className="brutalist-badge">
-            <span className="badge-bolt">⚡</span> SIH26042
+        <div className="header-meta">
+          <span className="live-engine-badge">
+            <span className="engine-pulse-dot" />
+            <span>Live Audio Engine · SIH26042</span>
           </span>
         </div>
       </header>
