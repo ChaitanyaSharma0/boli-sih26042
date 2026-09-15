@@ -7,24 +7,28 @@ import Logo from "./components/Logo";
 // ponytail: three linear screens, so a step index replaces a router.
 // Add react-router only if a screen ever needs its own shareable URL.
 
-const STEPS = ["Capture", "Languages", "Result"];
+const STEPS = [
+  { num: 1, label: "Capture Lesson" },
+  { num: 2, label: "Select Languages" },
+  { num: 3, label: "Listen & Speak" },
+];
 
 function Stepper({ step }) {
   return (
     <nav className="progress-container" aria-label="Lesson progress">
       <ol className="progress">
-        {STEPS.map((label, index) => (
+        {STEPS.map((s, index) => (
           <li
-            key={label}
+            key={s.label}
             className={
               index === step ? "is-current" : index < step ? "is-done" : ""
             }
             aria-current={index === step ? "step" : undefined}
           >
             <span className="step-number" aria-hidden="true">
-              {index < step ? "✓" : index + 1}
+              {index < step ? "✓" : s.num}
             </span>
-            <span>{label}</span>
+            <span>{s.label}</span>
           </li>
         ))}
       </ol>
@@ -63,23 +67,11 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {/* Gentle Floating Animated Classroom Ambient Elements */}
-      <div className="classroom-ambience" aria-hidden="true">
-        <span className="ambient-float ambient-note-1">🎵</span>
-        <span className="ambient-float ambient-sparkle-1">✨</span>
-        <span className="ambient-float ambient-note-2">🗣️</span>
-        <span className="ambient-float ambient-leaf">🌿</span>
-        <span className="ambient-float ambient-sun">☀️</span>
-        <div className="ambient-orb orb-1" />
-        <div className="ambient-orb orb-2" />
-        <div className="ambient-orb orb-3" />
-      </div>
-
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
 
-      <header className="app-header-bar">
+      <header className="app-header-bar sun-card-shadow">
         <div className="header-brand">
           <Logo size="small" showTagline={true} />
         </div>
@@ -87,10 +79,16 @@ export default function App() {
           <Stepper step={step} />
         </div>
         <div className="header-meta">
-          <span className="live-engine-badge">
+          <div className="live-engine-badge">
             <span className="engine-pulse-dot" />
-            <span>Classroom Voice AI · SIH26042</span>
-          </span>
+            <span>AI Engine: Offline-Ready</span>
+          </div>
+          <div className="pilot-school-tag">
+            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+              location_on
+            </span>
+            <span>GPS Kanke, Ranchi</span>
+          </div>
         </div>
       </header>
 
@@ -130,12 +128,26 @@ export default function App() {
       {/* The scope boundary is on every screen, including the chrome.
           Santali is the only one of these languages with a translation
           model; the other four are a curated phrase bank (PRD.md §4). */}
-      <footer className="app-footer">
-        <strong>BOLI</strong> · Built for Jharkhand's multilingual classrooms
-        <span>
+      <footer className="app-footer sun-card-shadow">
+        <div className="footer-top-row">
+          <div className="footer-brand-initiative">
+            <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+              spa
+            </span>
+            <strong>BOLI बोली</strong>
+            <span>· Jharkhand Multilingual Primary Initiative (DIET Pilot)</span>
+          </div>
+          <div className="footer-links">
+            <a href="#curriculum" className="footer-link">DIET Guidelines</a>
+            <a href="#phonetics" className="footer-link">Phonetic Guide</a>
+            <a href="mailto:support@jepc.jharkhand.gov.in" className="footer-link">Helpdesk</a>
+          </div>
+        </div>
+        <div className="footer-boundary-note">
+          <strong>Classroom Honesty Boundary: </strong>
           Santali: real AI translation, no voice · Ho, Mundari, Kurukh, Sadri:
           curated phrase bank only, pending validation
-        </span>
+        </div>
       </footer>
     </div>
   );

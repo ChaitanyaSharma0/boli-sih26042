@@ -62,8 +62,11 @@ export default function LanguageSelect({
 
   const header = (
     <>
-      <p className="eyebrow">Step 02 · Languages</p>
-      <h1 id="languages-heading">Which voices does your class need?</h1>
+      <div className="section-eyebrow">
+        <span className="eyebrow-tag">STEP 02</span>
+        <span>MOTHER TONGUE SELECTION</span>
+      </div>
+      <h1 id="languages-heading" className="screen-title">Which voices does your class need?</h1>
     </>
   );
 
@@ -73,11 +76,12 @@ export default function LanguageSelect({
         {header}
         <p className="error">Could not load the language list. {error}</p>
         <div className="actions">
-          <button className="button button--secondary" onClick={onBack}>
-            <span aria-hidden="true">←</span> Edit the lesson
+          <button className="button button--secondary tactile-btn-secondary" onClick={onBack}>
+            <span className="material-symbols-outlined text-base">arrow_back</span>
+            <span>Edit the lesson</span>
           </button>
-          <button className="button button--primary" onClick={retry}>
-            Try again
+          <button className="button button--primary tactile-btn-primary" onClick={retry}>
+            <span>Try again</span>
           </button>
         </div>
       </section>
@@ -88,7 +92,7 @@ export default function LanguageSelect({
     return (
       <section aria-labelledby="languages-heading">
         {header}
-        <p className="intro" role="status">
+        <p className="screen-subtitle" role="status">
           Loading languages…
         </p>
       </section>
@@ -98,7 +102,7 @@ export default function LanguageSelect({
   return (
     <section aria-labelledby="languages-heading">
       {header}
-      <p className="intro">
+      <p className="screen-subtitle">
         Pick as many as you need. What each language can actually do is
         different, and it is spelled out below.
       </p>
@@ -106,7 +110,7 @@ export default function LanguageSelect({
       {groupLanguages(list).map((group, index) => (
         <fieldset
           key={group.key}
-          className={`language-group ${groupModifier(group.key)}`}
+          className={`language-group ${groupModifier(group.key)} sun-card-shadow`}
         >
           <legend>
             {String(index + 1).padStart(2, "0")} / {group.heading}
@@ -125,21 +129,24 @@ export default function LanguageSelect({
         </fieldset>
       ))}
 
-      <div className="actions">
-        <button className="button button--secondary" onClick={onBack}>
-          <span aria-hidden="true">←</span> Edit the lesson
+      <div className="actions actions--split">
+        <button className="button button--secondary tactile-btn-secondary" onClick={onBack}>
+          <span className="material-symbols-outlined text-base">arrow_back</span>
+          <span>Edit the lesson</span>
         </button>
         <button
-          className="button button--primary"
+          className="button button--primary tactile-btn-primary"
           onClick={onNext}
           disabled={selectedLangs.length === 0}
         >
-          {selectedLangs.length === 0
-            ? "Pick at least one language"
-            : `Continue with ${selectedLangs.length} language${
-                selectedLangs.length > 1 ? "s" : ""
-              }`}{" "}
-          <span aria-hidden="true">→</span>
+          <span>
+            {selectedLangs.length === 0
+              ? "Pick at least one language"
+              : `Continue with ${selectedLangs.length} language${
+                  selectedLangs.length > 1 ? "s" : ""
+                }`}
+          </span>
+          <span className="material-symbols-outlined text-xl">arrow_forward</span>
         </button>
       </div>
     </section>

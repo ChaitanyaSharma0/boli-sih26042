@@ -332,9 +332,12 @@ export default function Result({
 
   return (
     <section aria-labelledby="result-heading">
-      <p className="eyebrow">Step 03 · Lesson Audio & Output</p>
-      <h1 id="result-heading">A lesson, ready to be heard.</h1>
-      <p className="intro">
+      <div className="section-eyebrow">
+        <span className="eyebrow-tag">STEP 03</span>
+        <span>LESSON AUDIO & SYNTHESIS</span>
+      </div>
+      <h1 id="result-heading" className="screen-title">A lesson, ready to be heard.</h1>
+      <p className="screen-subtitle">
         Check the wording and listen to the audio before presenting to your class.
       </p>
 
@@ -352,18 +355,20 @@ export default function Result({
         <div className="result-toolbar-actions">
           <button
             type="button"
-            className="button button--secondary"
+            className="button button--secondary tactile-btn-secondary"
             onClick={() => setIsPrintModalOpen(true)}
           >
-            🖨️ Print Worksheet (with QR)
+            <span className="material-symbols-outlined text-base">print</span>
+            <span>Print Worksheet (with QR)</span>
           </button>
           <button
             type="button"
-            className="button button--primary"
+            className="button button--primary tactile-btn-primary"
             onClick={handleDownloadOfflinePack}
             disabled={isZipping || stage !== ""}
           >
-            {isZipping ? "Creating ZIP…" : "📦 Download Offline Pack (.zip)"}
+            <span className="material-symbols-outlined text-base">folder_zip</span>
+            <span>{isZipping ? "Creating ZIP…" : "Download Offline Pack (.zip)"}</span>
           </button>
         </div>
       </div>
@@ -618,10 +623,13 @@ export default function Result({
                           <button
                             type="button"
                             className="button button--secondary"
-                            style={{ padding: "0.15rem 0.5rem", fontSize: "0.75rem", marginLeft: "0.5rem" }}
+                            style={{ padding: "0.2rem 0.6rem", fontSize: "0.78rem", marginLeft: "0.5rem" }}
                             onClick={() => playPhrase(language.code, phrase)}
                           >
-                            ▶ Play
+                            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+                              play_arrow
+                            </span>
+                            <span>Play</span>
                           </button>
                         </li>
                       ))}
@@ -639,8 +647,9 @@ export default function Result({
       )}
 
       <div className="actions">
-        <button className="button button--secondary" onClick={onBack}>
-          <span aria-hidden="true">←</span> Change languages
+        <button className="button button--secondary tactile-btn-secondary" onClick={onBack}>
+          <span className="material-symbols-outlined text-base">arrow_back</span>
+          <span>Change languages</span>
         </button>
       </div>
 

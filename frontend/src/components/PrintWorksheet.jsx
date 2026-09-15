@@ -42,11 +42,13 @@ export default function PrintWorksheet({
         <div className="modal-header no-print">
           <h2>Printable Classroom Worksheet</h2>
           <div className="modal-actions">
-            <button className="button button--primary" onClick={handlePrint}>
-              🖨️ Print / Save as PDF
+            <button className="button button--primary tactile-btn-primary" onClick={handlePrint}>
+              <span className="material-symbols-outlined text-base">print</span>
+              <span>Print / Save as PDF</span>
             </button>
-            <button className="button button--secondary" onClick={onClose}>
-              ✕ Close
+            <button className="button button--secondary tactile-btn-secondary" onClick={onClose}>
+              <span className="material-symbols-outlined text-base">close</span>
+              <span>Close</span>
             </button>
           </div>
         </div>
