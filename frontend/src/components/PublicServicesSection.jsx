@@ -6,7 +6,7 @@ const SERVICE_NOTICES = [
     category: "Primary Education (प्राथमिक शिक्षा)",
     icon: "school",
     title: "JCERT कक्षा १–५ निःशुल्क पाठ्यपुस्तक वितरण",
-    dept: "स्कूली शिक्षा एवं साक्षरता विभाग, झारखण्ड",
+    dept: "स्कूली शिक्षा एवं साक्षरता विभाग",
     hindi: "सभी प्राथमिक विद्यालयों में कक्षा 1 से 5 तक के बच्चों को मातृभाषा समर्थित नई पाठ्यपुस्तकें और अभ्यास पुस्तिकाएं निःशुल्क वितरित की जा रही हैं।",
     santali: "ᱥᱟᱱᱟᱢ ᱯᱨᱟᱭᱢᱟᱨᱤ ᱟᱥᱲᱟ ᱨᱮ ᱠᱟᱹᱠᱷᱟ ᱑ ᱠᱷᱚᱱ ᱕ ᱦᱟᱹᱵᱤᱡ ᱜᱤᱫᱽᱨᱟᱹ ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱯᱚᱛᱚᱵ ᱟᱨ ᱠᱟᱹᱢᱤ ᱯᱚᱛᱚᱵ ᱯᱷᱨᱤ ᱛᱮ ᱦᱟᱹᱴᱤᱧᱚᱜ ᱠᱟᱱᱟ᱾",
     ho: "ᱥᱟᱱᱟᱢ ᱤᱥᱠᱩᱞ ᱨᱮ ᱜᱤᱫᱽᱨᱟᱹ ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱯᱚᱛᱚᱵ ᱮᱢ ᱦᱩᱭᱩᱜ ᱠᱟᱱᱟ᱾",
@@ -28,7 +28,7 @@ const SERVICE_NOTICES = [
     category: "Rural Welfare & Agriculture (ग्रामीण कल्याण)",
     icon: "agriculture",
     title: "बिरसा हरित ग्राम योजना: फलदार बागवानी अनुदान",
-    dept: "ग्रामीण विकास विभाग, झारखण्ड सरकार",
+    dept: "ग्रामीण विकास विभाग",
     hindi: "प्रत्येक ग्राम पंचायत में इच्छुक किसानों को आम और अमरूद के 100 फलदार पौधे और ड्रिप सिंचाई उपकरण शत-प्रतिशत सरकारी अनुदान पर दिए जा रहे हैं।",
     santali: "ᱡᱚᱛᱚ ᱯᱚᱧᱪᱟᱭᱚᱛ ᱨᱮ ᱪᱟᱹᱥᱤ ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱩᱞ ᱟᱨ ᱟᱢᱨᱩᱫ ᱫᱟᱨᱮ ᱥᱚᱨᱠᱟᱨᱤ ᱜᱚᱲᱚ ᱛᱮ ᱧᱟᱢᱚᱜ-ᱟ᱾",
     ho: "ᱪᱟᱹᱥᱤ ᱠᱚ ᱞᱟᱹᱜᱤᱫ ᱩᱞ ᱫᱟᱨᱮ ᱮᱢ ᱦᱩᱭᱩᱜ ᱠᱟᱱᱟ᱾",
@@ -55,11 +55,11 @@ export default function PublicServicesSection({ onLoadIntoStudio }) {
     <section className="public-services-section" id="services-section">
       <div className="section-eyebrow">
         <span className="eyebrow-tag">PUBLIC SERVICE ACCESSIBILITY</span>
-        <span>झारखण्ड जन-सेवा सूचना अनुवाद · PROPOSED SOLUTION</span>
+        <span>जन-सेवा सूचना अनुवाद · SIH PROPOSED SOLUTION</span>
       </div>
       <h2 className="screen-title">Access Public & School Services in Your Language</h2>
       <p className="screen-subtitle">
-        Bridging the communication divide so parents, students, and citizens in tribal areas can comprehend official government notices and school schemes without language barriers.
+        Bridging the communication divide so parents, students, and citizens in tribal areas can comprehend public notices and school schemes without language barriers.
       </p>
 
       <div className="services-grid-wrapper">

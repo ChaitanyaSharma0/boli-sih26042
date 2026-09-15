@@ -1668,34 +1668,29 @@ body {
 }
 
 /* ==========================================================================
-   Government of Jharkhand Emblem & Primary School Kids Animations
+   SIH Initiative Badge & Primary School Kids Animations
    ========================================================================== */
 
-.jharkhand-gov-emblem-wrap {
+.sih-initiative-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.35rem 0.75rem;
-  background: #ffffff;
-  border: 1.5px solid rgba(0, 82, 49, 0.18);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 2px 8px rgba(0, 82, 49, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.jharkhand-gov-emblem-wrap:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 82, 49, 0.14);
-}
-
-.jharkhand-emblem-svg {
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 4px rgba(17, 94, 52, 0.25));
-  transition: transform 0.3s ease;
-}
-
-.jharkhand-gov-emblem-wrap:hover .jharkhand-emblem-svg {
-  transform: scale(1.05);
+.initiative-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fea619;
+  box-shadow: 0 0 6px rgba(254, 166, 25, 0.8);
 }
 
 /* Primary School Kids Mascot Card: बोली साथी (Boli Saathi) */
@@ -2051,316 +2046,6 @@ body {
   background: var(--primary);
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 82, 49, 0.25);
-}
-
-/* ==========================================================================
-   Conversation Mode Component
-   ========================================================================== */
-.conversation-mode-container {
-  background: #ffffff;
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius-xl);
-  padding: 2rem;
-  margin-bottom: 2.5rem;
-}
-
-.conversation-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-bottom: 1.75rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1.5px solid var(--line);
-}
-
-.conv-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: var(--secondary-fixed);
-  color: var(--on-secondary-fixed);
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 0.2rem 0.65rem;
-  border-radius: var(--radius-full);
-  margin-bottom: 0.4rem;
-}
-
-.conv-heading {
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--on-surface);
-  margin: 0 0 0.35rem;
-}
-
-.conv-sub {
-  font-size: 0.92rem;
-  color: var(--text-muted);
-  margin: 0;
-  max-width: 600px;
-}
-
-.scenario-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.scenario-btn {
-  padding: 0.45rem 0.85rem;
-  background: var(--surface-container);
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius-md);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--on-surface);
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.2s ease;
-}
-
-.scenario-btn:hover {
-  border-color: var(--primary);
-  background: var(--surface-container-high);
-}
-
-.scenario-btn.is-active {
-  background: var(--primary);
-  color: #ffffff;
-  border-color: var(--primary);
-  box-shadow: 0 2px 6px rgba(0, 82, 49, 0.2);
-}
-
-.conversation-speakers-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  background: var(--surface-container-low);
-  padding: 0.85rem 1.25rem;
-  border-radius: var(--radius-lg);
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--line);
-}
-
-.speaker-profile {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.85rem;
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
-}
-
-.speaker-profile.is-turn {
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 82, 49, 0.12);
-  border: 1.5px solid var(--primary);
-}
-
-.speaker-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 0.95rem;
-}
-
-.profile-b .speaker-avatar {
-  background: var(--secondary);
-}
-
-.speaker-name {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: var(--on-surface);
-}
-
-.speaker-lang {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.turn-indicator {
-  font-size: 0.72rem;
-  font-weight: 800;
-  background: #a5f3c3;
-  color: #002111;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-full);
-}
-
-.dialogue-exchange-icon {
-  color: var(--text-muted);
-}
-
-.conversation-log-window {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  min-height: 260px;
-  max-height: 480px;
-  overflow-y: auto;
-  padding: 1rem 0.5rem;
-  background: var(--surface-container-lowest);
-  border-radius: var(--radius-lg);
-  border: 1px dashed var(--line);
-  margin-bottom: 1.5rem;
-}
-
-.conv-message-row {
-  display: flex;
-  width: 100%;
-}
-
-.conv-message-row.msg-from-a {
-  justify-content: flex-start;
-}
-
-.conv-message-row.msg-from-b {
-  justify-content: flex-end;
-}
-
-.conv-bubble {
-  max-width: 75%;
-  background: #ffffff;
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: 1rem 1.25rem;
-  box-shadow: 0 3px 10px rgba(87, 78, 69, 0.06);
-}
-
-.msg-from-a .conv-bubble {
-  border-left: 4px solid var(--primary);
-  background: #f8fdf9;
-}
-
-.msg-from-b .conv-bubble {
-  border-right: 4px solid var(--secondary);
-  background: #fffdf8;
-}
-
-.conv-bubble-sender {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: var(--on-surface);
-  margin-bottom: 0.4rem;
-}
-
-.conv-bubble-lang {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-.conv-original-text {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--on-surface);
-  margin: 0 0 0.5rem;
-}
-
-.conv-translation-divider {
-  height: 1px;
-  background: var(--line);
-  margin: 0.4rem 0 0.6rem;
-}
-
-.conv-translated-row {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  flex-wrap: wrap;
-}
-
-.conv-trans-icon {
-  font-size: 1rem;
-  color: var(--primary);
-}
-
-.conv-translated-text {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--primary);
-  flex: 1;
-}
-
-.conv-audio-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.65rem;
-  background: var(--surface-container);
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-full);
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--on-surface);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.conv-audio-btn:hover {
-  background: var(--primary);
-  color: #ffffff;
-  border-color: var(--primary);
-}
-
-.conv-input-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.turn-selector-tabs {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.speaker-tab-btn {
-  padding: 0.3rem 0.75rem;
-  background: var(--surface-container);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-full);
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.speaker-tab-btn.active {
-  background: var(--primary);
-  color: #ffffff;
-  border-color: var(--primary);
-}
-
-.conv-input-row {
-  display: flex;
-  gap: 0.65rem;
-}
-
-.conv-text-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: 1.5px solid var(--line);
-  border-radius: var(--radius-md);
-  font-size: 0.95rem;
-  font-family: inherit;
-}
-
-.conv-text-input:focus {
-  outline: none;
-  border-color: var(--primary);
 }
 
 /* ==========================================================================

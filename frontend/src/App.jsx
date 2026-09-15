@@ -3,9 +3,7 @@ import Capture from "./screens/Capture";
 import LanguageSelect from "./screens/LanguageSelect";
 import Result from "./screens/Result";
 import Logo from "./components/Logo";
-import JharkhandGovLogo from "./components/JharkhandGovLogo";
 import TopUtilityBar from "./components/TopUtilityBar";
-import ConversationMode from "./components/ConversationMode";
 import PublicServicesSection from "./components/PublicServicesSection";
 import LanguagesSection from "./components/LanguagesSection";
 import HowItWorksSection from "./components/HowItWorksSection";
@@ -44,7 +42,7 @@ function Stepper({ step, onSelectStep }) {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("studio"); // "studio" | "conversation" | "services" | "languages" | "how-it-works"
+  const [activeTab, setActiveTab] = useState("studio"); // "studio" | "services" | "languages" | "how-it-works"
   const [activeLang, setActiveLang] = useState("hi");
   const [step, setStep] = useState(0);
   const [hindiText, setHindiText] = useState("");
@@ -126,17 +124,6 @@ export default function App() {
       },
     },
     {
-      id: "conversation-tab",
-      icon: "forum",
-      title: "Bilingual Conversation Mode",
-      badge: "2-Way",
-      active: activeTab === "conversation",
-      onClick: () => {
-        setActiveTab("conversation");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      },
-    },
-    {
       id: "speaker-test",
       icon: "volume_up",
       title: "Speaker Chime Test",
@@ -188,17 +175,6 @@ export default function App() {
           </button>
           <button
             type="button"
-            className={`nav-tab-link ${activeTab === "conversation" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("conversation");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          >
-            <span className="material-symbols-outlined text-sm">forum</span>
-            <span>Conversation (संवाद)</span>
-          </button>
-          <button
-            type="button"
             className={`nav-tab-link ${activeTab === "services" ? "is-active" : ""}`}
             onClick={() => {
               setActiveTab("services");
@@ -240,7 +216,10 @@ export default function App() {
         )}
 
         <div className="header-meta">
-          <JharkhandGovLogo size={42} />
+          <div className="sih-initiative-badge">
+            <span className="initiative-dot" />
+            <span>SIH Prototype · SIH26042</span>
+          </div>
         </div>
       </header>
 
@@ -280,8 +259,6 @@ export default function App() {
             )}
           </div>
         )}
-
-        {activeTab === "conversation" && <ConversationMode />}
 
         {activeTab === "services" && (
           <PublicServicesSection

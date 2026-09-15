@@ -29,7 +29,7 @@ export default function TopUtilityBar({ activeLang, onToggleLang }) {
         <div className="utility-left">
           <span className="sih-gov-emblem-dot" />
           <span className="utility-gov-title">
-            <strong>झारखण्ड सरकार</strong> · Government of Jharkhand
+            <strong>Boli बोली</strong> · Multilingual Communication Platform
           </span>
           <span className="utility-badge-sih">SIH Prototype · SIH26042</span>
           <span className="utility-sub-clause">Proposed Digital Public Service Solution</span>

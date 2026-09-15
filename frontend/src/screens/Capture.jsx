@@ -585,11 +585,11 @@ export default function Capture({
           </span>
           <div>
             <strong>Smart Education · SIH26042</strong>
-            <span>Government of Jharkhand · Primary School Mother-Tongue Learning Pilot</span>
+            <span>SIH Prototype · Multilingual Primary Learning Platform</span>
           </div>
         </div>
         <div className="trust-contact-links">
-          <a className="trust-link" href="mailto:support@jepc.jharkhand.gov.in" title="Teacher Support Email">
+          <a className="trust-link" href="mailto:contact@boli-sih.org" title="SIH Project Support">
             <span className="material-symbols-outlined text-base">mail</span>
             <span>Teacher Support</span>
           </a>

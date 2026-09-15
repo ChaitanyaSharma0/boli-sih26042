@@ -61,7 +61,7 @@ export default function PrintWorksheet({
               <div>
                 <h1 className="worksheet-title">BOLI — Multilingual Classroom Worksheet</h1>
                 <p className="worksheet-subtitle">
-                  Government of Jharkhand · Primary Mother-Tongue Learning Aid
+                  SIH Prototype · Primary Mother-Tongue Learning Aid
                 </p>
               </div>
             </div>

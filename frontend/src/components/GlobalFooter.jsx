@@ -30,7 +30,6 @@ export default function GlobalFooter() {
           <h4 className="footer-col-heading">Platform Navigation</h4>
           <ul className="footer-links-list">
             <li><a href="#studio-section">Lesson & Translation Studio</a></li>
-            <li><a href="#conversation-section">Bilingual Conversation Mode</a></li>
             <li><a href="#services-section">Public & School Services</a></li>
             <li><a href="#languages-section">Languages of Jharkhand</a></li>
             <li><a href="#how-it-works">How Boli Operates</a></li>
@@ -67,7 +66,7 @@ export default function GlobalFooter() {
           <strong>Smart India Hackathon (SIH) Prototype Disclaimer</strong>
         </div>
         <p className="disclaimer-body">
-          <strong>Boli (बोली)</strong> is an academic prototype developed as a proposed technology solution for the Smart India Hackathon problem statement. It is designed to demonstrate how public-service and educational translation can realistically function in Jharkhand. It is not an officially commissioned Government of Jharkhand portal unless formally notified.
+          <strong>Boli (बोली)</strong> is an academic prototype developed as a proposed technology solution for the Smart India Hackathon problem statement. It is designed to demonstrate how public-service and educational translation can realistically function across regional languages. It is not an officially commissioned government portal unless formally notified.
         </p>
       </div>
 
