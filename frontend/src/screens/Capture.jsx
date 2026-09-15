@@ -118,10 +118,15 @@ export default function Capture({
 
   return (
     <section aria-labelledby="capture-heading">
-      <p className="eyebrow">Step 01 · Capture & Input</p>
-      <h1 id="capture-heading">Start with a Hindi textbook lesson.</h1>
-      <p className="intro">
-        Type a sentence, record Hindi speech, or upload a textbook photo or full chapter PDF.
+      <div className="hero-eyebrow">
+        <span className="eyebrow-dot" />
+        <span>v2.0 · SIH26042 Primary Education Cockpit</span>
+      </div>
+      <h1 id="capture-heading" className="aurora-hero-title">
+        Start with a Hindi lesson. Turn it into <span className="warm-gradient-word">Spoken</span> mother tongues.
+      </h1>
+      <p className="aurora-hero-subtitle">
+        Type a primary textbook sentence, record classroom speech, or upload a full chapter PDF to generate spoken lessons for languages with zero commercial TTS.
       </p>
 
       {/* Mode Selector */}
@@ -310,6 +315,14 @@ export default function Capture({
       </div>
 
       <ContrastDemo />
+
+      <div className="floating-govt-badge" aria-label="Project certification">
+        <span className="govt-badge-icon">🏛️</span>
+        <div className="govt-badge-text">
+          <strong>Smart Education · SIH26042</strong>
+          <small>Government of Jharkhand · Primary Classrooms</small>
+        </div>
+      </div>
     </section>
   );
 }
