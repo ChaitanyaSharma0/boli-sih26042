@@ -118,14 +118,13 @@ export default function Capture({
 
   return (
     <section aria-labelledby="capture-heading">
-      <div className="hero-eyebrow">
-        <span className="eyebrow-dot" />
-        <span>v2.0 · SIH26042 Primary Education Cockpit</span>
+      <div className="brutalist-badge-pill">
+        <span>⚡ NEW: AI Mother-Tongue Assistant 2.0</span>
       </div>
-      <h1 id="capture-heading" className="aurora-hero-title">
-        Start with a Hindi lesson. Turn it into <span className="warm-gradient-word">Spoken</span> mother tongues.
+      <h1 id="capture-heading" className="brutalist-hero-title">
+        Start with a Hindi lesson. Turn it into <span className="brutalist-stroke-word">Spoken</span> mother tongues.
       </h1>
-      <p className="aurora-hero-subtitle">
+      <p className="brutalist-hero-subtitle">
         Type a primary textbook sentence, record classroom speech, or upload a full chapter PDF to generate spoken lessons for languages with zero commercial TTS.
       </p>
 

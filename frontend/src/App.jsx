@@ -63,30 +63,20 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {/* Living Warm Animated Aurora Background */}
-      <div className="aurora-canvas" aria-hidden="true">
-        <div className="aurora-blade blade-1" />
-        <div className="aurora-blade blade-2" />
-        <div className="aurora-blade blade-3" />
-        <div className="aurora-grain" />
-        <div className="aurora-vignette" />
-      </div>
-
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
 
-      <header className="floating-pill-nav">
+      <header className="brutalist-nav">
         <div className="nav-left">
-          <Logo size="small" showTagline={false} />
+          <Logo size="small" showTagline={true} />
         </div>
         <div className="nav-center">
           <Stepper step={step} />
         </div>
         <div className="nav-right">
-          <span className="event-badge">
-            <span className="dot" aria-hidden="true" />
-            SIH26042 · Smart Education
+          <span className="brutalist-badge">
+            <span className="badge-bolt">⚡</span> SIH26042
           </span>
         </div>
       </header>
