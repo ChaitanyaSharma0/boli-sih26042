@@ -4,10 +4,13 @@ import LanguageSelect from "./screens/LanguageSelect";
 import Result from "./screens/Result";
 import Logo from "./components/Logo";
 import JharkhandGovLogo from "./components/JharkhandGovLogo";
+import TopUtilityBar from "./components/TopUtilityBar";
+import ConversationMode from "./components/ConversationMode";
+import PublicServicesSection from "./components/PublicServicesSection";
+import LanguagesSection from "./components/LanguagesSection";
+import HowItWorksSection from "./components/HowItWorksSection";
+import GlobalFooter from "./components/GlobalFooter";
 import Dock from "./components/motion/Dock";
-
-// ponytail: three linear screens, so a step index replaces a router.
-// Add react-router only if a screen ever needs its own shareable URL.
 
 const STEPS = [
   { num: 1, label: "Capture Lesson" },
@@ -15,7 +18,7 @@ const STEPS = [
   { num: 3, label: "Listen & Speak" },
 ];
 
-function Stepper({ step }) {
+function Stepper({ step, onSelectStep }) {
   return (
     <nav className="progress-container" aria-label="Lesson progress">
       <ol className="progress">
@@ -26,6 +29,8 @@ function Stepper({ step }) {
               index === step ? "is-current" : index < step ? "is-done" : ""
             }
             aria-current={index === step ? "step" : undefined}
+            onClick={() => onSelectStep && onSelectStep(index)}
+            style={{ cursor: "pointer" }}
           >
             <span className="step-number" aria-hidden="true">
               {index < step ? "✓" : s.num}
@@ -39,28 +44,21 @@ function Stepper({ step }) {
 }
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState("studio"); // "studio" | "conversation" | "services" | "languages" | "how-it-works"
+  const [activeLang, setActiveLang] = useState("hi");
   const [step, setStep] = useState(0);
   const [hindiText, setHindiText] = useState("");
-  // Grade-level selector: Class 1-5 (default Class 2)
   const [grade, setGrade] = useState(2);
-  // PDF Chapter extracted sentences
   const [chapterSentences, setChapterSentences] = useState([]);
-  // Whether the text came off a photo or a keyboard, for the lesson row.
   const [sourceType, setSourceType] = useState("typed");
   const [selectedLangs, setSelectedLangs] = useState([]);
   const mainRef = useRef(null);
 
-  // State lives here, not in the screens, because it flows forward:
-  // screen 1 produces hindiText, screen 2 produces selectedLangs, and
-  // screen 3 consumes both (ARCHITECTURE.md §5).
   function go(nextStep) {
     setStep(nextStep);
-    // Moving between screens replaces the whole page: send focus to the
-    // new content so a keyboard or screen-reader user is not left on a
-    // button that no longer exists.
     requestAnimationFrame(() => {
       mainRef.current?.focus();
-      window.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
 
@@ -89,7 +87,7 @@ export default function App() {
         osc.stop(startTime + 0.36);
       });
     } catch {
-      // AudioContext unavailable or restricted by browser policy
+      // AudioContext unavailable or restricted
     }
   }
 
@@ -99,24 +97,44 @@ export default function App() {
       icon: "edit_note",
       title: "Step 1: Capture Lesson",
       badge: "1",
-      active: step === 0,
-      onClick: () => go(0),
+      active: activeTab === "studio" && step === 0,
+      onClick: () => {
+        setActiveTab("studio");
+        go(0);
+      },
     },
     {
       id: "languages-step",
       icon: "translate",
       title: "Step 2: Tribal Dialects",
       badge: "2",
-      active: step === 1,
-      onClick: () => go(1),
+      active: activeTab === "studio" && step === 1,
+      onClick: () => {
+        setActiveTab("studio");
+        go(1);
+      },
     },
     {
       id: "audio-step",
       icon: "record_voice_over",
       title: "Step 3: Listen & Speak",
       badge: "3",
-      active: step === 2,
-      onClick: () => go(2),
+      active: activeTab === "studio" && step === 2,
+      onClick: () => {
+        setActiveTab("studio");
+        go(2);
+      },
+    },
+    {
+      id: "conversation-tab",
+      icon: "forum",
+      title: "Bilingual Conversation Mode",
+      badge: "2-Way",
+      active: activeTab === "conversation",
+      onClick: () => {
+        setActiveTab("conversation");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      },
     },
     {
       id: "speaker-test",
@@ -134,6 +152,7 @@ export default function App() {
       onClick: () => {
         setHindiText("");
         setChapterSentences([]);
+        setActiveTab("studio");
         go(0);
       },
     },
@@ -141,90 +160,167 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      {/* Top Government-Grade Utility Bar (Accessibility & SIH Identification) */}
+      <TopUtilityBar activeLang={activeLang} onToggleLang={setActiveLang} />
+
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
 
+      {/* Main Government Portal Header */}
       <header className="app-header-bar sun-card-shadow">
         <div className="header-brand">
           <Logo size="small" showTagline={true} />
         </div>
-        <div className="header-stepper">
-          <Stepper step={step} />
-        </div>
+
+        {/* Global Navigation Tabs (Section 8 of Prompt) */}
+        <nav className="header-nav-tabs" aria-label="Primary Platform Navigation">
+          <button
+            type="button"
+            className={`nav-tab-link ${activeTab === "studio" ? "is-active" : ""}`}
+            onClick={() => {
+              setActiveTab("studio");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <span className="material-symbols-outlined text-sm">auto_stories</span>
+            <span>Studio (शिक्षण)</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-tab-link ${activeTab === "conversation" ? "is-active" : ""}`}
+            onClick={() => {
+              setActiveTab("conversation");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <span className="material-symbols-outlined text-sm">forum</span>
+            <span>Conversation (संवाद)</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-tab-link ${activeTab === "services" ? "is-active" : ""}`}
+            onClick={() => {
+              setActiveTab("services");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <span className="material-symbols-outlined text-sm">public</span>
+            <span>Public Services (जन सेवाएँ)</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-tab-link ${activeTab === "languages" ? "is-active" : ""}`}
+            onClick={() => {
+              setActiveTab("languages");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <span className="material-symbols-outlined text-sm">language</span>
+            <span>Languages (भाषाएँ)</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-tab-link ${activeTab === "how-it-works" ? "is-active" : ""}`}
+            onClick={() => {
+              setActiveTab("how-it-works");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <span className="material-symbols-outlined text-sm">account_tree</span>
+            <span>How It Works</span>
+          </button>
+        </nav>
+
+        {/* Stepper only when in studio mode */}
+        {activeTab === "studio" && (
+          <div className="header-stepper">
+            <Stepper step={step} onSelectStep={go} />
+          </div>
+        )}
+
         <div className="header-meta">
           <JharkhandGovLogo size={42} />
         </div>
       </header>
 
+      {/* Main Workspace Area */}
       <main id="main-content" ref={mainRef} tabIndex={-1}>
-        {step === 0 && (
-          <Capture
-            hindiText={hindiText}
-            setHindiText={setHindiText}
-            grade={grade}
-            setGrade={setGrade}
-            chapterSentences={chapterSentences}
-            setChapterSentences={setChapterSentences}
-            setSourceType={setSourceType}
-            onNext={next}
+        {activeTab === "studio" && (
+          <div id="studio-section">
+            {step === 0 && (
+              <Capture
+                hindiText={hindiText}
+                setHindiText={setHindiText}
+                grade={grade}
+                setGrade={setGrade}
+                chapterSentences={chapterSentences}
+                setChapterSentences={setChapterSentences}
+                setSourceType={setSourceType}
+                onNext={next}
+              />
+            )}
+            {step === 1 && (
+              <LanguageSelect
+                selectedLangs={selectedLangs}
+                setSelectedLangs={setSelectedLangs}
+                onBack={back}
+                onNext={next}
+              />
+            )}
+            {step === 2 && (
+              <Result
+                hindiText={hindiText}
+                grade={grade}
+                chapterSentences={chapterSentences}
+                sourceType={sourceType}
+                selectedLangs={selectedLangs}
+                onBack={back}
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === "conversation" && <ConversationMode />}
+
+        {activeTab === "services" && (
+          <PublicServicesSection
+            onLoadIntoStudio={(text) => {
+              setHindiText(text);
+              setChapterSentences([]);
+              setActiveTab("studio");
+              go(0);
+            }}
           />
         )}
-        {step === 1 && (
-          <LanguageSelect
-            selectedLangs={selectedLangs}
-            setSelectedLangs={setSelectedLangs}
-            onBack={back}
-            onNext={next}
-          />
-        )}
-        {step === 2 && (
-          <Result
-            hindiText={hindiText}
-            grade={grade}
-            chapterSentences={chapterSentences}
-            sourceType={sourceType}
-            selectedLangs={selectedLangs}
-            onBack={back}
-          />
+
+        {activeTab === "languages" && <LanguagesSection />}
+
+        {activeTab === "how-it-works" && <HowItWorksSection />}
+
+        {/* When in Studio mode, also offer smooth anchor access to the supporting sections below */}
+        {activeTab === "studio" && (
+          <>
+            <div className="studio-sections-divider" />
+            <PublicServicesSection
+              onLoadIntoStudio={(text) => {
+                setHindiText(text);
+                setChapterSentences([]);
+                go(0);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+            <LanguagesSection />
+            <HowItWorksSection />
+          </>
         )}
       </main>
 
+      {/* Quick Apple-style Dock for Teachers & Field Workers */}
       <Dock items={dockItems} />
 
-      {/* The scope boundary is on every screen, including the chrome.
-          Santali is the only one of these languages with a translation
-          model; the other four are a curated phrase bank (PRD.md §4). */}
-      <footer className="app-footer sun-card-shadow">
-        <div className="footer-top-row">
-          <div className="footer-brand-initiative">
-            <img
-              src="/logo.png"
-              alt="BOLI"
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 6,
-                objectFit: "cover",
-                background: "#381c05",
-                display: "inline-block",
-              }}
-            />
-            <strong>BOLI बोली</strong>
-            <span>· Jharkhand Multilingual Primary Initiative (DIET Pilot)</span>
-          </div>
-          <div className="footer-links">
-            <a href="#curriculum" className="footer-link">DIET Guidelines</a>
-            <a href="#phonetics" className="footer-link">Phonetic Guide</a>
-            <a href="mailto:support@jepc.jharkhand.gov.in" className="footer-link">Helpdesk</a>
-          </div>
-        </div>
-        <div className="footer-boundary-note">
-          <strong>Classroom Honesty Boundary: </strong>
-          Santali: real AI translation, no voice · Ho, Mundari, Kurukh, Sadri:
-          curated phrase bank only, pending validation
-        </div>
-      </footer>
+      {/* Government-Grade Footer with SIH Prototype Disclaimers */}
+      <GlobalFooter />
     </div>
   );
 }
