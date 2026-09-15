@@ -3,6 +3,7 @@ import Capture from "./screens/Capture";
 import LanguageSelect from "./screens/LanguageSelect";
 import Result from "./screens/Result";
 import Logo from "./components/Logo";
+import JharkhandGovLogo from "./components/JharkhandGovLogo";
 import Dock from "./components/motion/Dock";
 
 // ponytail: three linear screens, so a step index replaces a router.
@@ -152,16 +153,7 @@ export default function App() {
           <Stepper step={step} />
         </div>
         <div className="header-meta">
-          <div className="live-engine-badge">
-            <span className="engine-pulse-dot" />
-            <span>AI Engine: Offline-Ready</span>
-          </div>
-          <div className="pilot-school-tag">
-            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-              location_on
-            </span>
-            <span>GPS Kanke, Ranchi</span>
-          </div>
+          <JharkhandGovLogo size={42} />
         </div>
       </header>
 

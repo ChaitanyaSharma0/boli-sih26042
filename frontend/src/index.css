@@ -1666,3 +1666,199 @@ body {
 .char-back {
   color: var(--secondary);
 }
+
+/* ==========================================================================
+   Government of Jharkhand Emblem & Primary School Kids Animations
+   ========================================================================== */
+
+.jharkhand-gov-emblem-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.35rem 0.75rem;
+  background: #ffffff;
+  border: 1.5px solid rgba(0, 82, 49, 0.18);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px rgba(0, 82, 49, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.jharkhand-gov-emblem-wrap:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 82, 49, 0.14);
+}
+
+.jharkhand-emblem-svg {
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(17, 94, 52, 0.25));
+  transition: transform 0.3s ease;
+}
+
+.jharkhand-gov-emblem-wrap:hover .jharkhand-emblem-svg {
+  transform: scale(1.05);
+}
+
+/* Primary School Kids Mascot Card: बोली साथी (Boli Saathi) */
+.boli-mascot-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: linear-gradient(135deg, #FFFDF9 0%, #FFF3E0 50%, #E8F5E9 100%);
+  border: 2px solid #FFE082;
+  border-radius: var(--radius-xl);
+  padding: 1rem 1.4rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 6px 18px rgba(254, 166, 25, 0.15), 0 2px 4px rgba(0, 82, 49, 0.06);
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+.boli-mascot-card:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 10px 24px rgba(254, 166, 25, 0.22), 0 4px 8px rgba(0, 82, 49, 0.08);
+  border-color: #FFB300;
+}
+
+/* Floating Particles around Mascot */
+.mascot-floating-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+}
+
+.particle {
+  position: absolute;
+  font-size: 0.95rem;
+  animation: float-particle 4s infinite ease-in-out;
+}
+
+.particle.p1 {
+  top: 12%;
+  left: 18px;
+  animation-delay: 0s;
+}
+
+.particle.p2 {
+  bottom: 14%;
+  left: 58px;
+  animation-delay: 1.2s;
+}
+
+.particle.p3 {
+  top: 15%;
+  right: 24px;
+  animation-delay: 2.1s;
+}
+
+.particle.p4 {
+  bottom: 12%;
+  right: 48px;
+  animation-delay: 3s;
+}
+
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-6px) scale(1.15) rotate(12deg);
+    opacity: 1;
+  }
+}
+
+/* Mascot Avatar & Bobbing */
+.mascot-avatar-wrap {
+  flex-shrink: 0;
+  animation: mascot-bob 3.2s infinite ease-in-out;
+  transform-origin: center bottom;
+}
+
+@keyframes mascot-bob {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) rotate(-1.5deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(1.5deg);
+  }
+}
+
+.mascot-svg {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.12));
+}
+
+.mascot-wing {
+  transform-origin: 74px 54px;
+  transition: transform 0.2s ease;
+}
+
+.mascot-avatar-wrap.is-waving .mascot-wing {
+  animation: mascot-wing-wave 0.4s 3 ease-in-out;
+}
+
+@keyframes mascot-wing-wave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-25deg) translateY(-3px);
+  }
+}
+
+/* Mascot Speech Bubble */
+.mascot-speech-bubble {
+  position: relative;
+  background: #ffffff;
+  border: 1.5px solid #FFE082;
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.1rem;
+  flex: 1;
+  box-shadow: 0 2px 8px rgba(87, 78, 69, 0.08);
+}
+
+.speech-bubble-tail {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border-left: 1.5px solid #FFE082;
+  border-bottom: 1.5px solid #FFE082;
+}
+
+.mascot-name-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #005231;
+  margin-bottom: 0.25rem;
+}
+
+.mascot-class-badge {
+  background: var(--secondary-container);
+  color: var(--on-secondary-fixed);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+}
+
+.mascot-dialogue {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  line-height: 1.4;
+  margin: 0;
+}
+

@@ -4,6 +4,7 @@ import ContrastDemo from "../components/ContrastDemo";
 import TextLoop from "../components/motion/TextLoop";
 import Spotlight from "../components/motion/Spotlight";
 import Tilt from "../components/motion/Tilt";
+import BoliMascot from "../components/BoliMascot";
 
 export default function Capture({
   hindiText,
@@ -168,31 +169,12 @@ export default function Capture({
 
   return (
     <section aria-labelledby="capture-heading">
-      {/* Top Pedagogical Chips */}
-      <div className="classroom-chips-row">
-        <span className="classroom-chip chip-jcert">
-          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-            menu_book
-          </span>
-          JCERT / NCERT Aligned
-        </span>
-        <span className="classroom-chip chip-engine">
-          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-            mic
-          </span>
-          Tribal Phonetic Engine v2.4
-        </span>
-        <span className="classroom-chip chip-offline">
-          <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-            wifi_off
-          </span>
-          100% Offline Classroom Mode
-        </span>
-      </div>
+      {/* Cheerful Primary School Mascot & Greeting for Kids */}
+      <BoliMascot currentGrade={grade} />
 
       <div className="section-eyebrow">
-        <span className="eyebrow-tag">STEP 01</span>
-        <span>PRIMARY TEXTBOOK TO SPOKEN MOTHER TONGUE</span>
+        <span className="eyebrow-tag">कक्षा 1–5 विशेष</span>
+        <span>झारखण्ड प्राथमिक शिक्षा अभियान · मातृभाषा शिक्षण</span>
       </div>
       <h1 id="capture-heading" className="screen-title">
         Turn Hindi primary lessons into spoken{" "}
@@ -269,7 +251,7 @@ export default function Capture({
               <span className="material-symbols-outlined text-secondary text-base" style={{ fontVariationSettings: "'FILL' 1" }}>
                 school
               </span>
-              Target Classroom Level & Articulation Speed
+              कक्षा चुनें (Select Class Level)
             </span>
             <span style={{ color: "var(--primary)", fontWeight: 700 }}>Class {grade}</span>
           </div>
@@ -286,26 +268,26 @@ export default function Capture({
                 <span className="grade-title">Class {g}</span>
                 <span className="grade-subtitle">
                   {g === 1
-                    ? "Balvatika"
+                    ? "बालवाटिका"
                     : g === 2
-                    ? "Early Reader"
+                    ? "कक्षा २"
                     : g === 3
-                    ? "Fluency"
+                    ? "कक्षा ३"
                     : g === 4
-                    ? "Compound"
-                    : "Prep"}
+                    ? "कक्षा ४"
+                    : "कक्षा ५"}
                 </span>
               </button>
             ))}
           </div>
 
-          {/* Stitch Amber Pedagogy Feedback Box */}
+          {/* Child-friendly Pedagogy Guidance Box */}
           <div className="pedagogy-note-box">
             <span className="material-symbols-outlined text-secondary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
-              lightbulb
+              sentiment_very_satisfied
             </span>
             <p className="pedagogy-text">
-              <strong>Class {grade} Pedagogy Note: </strong>
+              <strong>कक्षा {grade} बाल-मित्र मार्गदर्शन: </strong>
               {GRADE_PEDAGOGY_NOTES[grade]}
             </p>
           </div>
