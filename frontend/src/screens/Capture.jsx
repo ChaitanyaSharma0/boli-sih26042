@@ -326,10 +326,17 @@ export default function Capture({
       <ContrastDemo />
 
       <div className="platform-trust-footer">
-        <span className="trust-icon">🏛️</span>
-        <div>
-          <strong>Smart Education · SIH26042</strong>
-          <span>Government of Jharkhand · Primary School Mother-Tongue Learning</span>
+        <div className="trust-left">
+          <span className="trust-icon">🏛️</span>
+          <div>
+            <strong>Smart Education · SIH26042</strong>
+            <span>Government of Jharkhand · Primary School Mother-Tongue Learning</span>
+          </div>
+        </div>
+        <div className="trust-contact-links">
+          <a className="trust-link" href="mailto:support@jepc.jharkhand.gov.in" title="Teacher Support Email">
+            ✉️ Teacher Support
+          </a>
         </div>
       </div>
     </section>

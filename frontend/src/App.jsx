@@ -63,6 +63,18 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      {/* Gentle Floating Animated Classroom Ambient Elements */}
+      <div className="classroom-ambience" aria-hidden="true">
+        <span className="ambient-float ambient-note-1">🎵</span>
+        <span className="ambient-float ambient-sparkle-1">✨</span>
+        <span className="ambient-float ambient-note-2">🗣️</span>
+        <span className="ambient-float ambient-leaf">🌿</span>
+        <span className="ambient-float ambient-sun">☀️</span>
+        <div className="ambient-orb orb-1" />
+        <div className="ambient-orb orb-2" />
+        <div className="ambient-orb orb-3" />
+      </div>
+
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
@@ -77,7 +89,7 @@ export default function App() {
         <div className="header-meta">
           <span className="live-engine-badge">
             <span className="engine-pulse-dot" />
-            <span>Live Audio Engine · SIH26042</span>
+            <span>Classroom Voice AI · SIH26042</span>
           </span>
         </div>
       </header>

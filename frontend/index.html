@@ -3,24 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BOLI — Voice AI for Jharkhand Classrooms</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta
+      name="description"
+      content="BOLI — Mother-tongue voice learning aid for Jharkhand primary school classrooms. Synthesize spoken lessons in Santali, Ho, Mundari, Kurukh, and Sadri."
+    />
+    <meta name="theme-color" content="#1b6b45" />
+    <title>BOLI — Mother-Tongue Voice AI for Jharkhand Primary Classrooms</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@500;600;700;800&family=Noto+Sans+Ol+Chiki:wght@500;700&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
-    <!-- SVG Noise / Film Grain Filter for Aurora -->
-    <svg style="display: none;">
-      <filter id="aurora-grain">
-        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
-        <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.07 0" />
-      </filter>
-    </svg>
-
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
