@@ -1050,88 +1050,265 @@ body {
    Screen 2: Language Selection (Storybook Grid)
    ========================================================================== */
 
-.language-group {
-  margin-bottom: 2.5rem;
+.language-select-screen {
+  position: relative;
+  width: 100%;
+}
+
+.language-group-panel {
+  margin-bottom: 2rem;
+  padding: 1.75rem 2rem;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 16px 40px -8px rgba(0, 30, 15, 0.35), 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
 .language-group-header {
-  margin-bottom: 1.15rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-wrap: wrap;
 }
 
-.language-group-header h2 {
+.group-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+  min-width: 260px;
+}
+
+.group-num-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(27, 107, 69, 0.28);
+  flex-shrink: 0;
+}
+
+.group-heading {
   font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--navy);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.01em;
 }
 
-.language-group-header p {
+.group-blurb {
   font-size: 0.92rem;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
+  color: #475569;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.group-type-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.group-type-tag--ai {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.group-type-tag--bank {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
 }
 
 .language-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.15rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
 }
 
-.language-card {
+/* Individual Tactile Language Card */
+.lang-select-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 1.35rem;
-  background: var(--card);
-  border: 2px solid var(--line);
+  padding: 1.35rem 1.4rem;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   cursor: pointer;
-  min-height: 100px;
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  min-height: 140px;
 }
 
-.language-card:hover {
+.lang-select-card:hover {
   transform: translateY(-3px);
-  border-color: var(--navy-light);
-  box-shadow: var(--shadow-hover);
+  border-color: #94a3b8;
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.12);
 }
 
-.language-card--checked {
-  border-color: var(--navy) !important;
-  background: var(--navy-tint) !important;
-  box-shadow: 0 8px 24px rgba(30, 58, 95, 0.15) !important;
-  transform: translateY(-2px) scale(1.02);
+.lang-select-card.is-selected {
+  border-color: #16a34a !important;
+  background: #f0fdf4 !important;
+  box-shadow: 0 12px 28px -4px rgba(22, 163, 74, 0.22) !important;
+  transform: translateY(-2px);
 }
 
-.language-card-top {
+.lang-select-card.is-bank.is-selected {
+  border-color: #d97706 !important;
+  background: #fffbeb !important;
+  box-shadow: 0 12px 28px -4px rgba(217, 119, 6, 0.2) !important;
+}
+
+.lang-select-card.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lang-card-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.lang-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  height: 100%;
+}
+
+.lang-card-top {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
   justify-content: space-between;
-  margin-bottom: 0.55rem;
 }
 
-.language-name {
+.lang-card-check-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 2px solid #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.lang-card-check-box.is-checked {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.4);
+}
+
+.lang-select-card.is-bank .lang-card-check-box.is-checked {
+  background: #d97706;
+  border-color: #d97706;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.4);
+}
+
+.lang-card-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.lang-card-name {
+  font-family: var(--font-display);
   font-size: 1.2rem;
   font-weight: 800;
-  color: var(--navy);
+  color: #0f172a;
 }
 
-.native-badge {
-  font-size: 0.82rem;
+.lang-card-native {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.18rem 0.6rem;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.lang-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.74rem;
+  font-weight: 700;
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-full);
-  background: #ffffff;
-  border: 1.5px solid var(--line);
-  color: var(--green-dark);
-  font-weight: 800;
+  white-space: nowrap;
 }
 
-.language-detail {
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  line-height: 1.5;
+.lang-badge--ai {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
 }
+
+.lang-badge--bank {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.lang-card-desc {
+  font-size: 0.88rem;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+.lang-card-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0369a1;
+  background: #f0f9ff;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  margin-top: auto;
+}
+
+.panel-actions-bar {
+  margin-top: 2rem;
+  padding: 1.25rem 0;
+}
+
 
 /* ==========================================================================
    Screen 3: Result & Spoken Lesson View

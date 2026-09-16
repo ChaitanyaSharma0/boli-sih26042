@@ -100,22 +100,51 @@ export default function LanguageSelect({
   }
 
   return (
-    <section aria-labelledby="languages-heading">
-      {header}
-      <p className="screen-subtitle">
-        Pick as many as you need. What each language can actually do is
-        different, and it is spelled out below.
-      </p>
+    <section aria-labelledby="languages-heading" className="language-select-screen">
+      <div className="screen-header-block">
+        {header}
+        <p className="screen-subtitle">
+          Pick as many as you need. What each language can actually do is
+          different, and it is spelled out below.
+        </p>
+      </div>
 
       {groupLanguages(list).map((group, index) => (
-        <fieldset
+        <div
           key={group.key}
-          className={`language-group ${groupModifier(group.key)} sun-card-shadow`}
+          className={`language-group-panel panel sun-card-shadow ${groupModifier(group.key)}`}
         >
-          <legend>
-            {String(index + 1).padStart(2, "0")} / {group.heading}
-          </legend>
-          {group.blurb && <p className="group-blurb">{group.blurb}</p>}
+          <div className="language-group-header">
+            <div className="group-header-left">
+              <span className="group-num-badge">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h2 className="group-heading">{group.heading}</h2>
+                {group.blurb && <p className="group-blurb">{group.blurb}</p>}
+              </div>
+            </div>
+            <span
+              className={`group-type-tag ${
+                group.key === "full"
+                  ? "group-type-tag--ai"
+                  : "group-type-tag--bank"
+              }`}
+            >
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: "14px" }}
+              >
+                {group.key === "full" ? "neurology" : "menu_book"}
+              </span>
+              <span>
+                {group.key === "full"
+                  ? "Neural AI Translation"
+                  : "Validated Audio Phrase Bank"}
+              </span>
+            </span>
+          </div>
+
           <div className="language-grid">
             {group.items.map((language) => (
               <LanguageChip
@@ -126,11 +155,14 @@ export default function LanguageSelect({
               />
             ))}
           </div>
-        </fieldset>
+        </div>
       ))}
 
-      <div className="actions actions--split">
-        <button className="button button--secondary tactile-btn-secondary" onClick={onBack}>
+      <div className="actions actions--split panel-actions-bar">
+        <button
+          className="button button--secondary tactile-btn-secondary"
+          onClick={onBack}
+        >
           <span className="material-symbols-outlined text-base">arrow_back</span>
           <span>Edit the lesson</span>
         </button>
@@ -152,3 +184,4 @@ export default function LanguageSelect({
     </section>
   );
 }
+
