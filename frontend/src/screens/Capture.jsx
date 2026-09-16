@@ -142,11 +142,11 @@ export default function Capture({
   ];
 
   const GRADE_PEDAGOGY_NOTES = {
-    1: "Balvatika (Class 1): 3–5 words per clause. Extended 25% pauses between words to support emergent phonemic awareness.",
-    2: "Class 2 (Early Reader): 6–10 words per phrase. Pronunciation pauses are extended by 15% to support mapping Devanagari Hindi to spoken Santali/Mundari phonemes.",
-    3: "Class 3 (Fluency Building): 10–14 words per phrase. Natural rhythm with village idioms and daily conversation vocabulary.",
-    4: "Class 4 (Compound Stories): Multi-clause narrative sentences with cultural substitutions for textbook Hindi terms.",
-    5: "Class 5 (Upper Primary Prep): Standard curriculum vocabulary with dual-script phonetic annotations for bilingual confidence.",
+    1: "Class 1 (Balvatika): Short, simple phrases (3–5 words) using familiar daily objects, repetition, and playful rhythm for first-time learners.",
+    2: "Class 2 (Early Reader): Gentle sentence structures (5–8 words) connecting classroom concepts to village environment and daily routines.",
+    3: "Class 3 (Fluency Building): Connected clauses (8–12 words) introducing early environmental science, moral tales, and conversational vocabulary.",
+    4: "Class 4 (Narrative Comprehension): Multi-clause story sentences introducing compound actions, community traditions, and guided questions.",
+    5: "Class 5 (Upper Primary Transition): Standard textbook concepts paired with clear vernacular context to prepare students for middle school Hindi.",
   };
 
   function handlePresetChange(e) {
@@ -189,8 +189,43 @@ export default function Capture({
         />
       </h1>
       <p className="screen-subtitle">
-        Bridge early classroom comprehension for tribal children in Jharkhand. Transform textbook lessons into spoken mother-tongue audio with authentic village phonetics.
+        Bridge early classroom comprehension for tribal children in Jharkhand. Adapt Hindi curriculum lessons for Class 1–5 understanding and translate into spoken mother-tongue audio.
       </p>
+
+      {/* Visual Pedagogy Pipeline Indicator */}
+      <div className="pedagogy-flow-indicator" aria-label="Pedagogical Translation Pipeline">
+        <div className="flow-step">
+          <span className="flow-step-num">01</span>
+          <div className="flow-step-meta">
+            <span className="flow-step-title">Hindi Lesson</span>
+            <span className="flow-step-sub">NCERT / JCERT Text</span>
+          </div>
+        </div>
+        <span className="material-symbols-outlined flow-arrow" aria-hidden="true">arrow_forward</span>
+        <div className="flow-step">
+          <span className="flow-step-num">02</span>
+          <div className="flow-step-meta">
+            <span className="flow-step-title">Grade Adaptation</span>
+            <span className="flow-step-sub">FLN Class 1–5 Vocab</span>
+          </div>
+        </div>
+        <span className="material-symbols-outlined flow-arrow" aria-hidden="true">arrow_forward</span>
+        <div className="flow-step">
+          <span className="flow-step-num">03</span>
+          <div className="flow-step-meta">
+            <span className="flow-step-title">Mother Tongue</span>
+            <span className="flow-step-sub">5 Jharkhand Dialects</span>
+          </div>
+        </div>
+        <span className="material-symbols-outlined flow-arrow" aria-hidden="true">arrow_forward</span>
+        <div className="flow-step">
+          <span className="flow-step-num">04</span>
+          <div className="flow-step-meta">
+            <span className="flow-step-title">Native Audio</span>
+            <span className="flow-step-sub">Parler & MMS TTS</span>
+          </div>
+        </div>
+      </div>
 
       {/* Mode Selector & Quick Textbook Loader */}
       <div className="studio-top-controls">
@@ -435,7 +470,7 @@ export default function Capture({
                 ref={chapterFileInput}
                 id="lesson-chapter"
                 type="file"
-                accept=".pdf,.txt"
+                accept=".pdf"
                 onChange={handleChapterUpload}
                 disabled={extractingChapter}
                 hidden
@@ -455,10 +490,10 @@ export default function Capture({
                   <strong>
                     {extractingChapter
                       ? "Extracting chapter sentences…"
-                      : "Upload Textbook Chapter (.PDF or .TXT)"}
+                      : "Upload Textbook Chapter (PDF)"}
                   </strong>
                   <small>
-                    Automatically parses each sentence for batch simplification, translation, and audio.
+                    Extracts Hindi sentences page-by-page from NCERT/JCERT textbook chapters for batch grade adaptation, translation, and audio generation.
                   </small>
                 </div>
               </button>
@@ -514,8 +549,9 @@ export default function Capture({
           className="button button--primary tactile-btn-primary"
           onClick={onNext}
           disabled={!hindiText.trim()}
+          title={!hindiText.trim() ? "Please enter Hindi lesson text to continue" : "Proceed to select tribal dialects"}
         >
-          <span>Choose languages (Step 2)</span>
+          <span>Continue to Languages →</span>
           <span className="material-symbols-outlined text-xl">arrow_forward</span>
         </button>
       </div>
@@ -529,12 +565,12 @@ export default function Capture({
             <div className="bento-icon-box bg-primary-light">
               <span className="material-symbols-outlined text-2xl text-primary">translate</span>
             </div>
-            <h3 className="bento-title">Authentic Tribal Phonetics</h3>
+            <h3 className="bento-title">Native Tribal Speech</h3>
             <p className="bento-desc">
-              Preserves authentic glottal stops and pitch in Santhali (Ol Chiki), Ho (Warang Chiti), Kudukh, Mundari, Khortha, and Sadri/Nagpuri.
+              Santali generated with Indic Parler-TTS in native Ol Chiki script, alongside Ho, Mundari, Kurukh, and Sadri high-clarity pronunciation audio via Meta MMS.
             </p>
             <div className="bento-footer">
-              <span className="bento-tag text-primary">6 Mother Tongues</span>
+              <span className="bento-tag text-primary">5 Primary Dialects</span>
               <span className="material-symbols-outlined text-sm text-primary">verified</span>
             </div>
           </div>
@@ -544,16 +580,16 @@ export default function Capture({
           <div className="bento-card">
             <div className="bento-icon-box bg-secondary-light">
               <span className="material-symbols-outlined text-2xl text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
-                speaker_group
+                download_for_offline
               </span>
             </div>
-            <h3 className="bento-title">Offline Classroom Speaker Sync</h3>
+            <h3 className="bento-title">Offline Lesson Pack Download</h3>
             <p className="bento-desc">
-              Zero internet required. Broadcast high-volume synthesized tribal audio directly to portable Bluetooth classroom megaphones during circle drills.
+              Generate self-contained HTML players and pure WAV audio files. Teachers can preload lesson plans in block resource centres and run circle drills in zero-connectivity village schools.
             </p>
             <div className="bento-footer">
-              <span className="bento-tag text-secondary">Offline Cache Ready</span>
-              <span className="material-symbols-outlined text-sm text-secondary">bluetooth</span>
+              <span className="bento-tag text-secondary">HTML + WAV Bundle</span>
+              <span className="material-symbols-outlined text-sm text-secondary">offline_pin</span>
             </div>
           </div>
         </Tilt>
@@ -565,36 +601,19 @@ export default function Capture({
                 record_voice_over
               </span>
             </div>
-            <h3 className="bento-title">Interactive Classroom Echo</h3>
+            <h3 className="bento-title">Interactive Choral Echo</h3>
             <p className="bento-desc">
-              Spaced repetition designed for 6–8 year olds. The engine speaks a phrase in Mundari or Santhali, prompts students to chant, and reinforces bilingual vocabulary.
+              Spaced repetition designed for Class 1–5 tribal learners. Real-time classroom ASR listens to teacher phrases, plays high-volume native audio, and guides choral chant-and-repeat drills.
             </p>
             <div className="bento-footer">
-              <span className="bento-tag text-tertiary">Chant & Repeat Logic</span>
+              <span className="bento-tag text-tertiary">Choral Repetition</span>
               <span className="material-symbols-outlined text-sm text-tertiary">graphic_eq</span>
             </div>
           </div>
         </Tilt>
       </div>
 
-      {/* Platform Trust & Support Footer */}
-      <div className="platform-trust-footer">
-        <div className="trust-left">
-          <span className="material-symbols-outlined text-3xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-            school
-          </span>
-          <div>
-            <strong>Smart Education · SIH26042</strong>
-            <span>SIH Prototype · Multilingual Primary Learning Platform</span>
-          </div>
-        </div>
-        <div className="trust-contact-links">
-          <a className="trust-link" href="mailto:contact@boli-sih.org" title="SIH Project Support">
-            <span className="material-symbols-outlined text-base">mail</span>
-            <span>Teacher Support</span>
-          </a>
-        </div>
-      </div>
+
     </section>
   );
 }

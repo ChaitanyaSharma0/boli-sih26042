@@ -33,13 +33,22 @@ def test_languages():
     assert set(langs) == {"sat", "hoc", "unr", "kru", "sck"}, langs.keys()
 
     assert langs["sat"]["translation"] == "full"
-    assert langs["sat"]["tts"] == "none"
-    assert langs["sat"]["note"], "Santali must explain why it has no TTS"
+    assert langs["sat"]["tts"] == "full"
+    assert langs["sat"]["note"], "Santali must have TTS note"
 
     for code in ("hoc", "unr", "kru", "sck"):
         assert langs[code]["translation"] == "phrase_bank", code
         assert langs[code]["tts"] == "full", code
     print("languages:", {c: r["translation"] for c, r in langs.items()})
+
+
+def test_santali_speaks():
+    """Santali uses AI4Bharat Indic Parler-TTS directly with Ol Chiki script."""
+    r = client.post("/speak", json={"text": "ᱥᱟᱹᱜᱩᱱ ᱡᱚᱦᱟᱨ", "lang": "sat"})
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"] == "audio/wav", r.headers["content-type"]
+    assert r.content[:4] == b"RIFF" and r.content[8:12] == b"WAVE", r.content[:16]
+    print(f"Santali spoke: {len(r.content)} bytes of wav")
 
 
 def test_arbitrary_text_is_refused():
@@ -83,6 +92,7 @@ def test_every_language_has_a_bank_and_speaks_it():
 
 if __name__ == "__main__":
     test_languages()
+    test_santali_speaks()
     test_arbitrary_text_is_refused()
     test_bank_phrase_speaks()
     test_every_language_has_a_bank_and_speaks_it()

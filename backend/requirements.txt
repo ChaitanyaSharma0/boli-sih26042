@@ -12,6 +12,11 @@ httpx2                 # starlette's TestClient dependency, used by test_contras
 transformers==4.45.2   # pinned: newer breaks IndicTransToolkit's imports (RULES.md §8)
 torch                  # CPU wheel: --index-url https://download.pytorch.org/whl/cpu
 scipy
+soundfile
+einops
+descript-audio-codec
+protobuf>=4.25.0,<6
+parler-tts @ git+https://github.com/huggingface/parler-tts.git
 sentencepiece
 sacremoses
 sacrebleu

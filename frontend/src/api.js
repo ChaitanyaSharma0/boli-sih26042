@@ -2,7 +2,7 @@
 // directly — the gated HF token must never reach the browser
 // (ARCHITECTURE.md §1).
 
-const BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000";
+const BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8001";
 
 // FastAPI puts its error message in `detail`. Surface that to the teacher
 // rather than a generic failure — the backend's messages are written to be

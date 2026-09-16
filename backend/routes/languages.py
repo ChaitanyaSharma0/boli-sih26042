@@ -26,7 +26,7 @@ NAMES = {
 }
 
 NOTES = {
-    "sat": "No TTS checkpoint exists anywhere for Santali.",
+    "sat": "AI4Bharat Indic Parler-TTS (Arjun / Pushpa voices).",
     "hoc": None,
     "unr": None,
     "kru": None,

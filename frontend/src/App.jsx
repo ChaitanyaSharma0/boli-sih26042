@@ -4,11 +4,12 @@ import LanguageSelect from "./screens/LanguageSelect";
 import Result from "./screens/Result";
 import Logo from "./components/Logo";
 import TopUtilityBar from "./components/TopUtilityBar";
-import PublicServicesSection from "./components/PublicServicesSection";
 import LanguagesSection from "./components/LanguagesSection";
 import HowItWorksSection from "./components/HowItWorksSection";
 import GlobalFooter from "./components/GlobalFooter";
-import Dock from "./components/motion/Dock";
+import ForestBackground from "./components/ForestBackground";
+import LiveClassroom from "./components/LiveClassroom";
+import Flashcards from "./components/Flashcards";
 
 const STEPS = [
   { num: 1, label: "Capture Lesson" },
@@ -16,33 +17,51 @@ const STEPS = [
   { num: 3, label: "Listen & Speak" },
 ];
 
-function Stepper({ step, onSelectStep }) {
+function Stepper({ step, onSelectStep, canGoToStep }) {
   return (
     <nav className="progress-container" aria-label="Lesson progress">
       <ol className="progress">
-        {STEPS.map((s, index) => (
-          <li
-            key={s.label}
-            className={
-              index === step ? "is-current" : index < step ? "is-done" : ""
-            }
-            aria-current={index === step ? "step" : undefined}
-            onClick={() => onSelectStep && onSelectStep(index)}
-            style={{ cursor: "pointer" }}
-          >
-            <span className="step-number" aria-hidden="true">
-              {index < step ? "✓" : s.num}
-            </span>
-            <span>{s.label}</span>
-          </li>
-        ))}
+        {STEPS.map((s, index) => {
+          const isAllowed = canGoToStep ? canGoToStep(index) : true;
+          return (
+            <li
+              key={s.label}
+              className={`${
+                index === step ? "is-current" : index < step ? "is-done" : ""
+              } ${!isAllowed ? "is-disabled" : ""}`}
+              aria-current={index === step ? "step" : undefined}
+              aria-disabled={!isAllowed}
+              onClick={() => {
+                if (isAllowed && onSelectStep) {
+                  onSelectStep(index);
+                }
+              }}
+              style={{
+                cursor: isAllowed ? "pointer" : "not-allowed",
+                opacity: isAllowed ? 1 : 0.45,
+              }}
+              title={
+                !isAllowed
+                  ? index === 1
+                    ? "Enter lesson text first"
+                    : "Select tribal dialects first"
+                  : undefined
+              }
+            >
+              <span className="step-number" aria-hidden="true">
+                {index < step ? "✓" : s.num}
+              </span>
+              <span>{s.label}</span>
+            </li>
+          );
+        })}
       </ol>
     </nav>
   );
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("studio"); // "studio" | "services" | "languages" | "how-it-works"
+  const [activeTab, setActiveTab] = useState("studio"); // "studio" | "live" | "flashcards" | "languages" | "how-it-works"
   const [activeLang, setActiveLang] = useState("hi");
   const [step, setStep] = useState(0);
   const [hindiText, setHindiText] = useState("");
@@ -52,7 +71,16 @@ export default function App() {
   const [selectedLangs, setSelectedLangs] = useState([]);
   const mainRef = useRef(null);
 
+  function canGoToStep(targetStep) {
+    if (targetStep <= step) return true;
+    const hasText = hindiText.trim().length > 0 || chapterSentences.length > 0;
+    if (targetStep === 1) return hasText;
+    if (targetStep === 2) return hasText && selectedLangs.length > 0;
+    return false;
+  }
+
   function go(nextStep) {
+    if (!canGoToStep(nextStep)) return;
     setStep(nextStep);
     requestAnimationFrame(() => {
       mainRef.current?.focus();
@@ -89,66 +117,12 @@ export default function App() {
     }
   }
 
-  const dockItems = [
-    {
-      id: "capture-step",
-      icon: "edit_note",
-      title: "Step 1: Capture Lesson",
-      badge: "1",
-      active: activeTab === "studio" && step === 0,
-      onClick: () => {
-        setActiveTab("studio");
-        go(0);
-      },
-    },
-    {
-      id: "languages-step",
-      icon: "translate",
-      title: "Step 2: Tribal Dialects",
-      badge: "2",
-      active: activeTab === "studio" && step === 1,
-      onClick: () => {
-        setActiveTab("studio");
-        go(1);
-      },
-    },
-    {
-      id: "audio-step",
-      icon: "record_voice_over",
-      title: "Step 3: Listen & Speak",
-      badge: "3",
-      active: activeTab === "studio" && step === 2,
-      onClick: () => {
-        setActiveTab("studio");
-        go(2);
-      },
-    },
-    {
-      id: "speaker-test",
-      icon: "volume_up",
-      title: "Speaker Chime Test",
-      badge: "Test",
-      active: false,
-      onClick: playSpeakerChime,
-    },
-    {
-      id: "reset-lesson",
-      icon: "restart_alt",
-      title: "Start New Lesson",
-      active: false,
-      onClick: () => {
-        setHindiText("");
-        setChapterSentences([]);
-        setActiveTab("studio");
-        go(0);
-      },
-    },
-  ];
-
   return (
-    <div className="app-shell">
-      {/* Top Government-Grade Utility Bar (Accessibility & SIH Identification) */}
-      <TopUtilityBar activeLang={activeLang} onToggleLang={setActiveLang} />
+    <>
+      <ForestBackground />
+      <div className="app-shell">
+        {/* Top Government-Grade Utility Bar (Accessibility & SIH Identification) */}
+        <TopUtilityBar activeLang={activeLang} onToggleLang={setActiveLang} />
 
       <a className="skip-link" href="#main-content">
         Skip to content
@@ -160,65 +134,108 @@ export default function App() {
           <Logo size="small" showTagline={true} />
         </div>
 
-        {/* Global Navigation Tabs (Section 8 of Prompt) */}
+        {/* Global Navigation Tabs */}
         <nav className="header-nav-tabs" aria-label="Primary Platform Navigation">
-          <button
-            type="button"
-            className={`nav-tab-link ${activeTab === "studio" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("studio");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          >
-            <span className="material-symbols-outlined text-sm">auto_stories</span>
-            <span>Studio (शिक्षण)</span>
-          </button>
-          <button
-            type="button"
-            className={`nav-tab-link ${activeTab === "services" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("services");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          >
-            <span className="material-symbols-outlined text-sm">public</span>
-            <span>Public Services (जन सेवाएँ)</span>
-          </button>
-          <button
-            type="button"
-            className={`nav-tab-link ${activeTab === "languages" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("languages");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          >
-            <span className="material-symbols-outlined text-sm">language</span>
-            <span>Languages (भाषाएँ)</span>
-          </button>
-          <button
-            type="button"
-            className={`nav-tab-link ${activeTab === "how-it-works" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("how-it-works");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          >
-            <span className="material-symbols-outlined text-sm">account_tree</span>
-            <span>How It Works</span>
-          </button>
+          <div className="nav-tabs-primary">
+            <button
+              type="button"
+              className={`nav-tab-link ${activeTab === "studio" ? "is-active" : ""}`}
+              onClick={() => {
+                setActiveTab("studio");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              <span className="material-symbols-outlined text-sm">auto_stories</span>
+              <span>Studio (शिक्षण)</span>
+            </button>
+            <button
+              type="button"
+              className={`nav-tab-link ${activeTab === "live" ? "is-active" : ""}`}
+              onClick={() => {
+                setActiveTab("live");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              <span className="material-symbols-outlined text-sm">mic</span>
+              <span>Live Classroom (मौखिक)</span>
+            </button>
+            <button
+              type="button"
+              className={`nav-tab-link ${activeTab === "flashcards" ? "is-active" : ""}`}
+              onClick={() => {
+                setActiveTab("flashcards");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              <span className="material-symbols-outlined text-sm">style</span>
+              <span>Flashcards (पत्ती)</span>
+            </button>
+          </div>
+
+          <div className="nav-tab-separator" aria-hidden="true" />
+
+          <div className="nav-tabs-secondary">
+            <button
+              type="button"
+              className={`nav-tab-link nav-tab-secondary ${activeTab === "languages" ? "is-active" : ""}`}
+              onClick={() => {
+                setActiveTab("languages");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              <span className="material-symbols-outlined text-sm">language</span>
+              <span>Languages</span>
+            </button>
+            <button
+              type="button"
+              className={`nav-tab-link nav-tab-secondary ${activeTab === "how-it-works" ? "is-active" : ""}`}
+              onClick={() => {
+                setActiveTab("how-it-works");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              <span className="material-symbols-outlined text-sm">account_tree</span>
+              <span>How It Works</span>
+            </button>
+          </div>
         </nav>
 
         {/* Stepper only when in studio mode */}
         {activeTab === "studio" && (
           <div className="header-stepper">
-            <Stepper step={step} onSelectStep={go} />
+            <Stepper step={step} onSelectStep={go} canGoToStep={canGoToStep} />
           </div>
         )}
 
         <div className="header-meta">
+          <div className="header-utility-group">
+            <button
+              type="button"
+              className="header-util-btn"
+              onClick={playSpeakerChime}
+              title="Classroom Speaker Test (Plays chime on classroom bluetooth or wired audio)"
+            >
+              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>volume_up</span>
+              <span className="util-btn-text">Speaker Test</span>
+            </button>
+            <button
+              type="button"
+              className="header-util-btn"
+              onClick={() => {
+                setHindiText("");
+                setChapterSentences([]);
+                setActiveTab("studio");
+                go(0);
+              }}
+              title="Start New Lesson (Resets input and returns to Step 1)"
+            >
+              <span className="material-symbols-outlined text-sm">restart_alt</span>
+              <span className="util-btn-text">New Lesson</span>
+            </button>
+          </div>
           <div className="sih-initiative-badge">
             <span className="initiative-dot" />
-            <span>SIH Prototype · SIH26042</span>
+            <span>SIH26042</span>
           </div>
         </div>
       </header>
@@ -260,44 +277,30 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === "services" && (
-          <PublicServicesSection
+        {activeTab === "live" && (
+          <LiveClassroom
             onLoadIntoStudio={(text) => {
               setHindiText(text);
               setChapterSentences([]);
               setActiveTab("studio");
               go(0);
             }}
+            currentGrade={grade}
           />
+        )}
+
+        {activeTab === "flashcards" && (
+          <Flashcards lessonText={hindiText} currentGrade={grade} />
         )}
 
         {activeTab === "languages" && <LanguagesSection />}
 
         {activeTab === "how-it-works" && <HowItWorksSection />}
-
-        {/* When in Studio mode, also offer smooth anchor access to the supporting sections below */}
-        {activeTab === "studio" && (
-          <>
-            <div className="studio-sections-divider" />
-            <PublicServicesSection
-              onLoadIntoStudio={(text) => {
-                setHindiText(text);
-                setChapterSentences([]);
-                go(0);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            />
-            <LanguagesSection />
-            <HowItWorksSection />
-          </>
-        )}
       </main>
-
-      {/* Quick Apple-style Dock for Teachers & Field Workers */}
-      <Dock items={dockItems} />
 
       {/* Government-Grade Footer with SIH Prototype Disclaimers */}
       <GlobalFooter />
     </div>
+    </>
   );
 }

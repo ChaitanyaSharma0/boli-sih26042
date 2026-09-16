@@ -26,13 +26,6 @@ class SpeakRequest(BaseModel):
 
 @router.post("/speak")
 def speak(req: SpeakRequest):
-    if req.lang == "sat":
-        raise HTTPException(
-            501,
-            "No text-to-speech checkpoint exists for Santali, from us or anyone "
-            "else. Santali is translation-only — see /translate.",
-        )
-
     text = req.text
     matched_target = None
     if req.lang in phrase_bank.LANGS:

@@ -17,7 +17,12 @@ from routes.languages import NAMES
 
 router = APIRouter()
 
-SOURCE_TYPES = ("typed", "ocr")
+SOURCE_TYPES = (
+    "typed",
+    "ocr",
+    "asr",
+    "pdf_chapter",
+)
 
 
 class LessonRequest(BaseModel):
