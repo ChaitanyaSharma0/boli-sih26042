@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import logoSrc from "../assets/logo.png";
 
 export default function TopUtilityBar({ activeLang, onToggleLang }) {
   const [fontSizeLevel, setFontSizeLevel] = useState(0); // -1, 0, 1
@@ -24,15 +25,20 @@ export default function TopUtilityBar({ activeLang, onToggleLang }) {
   }, [highContrast]);
 
   return (
-    <div className="top-gov-utility-bar" role="region" aria-label="Government Prototype Utility Bar">
+    <div className="top-gov-utility-bar" role="region" aria-label="Portal Utility Bar">
       <div className="utility-bar-inner">
         <div className="utility-left">
-          <span className="sih-gov-emblem-dot" />
-          <span className="utility-gov-title">
-            <strong>Boli बोली</strong> · Multilingual Communication Platform
-          </span>
-          <span className="utility-badge-sih">SIH Prototype · SIH26042</span>
-          <span className="utility-sub-clause">Proposed Digital Public Service Solution</span>
+          <div className="utility-logo-badge">
+            <img src={logoSrc} alt="Boli Emblem" className="utility-logo-img" />
+          </div>
+          <div className="utility-title-stack">
+            <span className="utility-gov-title">
+              <strong>Boli बोली</strong>
+              <span className="utility-title-sep">·</span>
+              <span className="utility-title-desc">Multilingual Primary Learning</span>
+            </span>
+            <span className="utility-badge-sih">SIH Prototype · SIH26042</span>
+          </div>
         </div>
 
         <div className="utility-right">
@@ -82,24 +88,6 @@ export default function TopUtilityBar({ activeLang, onToggleLang }) {
             <span>{highContrast ? "Normal" : "High Contrast"}</span>
           </button>
 
-          {/* Language Switcher */}
-          <div className="utility-lang-toggle">
-            <button
-              type="button"
-              className={`lang-choice-btn ${activeLang === "hi" ? "is-selected" : ""}`}
-              onClick={() => onToggleLang && onToggleLang("hi")}
-            >
-              हिन्दी
-            </button>
-            <span className="lang-divider">|</span>
-            <button
-              type="button"
-              className={`lang-choice-btn ${activeLang === "en" ? "is-selected" : ""}`}
-              onClick={() => onToggleLang && onToggleLang("en")}
-            >
-              English
-            </button>
-          </div>
 
           <a href="#help-faq" className="utility-help-link">
             <span className="material-symbols-outlined text-sm">help</span>

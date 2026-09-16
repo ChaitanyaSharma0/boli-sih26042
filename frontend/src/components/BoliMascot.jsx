@@ -36,13 +36,7 @@ export default function BoliMascot({ currentGrade = 2 }) {
       title="क्लिक करके बोली साथी से बात करें!"
       aria-label="बोली साथी - प्राथमिक विद्यालय मित्र"
     >
-      {/* Playful Floating Sparkles / Musical Notes */}
-      <div className="mascot-floating-particles" aria-hidden="true">
-        <span className="particle p1">⭐</span>
-        <span className="particle p2">🎵</span>
-        <span className="particle p3">✨</span>
-        <span className="particle p4">🌿</span>
-      </div>
+
 
       {/* Mascot Character Avatar (Jharkhand Melodious Koel with School Bag & Flower) */}
       <div className={`mascot-avatar-wrap ${isWaving ? "is-waving" : ""}`}>

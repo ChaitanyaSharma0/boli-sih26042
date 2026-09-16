@@ -9,10 +9,10 @@ export default function LanguagesSection() {
       speakers: "~7.6 Million speakers across Eastern India",
       translationStatus: "Neural Machine Translation (AI Model)",
       translationBadge: "AI Neural Model",
-      voiceStatus: "Text-Only (No voice model exists yet)",
-      voiceBadge: "Text Translation Ready",
+      voiceStatus: "Neural Text-to-Speech (AI Model)",
+      voiceBadge: "Spoken Voice Ready",
       details:
-        "Trained using AI4Bharat IndicTrans2 engine on script-qualified sat_Olck tokens. Real AI translation from Hindi directly into Ol Chiki script.",
+        "Trained using AI4Bharat IndicTrans2 engine on script-qualified sat_Olck tokens, paired with AI4Bharat Indic Parler-TTS for native Ol Chiki speech synthesis.",
     },
     {
       code: "hoc",
