@@ -1,3 +1,5 @@
+import logoSrc from "../assets/logo.png";
+
 export default function GlobalFooter() {
   return (
     <footer className="app-global-footer sun-card-shadow" role="contentinfo">
@@ -5,15 +7,40 @@ export default function GlobalFooter() {
       <div className="footer-main-grid">
         <div className="footer-col-brand">
           <div className="footer-brand-header">
-            <img
-              src="/logo.png"
-              alt="Boli Logo"
-              width="32"
-              height="32"
-              className="footer-logo-img"
-            />
+            <div
+              className="footer-logo-badge"
+              style={{
+                position: "relative",
+                width: "36px",
+                height: "36px",
+                borderRadius: "8px",
+                overflow: "hidden",
+                background: "#421d00",
+                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <img
+                src={logoSrc}
+                alt="Boli Logo"
+                className="footer-logo-img"
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  top: "50%",
+                  transform: "translate(-54.86%, -47.5%)",
+                  width: "140%",
+                  height: "auto",
+                  display: "block",
+                  pointerEvents: "none",
+                }}
+              />
+            </div>
             <div className="footer-brand-title">
-              <strong>boli</strong>
+              <strong>BOLI</strong>
               <span>बोली · SIH Prototype</span>
             </div>
           </div>

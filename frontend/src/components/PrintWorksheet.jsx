@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import QRCode from "qrcode";
+import QRCode from "qrcode/lib/browser.js";
 
 export default function PrintWorksheet({
   isOpen,

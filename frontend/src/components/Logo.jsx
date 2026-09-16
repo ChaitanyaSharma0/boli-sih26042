@@ -16,28 +16,31 @@ export default function Logo({ size = "medium", showTagline = true }) {
       <div
         className="boli-logo-emblem"
         style={{
+          position: "relative",
           width: iconSize,
           height: iconSize,
-          borderRadius: "10px",
+          borderRadius: size === "small" ? "8px" : "10px",
           overflow: "hidden",
           boxShadow: "0 2px 8px rgba(56, 28, 5, 0.22)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#381c05",
+          background: "#421d00",
           flexShrink: 0,
         }}
       >
         <img
           src={logoSrc}
           alt="BOLI Brand Logo"
-          width={iconSize}
-          height={iconSize}
           style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-54.86%, -47.5%)",
+            width: "140%",
+            height: "auto",
             display: "block",
+            pointerEvents: "none",
           }}
         />
       </div>

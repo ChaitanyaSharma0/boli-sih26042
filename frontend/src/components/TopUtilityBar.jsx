@@ -28,8 +28,37 @@ export default function TopUtilityBar({ activeLang, onToggleLang }) {
     <div className="top-gov-utility-bar" role="region" aria-label="Portal Utility Bar">
       <div className="utility-bar-inner">
         <div className="utility-left">
-          <div className="utility-logo-badge">
-            <img src={logoSrc} alt="Boli Emblem" className="utility-logo-img" />
+          <div
+            className="utility-logo-badge"
+            style={{
+              position: "relative",
+              width: "24px",
+              height: "24px",
+              borderRadius: "6px",
+              overflow: "hidden",
+              background: "#421d00",
+              boxShadow: "0 1px 4px rgba(0, 0, 0, 0.25)",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <img
+              src={logoSrc}
+              alt="Boli Emblem"
+              className="utility-logo-img"
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: "translate(-54.86%, -47.5%)",
+                width: "140%",
+                height: "auto",
+                display: "block",
+                pointerEvents: "none",
+              }}
+            />
           </div>
           <div className="utility-title-stack">
             <span className="utility-gov-title">
