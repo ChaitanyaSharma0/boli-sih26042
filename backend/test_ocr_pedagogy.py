@@ -36,6 +36,7 @@ TEXTBOOK_LINE = "किसान खेत में गेहूँ उगा�
 DEVANAGARI_FONTS = [
     r"C:\Windows\Fonts\Nirmala.ttc",
     r"C:\Windows\Fonts\mangal.ttf",
+    "/System/Library/Fonts/Supplemental/DevanagariMT.ttc",
     "/usr/share/fonts/truetype/lohit-devanagari/Lohit-Devanagari.ttf",
     "/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf",
 ]
