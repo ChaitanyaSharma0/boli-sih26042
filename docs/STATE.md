@@ -662,6 +662,28 @@ the pair must be `धान हाट में बिकता है।` or `�
 
 ## Open questions / blockers
 
+- **Known issues from the naman/chapter-and-voice merge** (2026-09-17),
+  logged deliberately rather than fixed, so the merge was not blocked:
+  1. **Offline pack HTML is not escaped.** `frontend/src/offlinePack.js`
+     interpolates lesson text, translations and Hindi straight into the
+     generated `index.html`. A chapter PDF containing markup would end up
+     running inside the pack. Fix by escaping every interpolation in that
+     one file; a `ponytail:` comment there marks it.
+  2. **`extractChapter` and `transcribeAudio` in `frontend/src/api.js`
+     call `fetch` directly** instead of the `send()` wrapper, so a network
+     failure on chapter upload or the mic shows the browser's "Failed to
+     fetch" rather than "Couldn't reach the server". Route both through
+     `send()`.
+  3. **In chapter mode, a simplification failure on any sentence after
+     the first is silent.** Only sentence 1 records `simplifyError`; later
+     sentences just show no rewrite and no Santali, with nothing saying
+     why. `LanguageResult` already takes a `simplifyFailed` prop, so
+     passing `item.adapted == null` per sentence fixes the per-language
+     message; the rewrite section needs its own error line too.
+- The offline pack loads no web fonts, since it is meant to work offline.
+  Santali (Ol Chiki) text therefore relies on the device having a font
+  that covers it, and may render as boxes on phones that do not.
+
 - **`/simplify` is down again, and it is billing, not code.** The
   Experiential Labs key now returns
   `429 "Complete the $1 card verification to spend platform credits"`
