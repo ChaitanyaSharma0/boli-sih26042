@@ -10,6 +10,14 @@ import ContrastDemo from "../components/ContrastDemo";
 // vowel signs (किसान comes back as कस्िान) while still reporting decent
 // confidence, so the invitation to check the text is not boilerplate —
 // it is the actual correction mechanism (ARCHITECTURE.md §3).
+const GRADES = [
+  { value: 1, ages: "5–6" },
+  { value: 2, ages: "6–7" },
+  { value: 3, ages: "7–8" },
+  { value: 4, ages: "8–9" },
+  { value: 5, ages: "9–10" },
+];
+
 export default function Capture({
   hindiText,
   setHindiText,
@@ -122,34 +130,34 @@ export default function Capture({
       </p>
 
       <div className="work">
-        <div style={{ marginBottom: "1rem" }}>
-          <label className="field-label" htmlFor="grade-select">
+        {/* Native radios under the pills: one tap on a phone, and arrow
+            keys work without any code of ours. */}
+        <fieldset className="grade">
+          <legend className="field-label">
             Target Grade / Class
             <span className="in-script" lang="hi">
               कक्षा
             </span>
-          </label>
-          <select
-            id="grade-select"
-            value={grade}
-            onChange={(e) => setGrade(Number(e.target.value))}
-            style={{
-              display: "block",
-              marginTop: "0.25rem",
-              padding: "0.4rem 0.6rem",
-              fontSize: "0.95rem",
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-              maxWidth: "260px",
-            }}
-          >
-            <option value={1}>Class 1 (Ages 5–6)</option>
-            <option value={2}>Class 2 (Ages 6–7, default)</option>
-            <option value={3}>Class 3 (Ages 7–8)</option>
-            <option value={4}>Class 4 (Ages 8–9)</option>
-            <option value={5}>Class 5 (Ages 9–10)</option>
-          </select>
-        </div>
+          </legend>
+          <div className="grade-pills">
+            {GRADES.map((g) => (
+              <label key={g.value} className="grade-pill">
+                <input
+                  type="radio"
+                  name="grade"
+                  value={g.value}
+                  checked={grade === g.value}
+                  onChange={() => setGrade(g.value)}
+                />
+                <span>{g.value}</span>
+              </label>
+            ))}
+          </div>
+          <p className="grade-hint">
+            Class {grade}, ages {GRADES.find((g) => g.value === grade)?.ages}
+            {grade === 2 && " (default)"}
+          </p>
+        </fieldset>
 
         <label className="field-label" htmlFor="hindi">
           Hindi sentence
@@ -176,16 +184,11 @@ export default function Capture({
           placeholder="किसान खेत में गेहूँ उगाता है।"
         />
 
-        <div style={{ marginTop: "0.5rem" }}>
+        <div className="input-tools">
           <button
             type="button"
-            className="button button--secondary"
-            style={{
-              padding: "0.4rem 0.8rem",
-              fontSize: "0.9rem",
-              backgroundColor: isRecording ? "#B02A20" : undefined,
-              color: isRecording ? "#fff" : undefined,
-            }}
+            className={`mic-button ${isRecording ? "is-recording" : ""}`}
+            aria-pressed={isRecording}
             onClick={isRecording ? stopRecording : startRecording}
             disabled={transcribing || reading || extractingChapter}
           >
@@ -201,7 +204,7 @@ export default function Capture({
           <span>or upload chapter / photo</span>
         </p>
 
-        <div style={{ display: "grid", gap: "0.75rem" }}>
+        <div className="upload-options">
           <input
             ref={fileInput}
             id="lesson-photo"
@@ -274,23 +277,13 @@ export default function Capture({
         </div>
 
         {chapterSentences && chapterSentences.length > 0 && (
-          <div
-            style={{
-              marginTop: "0.75rem",
-              padding: "0.75rem",
-              backgroundColor: "rgba(27, 107, 69, 0.08)",
-              border: "1px solid #1B6B45",
-              borderRadius: "4px",
-            }}
-          >
-            <p style={{ margin: "0 0 0.5rem 0", fontWeight: "bold" }}>
+          <div className="extracted">
+            <p className="extracted-head">
               ✓ Extracted {chapterSentences.length} sentences from chapter:
             </p>
-            <ol style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.85rem", maxHeight: "120px", overflowY: "auto" }}>
+            <ol className="extracted-list" lang="hi">
               {chapterSentences.map((s, idx) => (
-                <li key={idx} style={{ marginBottom: "0.2rem" }}>
-                  {s}
-                </li>
+                <li key={idx}>{s}</li>
               ))}
             </ol>
           </div>

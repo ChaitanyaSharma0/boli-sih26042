@@ -435,6 +435,136 @@ textarea:disabled {
   line-height: 1.45;
 }
 
+.upload-options {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* --- Grade -------------------------------------------------------------
+   Five one-tap targets instead of a dropdown. The radios stay in the DOM
+   (visually hidden) so keyboard and screen-reader behaviour is native. */
+.grade {
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+}
+
+.grade legend {
+  padding: 0;
+}
+
+.grade-pills {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.4rem;
+}
+
+.grade-pill {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 2.75rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--navy);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.grade-pill input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.grade-pill:hover {
+  border-color: var(--navy);
+}
+
+.grade-pill:has(input:checked) {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: var(--paper);
+}
+
+.grade-pill:has(input:focus-visible) {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+.grade-hint {
+  margin: 0.35rem 0 0;
+  color: var(--slate);
+  font-size: 0.8rem;
+}
+
+/* --- Mic ----------------------------------------------------------------- */
+.input-tools {
+  margin-top: 0.5rem;
+}
+
+.mic-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--navy);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mic-button:hover:not(:disabled) {
+  border-color: var(--navy);
+}
+
+.mic-button:disabled {
+  color: var(--slate);
+  cursor: progress;
+}
+
+/* Recording is a live state, so it is loud: red fill, and the label
+   changes too, so colour is not the only signal. */
+.mic-button.is-recording {
+  border-color: var(--red);
+  background: var(--red);
+  color: var(--paper);
+}
+
+/* --- Extracted chapter -------------------------------------------------- */
+.extracted {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--edge);
+  border-left: 4px solid var(--navy);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+
+.extracted-head {
+  margin: 0 0 0.4rem;
+  color: var(--navy);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.extracted-list {
+  max-height: 9.5rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  overflow-y: auto;
+  font-size: 0.92rem;
+}
+
+.extracted-list li {
+  margin: 0.15rem 0;
+}
+
 /* --- Buttons ------------------------------------------------------------ */
 .button {
   display: inline-flex;
@@ -574,9 +704,84 @@ textarea:disabled {
 }
 
 .stage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0 0 0.75rem;
   color: var(--slate);
   font-size: 0.9rem;
+}
+
+.spinner {
+  flex: none;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid var(--navy);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Result toolbar and chapter cards ---------------------------------- */
+.result-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 1rem 0;
+}
+
+.result-meta {
+  color: var(--slate);
+  font-size: 0.88rem;
+}
+
+.chapter-results-list {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.sentence-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.sentence-source {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.rewrite {
+  margin: 0 0 0.9rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+
+.concept {
+  display: inline-block;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--navy);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.rewrite-text {
+  margin: 0.35rem 0 0;
+  font-weight: 500;
 }
 
 /* --- Language chips ----------------------------------------------------- */
@@ -700,10 +905,22 @@ textarea:disabled {
   line-height: 1.8;
 }
 
+/* Real translation output gets its own inset and the largest type on the
+   card. Only rendered for actual translations — phrase-bank audio shows the
+   Hindi it was asked with (.asked-for), never in this treatment. */
+.sentences.target {
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.8rem 0.6rem 2rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
 .sentences.target li {
   font-family: var(--script);
-  font-size: 1.2rem;
-  line-height: 1.95;
+  font-size: 1.45rem;
+  line-height: 1.8;
+  color: var(--ink);
 }
 
 .phrase-options {

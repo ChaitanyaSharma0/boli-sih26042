@@ -280,11 +280,16 @@ export default function Result({
       <h1 id="result-heading">Ready to play</h1>
 
       <div role="status" aria-live="polite">
-        {stage && <p className="stage">{stage}</p>}
+        {stage && (
+          <p className="stage">
+            <span className="spinner" aria-hidden="true" />
+            {stage}
+          </p>
+        )}
       </div>
       {error && <p className="error">{error}</p>}
 
-      <div style={{ margin: "1rem 0", display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+      <div className="result-toolbar">
         <button
           type="button"
           className="button button--primary"
@@ -294,26 +299,26 @@ export default function Result({
           {isZipping ? "Packaging ZIP…" : "📦 Download Offline Pack (.zip)"}
         </button>
         {chapterResults.length > 1 && (
-          <span style={{ fontSize: "0.9rem", color: "#555" }}>
+          <span className="result-meta">
             Chapter mode: {chapterResults.length} sentences processed (Class {grade})
           </span>
         )}
       </div>
 
       {chapterResults.length > 1 ? (
-        <div className="chapter-results-list" style={{ display: "grid", gap: "1.2rem" }}>
+        <div className="chapter-results-list">
           {chapterResults.map((item, idx) => (
             // Neutral surface: one sentence holds several languages with
             // different capabilities, so the capability edge belongs on each
             // language block inside it, never on the sentence as a whole.
-            <div key={idx} className="work" style={{ padding: "1rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                <h2 style={{ margin: 0 }}>
+            <div key={idx} className="work sentence-card">
+              <div className="sentence-head">
+                <h2>
                   Sentence {idx + 1} of {chapterResults.length}
                 </h2>
-                <span style={{ fontSize: "0.8rem", color: "#666" }}>Class {grade}</span>
+                <span className="badge">Class {grade}</span>
               </div>
-              <p style={{ fontWeight: "bold", fontSize: "1.05rem", margin: "0.25rem 0" }} lang="hi">
+              <p className="sentence-source" lang="hi">
                 {item.sourceText}
               </p>
 
@@ -325,11 +330,9 @@ export default function Result({
               )}
 
               {item.adapted && (
-                <div style={{ margin: "0.75rem 0", padding: "0.5rem", background: "rgba(0,0,0,0.03)", borderRadius: "4px" }}>
-                  <p style={{ margin: "0 0 0.25rem 0", fontSize: "0.85rem", color: "#555" }}>
-                    Concept: {item.adapted.concept}
-                  </p>
-                  <p style={{ margin: 0, fontWeight: 500 }} lang="hi">
+                <div className="rewrite">
+                  <span className="concept">Concept: {item.adapted.concept}</span>
+                  <p className="rewrite-text" lang="hi">
                     {item.adapted.adapted_hindi.join(" ")}
                   </p>
                 </div>
