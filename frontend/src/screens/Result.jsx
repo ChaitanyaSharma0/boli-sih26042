@@ -7,13 +7,9 @@ import {
   speak,
   translate,
 } from "../api";
-import {
-  nativeName,
-  speaksWithoutPedagogy,
-  translateTargetFor,
-} from "../capability";
-import AudioPlayer from "../components/AudioPlayer";
-import CorrectionForm from "../components/CorrectionForm";
+import { speaksWithoutPedagogy, translateTargetFor } from "../capability";
+import LanguageResult from "../components/LanguageResult";
+import { buildPackHtml, buildPackSummary } from "../offlinePack";
 
 // Screen 3 — the lesson, adapted, translated where that is real, and
 // spoken where a voice exists.
@@ -220,116 +216,6 @@ export default function Result({
     };
   }, [hindiText, grade, chapterSentences, sourceType, selectedLangs]);
 
-  async function handleDownloadOfflinePack() {
-    setIsZipping(true);
-    try {
-      const zip = new JSZip();
-      let summaryText = "BOLI — Mother-Tongue Lesson Pack\n";
-      summaryText += `Grade / Class Level: Class ${grade}\n`;
-      summaryText += `Total Sentences: ${chapterResults.length}\n\n`;
-
-      const audioFolder = zip.folder("audio");
-
-      chapterResults.forEach((item, idx) => {
-        summaryText += "===============================\n";
-        summaryText += `Sentence ${idx + 1}: ${item.sourceText}\n`;
-        if (item.adapted) {
-          summaryText += `Concept: ${item.adapted.concept}\n`;
-          summaryText += `Simplified Hindi: ${item.adapted.adapted_hindi.join(" ")}\n`;
-          if (item.adapted.substitutions?.length > 0) {
-            summaryText += "Substitutions:\n";
-            item.adapted.substitutions.forEach((sub) => {
-              summaryText += `  - ${sub.from} -> ${sub.to} (${sub.why})\n`;
-            });
-          }
-        }
-        if (item.translations?.length > 0) {
-          summaryText += "Translations:\n";
-          item.translations.forEach((t) => {
-            summaryText += `  [${t.name}]: ${t.translated}\n`;
-          });
-        }
-        summaryText += "\n";
-
-        if (item.audio) {
-          Object.entries(item.audio).forEach(([langCode, data]) => {
-            if (data.kind === "audio" && data.blob) {
-              audioFolder.file(`sentence_${idx + 1}_${langCode}.wav`, data.blob);
-            }
-          });
-        }
-      });
-
-      zip.file("summary.txt", summaryText);
-      zip.file("data.json", JSON.stringify(chapterResults, null, 2));
-
-      const htmlContent = `<!DOCTYPE html>
-<html lang="hi">
-<head>
-  <meta charset="UTF-8">
-  <title>BOLI — Offline Classroom Pack</title>
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
-    h1 { color: #1E3A5F; }
-    .card { background: #F1F4F8; padding: 1.2rem; margin-bottom: 1.2rem; border-radius: 8px; border-left: 5px solid #1B6B45; }
-    .meta { color: #666; font-size: 0.9rem; }
-    .trans-box { margin-top: 0.5rem; padding: 0.5rem; background: #fff; border-radius: 4px; }
-    audio { display: block; margin-top: 0.5rem; width: 100%; }
-  </style>
-</head>
-<body>
-  <h1>BOLI — Offline Classroom Lesson</h1>
-  <p class="meta">Class ${grade} · Zero-Connectivity Offline Classroom Pack</p>
-  ${chapterResults
-    .map(
-      (item, idx) => `
-    <div class="card">
-      <h3>Sentence ${idx + 1}</h3>
-      <p><strong>Original Hindi:</strong> ${item.sourceText}</p>
-      ${
-        item.adapted
-          ? `<p><strong>Simplified Hindi:</strong> ${item.adapted.adapted_hindi.join(" ")}</p>`
-          : ""
-      }
-      ${(item.translations || [])
-        .map(
-          (t) => `
-        <div class="trans-box">
-          <strong>${t.name}:</strong> ${t.translated}
-        </div>`
-        )
-        .join("")}
-      ${Object.entries(item.audio || {})
-        .filter(([, a]) => a.kind === "audio")
-        .map(
-          ([langCode, a]) => `
-        <div class="trans-box">
-          <strong>Audio (${langCode}):</strong> <em>${a.text || ""}</em>
-          <audio controls src="audio/sentence_${idx + 1}_${langCode}.wav"></audio>
-        </div>`
-        )
-        .join("")}
-    </div>`
-    )
-    .join("")}
-</body>
-</html>`;
-      zip.file("index.html", htmlContent);
-
-      const blob = await zip.generateAsync({ type: "blob" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `boli_class_${grade}_offline_pack.zip`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setError("Failed to create offline pack: " + err.message);
-    } finally {
-      setIsZipping(false);
-    }
-  }
-
   // Play one phrase from the bank, when the teacher's own sentence was not
   // in it. Same /speak route, same rules — just a phrase that will match.
   async function playPhrase(lang, phrase) {
@@ -352,6 +238,42 @@ export default function Result({
   const ordered = [...chosen].sort(
     (a, b) => Number(b.tts === "full") - Number(a.tts === "full"),
   );
+
+  // The pack carries the same honesty rules as the screen. Its HTML and
+  // summary are built in src/offlinePack.js so those rules are tested
+  // rather than trusted.
+  async function handleDownloadOfflinePack() {
+    setIsZipping(true);
+    try {
+      const zip = new JSZip();
+      const pack = { results: chapterResults, languages: ordered, grade };
+
+      const audioFolder = zip.folder("audio");
+      chapterResults.forEach((item, idx) => {
+        Object.entries(item.audio || {}).forEach(([langCode, data]) => {
+          if (data.kind === "audio" && data.blob) {
+            audioFolder.file(`sentence_${idx + 1}_${langCode}.wav`, data.blob);
+          }
+        });
+      });
+
+      zip.file("summary.txt", buildPackSummary(pack));
+      zip.file("data.json", JSON.stringify(chapterResults, null, 2));
+      zip.file("index.html", buildPackHtml(pack));
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `boli_class_${grade}_offline_pack.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError("Failed to create offline pack: " + err.message);
+    } finally {
+      setIsZipping(false);
+    }
+  }
 
   return (
     <section aria-labelledby="result-heading">
@@ -381,18 +303,14 @@ export default function Result({
       {chapterResults.length > 1 ? (
         <div className="chapter-results-list" style={{ display: "grid", gap: "1.2rem" }}>
           {chapterResults.map((item, idx) => (
-            <div
-              key={idx}
-              className="work"
-              style={{
-                borderLeft: "4px solid var(--accent, #1B6B45)",
-                padding: "1rem",
-              }}
-            >
+            // Neutral surface: one sentence holds several languages with
+            // different capabilities, so the capability edge belongs on each
+            // language block inside it, never on the sentence as a whole.
+            <div key={idx} className="work" style={{ padding: "1rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                <span className="field-label" style={{ margin: 0 }}>
+                <h2 style={{ margin: 0 }}>
                   Sentence {idx + 1} of {chapterResults.length}
-                </span>
+                </h2>
                 <span style={{ fontSize: "0.8rem", color: "#666" }}>Class {grade}</span>
               </div>
               <p style={{ fontWeight: "bold", fontSize: "1.05rem", margin: "0.25rem 0" }} lang="hi">
@@ -410,196 +328,37 @@ export default function Result({
                 </div>
               )}
 
-              {item.translations?.length > 0 && (
-                <div style={{ marginTop: "0.5rem" }}>
-                  {item.translations.map((t, tIdx) => (
-                    <div key={tIdx} style={{ fontSize: "0.95rem", margin: "0.25rem 0" }}>
-                      <strong>{t.name}:</strong> <span lang={t.code}>{t.translated}</span>
-                      {t.contaminated && (
-                        <span className="warn" style={{ display: "block", fontSize: "0.8rem" }}>
-                          (Script contamination detected)
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {item.audio && Object.keys(item.audio).length > 0 && (
-                <div style={{ marginTop: "0.75rem", display: "grid", gap: "0.5rem" }}>
-                  {Object.entries(item.audio).map(([langCode, a]) => {
-                    const langObj = chosen.find((c) => c.code === langCode);
-                    const langName = langObj ? langObj.name : langCode;
-                    return (
-                      <div key={langCode}>
-                        {a.kind === "audio" && (
-                          <>
-                            <AudioPlayer blob={a.blob} label={`${langName} audio`} />
-                            {a.text && (
-                              <p className="note" style={{ margin: "0.2rem 0" }}>
-                                {a.textIsTarget ? (
-                                  <>
-                                    Spoken ({langName}):{" "}
-                                    <span lang={langCode}>{a.text}</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    The {langName} phrase for{" "}
-                                    <span lang="hi">{a.text}</span>
-                                  </>
-                                )}
-                              </p>
-                            )}
-                          </>
-                        )}
-                        {a.kind === "phrase_bank_only" && (
-                          <p className="note" style={{ margin: "0.2rem 0" }}>
-                            {langName}: Not in phrase bank today.
-                          </p>
-                        )}
-                        {a.kind === "error" && (
-                          <p className="error" style={{ margin: "0.2rem 0" }}>
-                            {langName}: {a.error}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {ordered.map((language) => (
+                <LanguageResult
+                  key={language.code}
+                  language={language}
+                  spoken={item.audio?.[language.code]}
+                  translations={(item.translations || []).filter(
+                    (t) => t.code === language.code
+                  )}
+                  simplifyFailed={false}
+                  lessonId={item.lessonId}
+                  headingLevel={3}
+                />
+              ))}
             </div>
           ))}
         </div>
       ) : (
         <>
-          {ordered.map((language) => {
-            const mine = translations.filter((t) => t.code === language.code);
-            const spoken = audio[language.code];
-            const isBank = language.translation === "phrase_bank";
-            const native = nativeName(language);
-
-            return (
-              <article
-                key={language.code}
-                className={`result cap-${language.translation}`}
-                aria-labelledby={`result-${language.code}`}
-              >
-                <div className="result-head">
-                  <h2 id={`result-${language.code}`}>{language.name}</h2>
-                  {native && (
-                    <span className="in-script" lang={language.code}>
-                      {native}
-                    </span>
-                  )}
-                  <span className="badge">
-                    {isBank ? "Phrase bank only" : "AI translation"}
-                  </span>
-                </div>
-
-                {spoken?.kind === "audio" && (
-                  <>
-                    <AudioPlayer
-                      blob={spoken.blob}
-                      label={`${language.name} audio`}
-                    />
-                    {spoken.textIsTarget ? (
-                      <p className="target-text" lang={language.code}>
-                        {spoken.text}
-                      </p>
-                    ) : (
-                      <p className="asked-for">
-                        The {language.name} phrase for{" "}
-                        <span lang="hi">{spoken.text}</span>
-                      </p>
-                    )}
-                    {/* Only claim something was spoken when it actually was. */}
-                    {isBank && (
-                      <p className="section-note">
-                        From the curated phrase bank, not translated from your
-                        sentence. No native speaker has checked it yet.
-                      </p>
-                    )}
-                  </>
-                )}
-
-                {spoken?.kind === "phrase_bank_only" && (
-                  <>
-                    <p className="note">{spoken.reason}</p>
-                    <p className="field-label">
-                      What BOLI can say in {language.name} today
-                    </p>
-                    <ul className="phrase-options">
-                      {spoken.options.map((phrase) => (
-                        <li key={phrase.id}>
-                          {phrase.hindi_source} —{" "}
-                          <span className="in-script" lang={language.code}>
-                            {phrase.target_text}
-                          </span>{" "}
-                          <button
-                            className="link"
-                            onClick={() => playPhrase(language.code, phrase)}
-                          >
-                            Play this one
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-
-                {spoken?.kind === "error" && (
-                  <p className="error">Couldn't make the audio. {spoken.error}</p>
-                )}
-
-                {simplifyError && !isBank && (
-                  <p className="error">
-                    No {language.name} this time: it needs the simplification
-                    step, which failed. The other languages here were not
-                    affected.
-                  </p>
-                )}
-
-                {mine.length > 0 && (
-                  <>
-                    <ol className="sentences target" lang={language.code}>
-                      {mine.map((t, i) => (
-                        <li key={i}>
-                          {t.translated}
-                          {t.contaminated && (
-                            <span className="warn">
-                              The model doesn't know a word in this sentence, so
-                              part of this line is in the wrong script. Try
-                              simpler, more local wording.
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ol>
-                    <CorrectionForm
-                      lang={language.code}
-                      original={mine.map((t) => t.translated).join(" ")}
-                      lessonId={lessonId}
-                    />
-                  </>
-                )}
-
-                {language.tts === "none" && (
-                  <p className="note">
-                    {language.note ?? "There is no voice for this language."}{" "}
-                    This is text only.
-                  </p>
-                )}
-
-                {spoken?.kind === "audio" && isBank && (
-                  <CorrectionForm
-                    lang={language.code}
-                    original={spoken.text}
-                    lessonId={lessonId}
-                  />
-                )}
-              </article>
-            );
-          })}
+          {ordered.map((language) => (
+            <LanguageResult
+              key={language.code}
+              language={language}
+              spoken={audio[language.code]}
+              translations={translations.filter(
+                (t) => t.code === language.code
+              )}
+              simplifyFailed={Boolean(simplifyError)}
+              lessonId={lessonId}
+              onPlayPhrase={playPhrase}
+            />
+          ))}
 
           {/* The pedagogy step's evidence. The headline swap stays open,
               because it is the argument the whole approach rests on; the

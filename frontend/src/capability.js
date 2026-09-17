@@ -149,3 +149,17 @@ const NATIVE_NAMES = {
 export function nativeName(language) {
   return NATIVE_NAMES[language.code] ?? null;
 }
+
+// The honesty copy for spoken phrase-bank audio, shared by the on-screen
+// cards (single-sentence and chapter mode) and the downloadable offline
+// pack, so all three say exactly the same thing. Change it here only.
+export const PHRASE_BANK_NOTE =
+  "From the curated phrase bank, not translated from your sentence. " +
+  "No native speaker has checked it yet.";
+
+// /speak returns audio bytes only, so on a phrase-bank hit the text held
+// is the Hindi that was sent, not the phrase that was spoken. Never present
+// that Hindi as the spoken output.
+export function phraseForLabel(languageName) {
+  return `The ${languageName} phrase for`;
+}
