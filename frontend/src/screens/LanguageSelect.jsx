@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { languages as fetchLanguages } from "../api";
 import LanguageChip from "../components/LanguageChip";
-import { groupLanguages } from "../capability";
+import { capabilityBadge, groupLanguages } from "../capability";
 
 // Screen 2 — pick the mother tongues in the room.
 //
@@ -84,7 +84,14 @@ export default function LanguageSelect({
 
       {groupLanguages(list).map((group) => (
         <div key={group.key}>
-          <h2 className="section-label">{group.heading}</h2>
+          <div className="section-head">
+            <h2 className="section-label">{group.heading}</h2>
+            {/* Same words as each card's badge, so the boundary reads at the
+                section level before any single card does. */}
+            <span className={`badge badge--${group.key}`}>
+              {capabilityBadge({ translation: group.key })}
+            </span>
+          </div>
           {group.blurb && <p className="section-note">{group.blurb}</p>}
           <div className="chip-list">
             {group.items.map((language) => (

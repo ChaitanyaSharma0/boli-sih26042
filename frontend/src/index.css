@@ -244,6 +244,18 @@ h3 {
   color: var(--navy);
 }
 
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.5rem;
+  margin: 1.5rem 0 0.35rem;
+}
+
+.section-head .section-label {
+  margin: 0;
+}
+
 .section-note {
   margin: 0 0 0.7rem;
   color: var(--slate);
@@ -298,12 +310,14 @@ h3 {
   white-space: nowrap;
 }
 
-.cap-full .badge {
+.cap-full .badge,
+.badge--full {
   border-color: var(--green);
   background: var(--surface-green);
 }
 
-.cap-phrase_bank .badge {
+.cap-phrase_bank .badge,
+.badge--phrase_bank {
   border-color: var(--amber);
   background: var(--surface-amber);
 }
