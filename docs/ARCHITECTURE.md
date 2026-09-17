@@ -126,8 +126,9 @@ Response: `{ "id": 1 }`
 
 Called by screen 3 before anything else, as soon as the source text and
 the chosen languages are known. Writes one `lessons` row and returns its
-id, which `/correct` then references. `source_type` is `"typed"` or
-`"ocr"`; anything else is a 400.
+id, which `/correct` then references. `source_type` is `"typed"`, `"ocr"`,
+`"pdf_chapter"` (one row per extracted sentence) or `"asr"`; anything
+else is a 400.
 
 Deliberately minimal: it does **not** store the adapted text or the
 Santali translation, so those columns stay null for now. The row exists

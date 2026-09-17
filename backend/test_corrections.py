@@ -139,6 +139,21 @@ def test_creating_a_lesson():
     print(f"linked   : correction -> lesson {lesson_id}")
 
 
+def test_chapter_and_mic_lessons_are_accepted():
+    """Capture sends these for a PDF chapter and for the mic; both must log."""
+    for source_type in ("pdf_chapter", "asr"):
+        r = client.post(
+            "/lessons",
+            json={
+                "source_text": "पानी हमारा जीवन है।",
+                "source_type": source_type,
+                "languages_requested": ["hoc"],
+            },
+        )
+        assert r.status_code == 200, (source_type, r.text)
+    print("accepted : pdf_chapter, asr")
+
+
 def test_bad_lessons_are_rejected():
     base = {
         "source_text": "किसान खेत में गेहूँ उगाता है।",
@@ -171,6 +186,7 @@ if __name__ == "__main__":
     test_logging_a_correction()
     test_count_increments()
     test_creating_a_lesson()
+    test_chapter_and_mic_lessons_are_accepted()
     test_bad_lessons_are_rejected()
     test_bad_input_is_rejected()
     print(f"\nPASS  (scratch db: {_scratch})")

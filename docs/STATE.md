@@ -674,12 +674,33 @@ the pair must be `धान हाट में बिकता है।` or `�
      failure on chapter upload or the mic shows the browser's "Failed to
      fetch" rather than "Couldn't reach the server". Route both through
      `send()`.
-  3. **In chapter mode, a simplification failure on any sentence after
-     the first is silent.** Only sentence 1 records `simplifyError`; later
-     sentences just show no rewrite and no Santali, with nothing saying
-     why. `LanguageResult` already takes a `simplifyFailed` prop, so
-     passing `item.adapted == null` per sentence fixes the per-language
-     message; the rewrite section needs its own error line too.
+  3. ~~**In chapter mode, a simplification failure on any sentence after
+     the first is silent.**~~ Fixed 2026-09-17: each sentence card now shows
+     its own "Couldn't simplify this sentence" line and passes
+     `simplifyFailed` per sentence, so Santali says why it is empty.
+- **Chapter mode showed "पानी हमारा जीवन है" under every sentence** (fixed
+  2026-09-17). Two causes, neither in the per-sentence loop, which was
+  passing each sentence correctly. (a) The chapter splitter ends every
+  sentence with a danda and `phrase_bank.lookup` matched exactly, so even
+  the bank's own phrase missed; lookup now ignores sentence-final
+  punctuation only (`test_phrase_bank.py`). (b) Every miss listed the
+  bank's options, and with one phrase per language that list read as the
+  output of each sentence; chapter mode, where options cannot be played,
+  now shows only the refusal reason, as the offline pack already did.
+- **`POST /lessons` rejected chapter and mic lessons** (fixed 2026-09-17).
+  `SOURCE_TYPES` now also allows `pdf_chapter` and `asr` (DATA_DICTIONARY,
+  schema.sql and ARCHITECTURE updated). Verified end to end: a real PDF
+  upload wrote one `pdf_chapter` lesson per sentence, and a correction
+  submitted from sentence 2 in chapter mode saved against that lesson id.
+- **PDF text extraction garbles Devanagari from some PDFs.** pdfplumber
+  returns NUL bytes for conjuncts and pre-base vowel signs out of order
+  (`पूर्व` → `पूव `, `दिशा` → `िदशा`) on a Chrome-printed PDF.
+  Such sentences can never match the phrase bank and translate badly.
+  The OCR fallback only runs when no text layer exists at all.
+- **`backend/.env` has `LLM_PROVIDER=gemini`** alongside the Experiential
+  Labs base URL and `claude-haiku-4.5`, so `/simplify` currently calls
+  `gemini-3.6-flash`, whose free-tier quota is exhausted (429 → 502). This
+  disagrees with the working configuration recorded above.
 - The offline pack loads no web fonts, since it is meant to work offline.
   Santali (Ol Chiki) text therefore relies on the device having a font
   that covers it, and may render as boxes on phones that do not.

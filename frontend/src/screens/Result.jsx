@@ -317,6 +317,13 @@ export default function Result({
                 {item.sourceText}
               </p>
 
+              {!item.adapted && (
+                <p className="error">
+                  Couldn't simplify this sentence, so it has no rewrite and
+                  no translation. Phrase-bank languages were not affected.
+                </p>
+              )}
+
               {item.adapted && (
                 <div style={{ margin: "0.75rem 0", padding: "0.5rem", background: "rgba(0,0,0,0.03)", borderRadius: "4px" }}>
                   <p style={{ margin: "0 0 0.25rem 0", fontSize: "0.85rem", color: "#555" }}>
@@ -336,7 +343,7 @@ export default function Result({
                   translations={(item.translations || []).filter(
                     (t) => t.code === language.code
                   )}
-                  simplifyFailed={false}
+                  simplifyFailed={!item.adapted}
                   lessonId={item.lessonId}
                   headingLevel={3}
                 />

@@ -13,8 +13,8 @@ import CorrectionForm from "./CorrectionForm";
 // disagree about what a language can do. Capability comes from the API's
 // `translation` field, never the language code (RULES.md §5).
 //
-// onPlayPhrase is optional: without it, phrase-bank options are listed but
-// not playable (chapter mode has no per-sentence playback state).
+// onPlayPhrase is optional: without it (chapter mode, which has no
+// per-sentence playback state) a refusal shows its reason and no options.
 //
 // headingLevel keeps the outline unbroken: 2 under the page title in
 // single-sentence mode, 3 under each sentence heading in chapter mode.
@@ -69,30 +69,32 @@ export default function LanguageResult({
       {spoken?.kind === "phrase_bank_only" && (
         <>
           <p className="note">{spoken.reason}</p>
-          <p className="field-label">
-            What BOLI can say in {language.name} today
-          </p>
-          <ul className="phrase-options">
-            {spoken.options.map((phrase) => (
-              <li key={phrase.id}>
-                {phrase.hindi_source} —{" "}
-                <span className="in-script" lang={language.code}>
-                  {phrase.target_text}
-                </span>
-                {onPlayPhrase && (
-                  <>
-                    {" "}
+          {/* Only offer the bank where a phrase can be played from it. In
+              chapter mode the same unplayable list repeated under every
+              sentence read as if each sentence had been spoken as it. */}
+          {onPlayPhrase && (
+            <>
+              <p className="field-label">
+                What BOLI can say in {language.name} today
+              </p>
+              <ul className="phrase-options">
+                {spoken.options.map((phrase) => (
+                  <li key={phrase.id}>
+                    {phrase.hindi_source} —{" "}
+                    <span className="in-script" lang={language.code}>
+                      {phrase.target_text}
+                    </span>{" "}
                     <button
                       className="link"
                       onClick={() => onPlayPhrase(language.code, phrase)}
                     >
                       Play this one
                     </button>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </>
       )}
 

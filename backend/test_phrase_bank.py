@@ -72,6 +72,17 @@ def test_bank_phrase_speaks():
     print(f"bank phrase spoke: {len(r.content)} bytes of wav")
 
 
+def test_sentence_final_danda_still_matches():
+    """Chapter extraction and OCR end sentences with a danda; the bank doesn't."""
+    for lang in phrase_bank.LANGS:
+        entry = phrase_bank.options(lang)[0]
+        for text in (entry["hindi_source"] + "।", " " + entry["hindi_source"] + " ।"):
+            assert phrase_bank.lookup(lang, text) == entry, (lang, text)
+    # Only the ending is loosened: a different sentence still misses.
+    assert phrase_bank.lookup("hoc", "सूरज पूर्व दिशा में उगता है।") is None
+    print("danda-terminated bank phrases match; others still refused")
+
+
 def test_every_language_has_a_bank_and_speaks_it():
     for lang in phrase_bank.LANGS:
         entry = phrase_bank.options(lang)[0]
@@ -85,5 +96,6 @@ if __name__ == "__main__":
     test_languages()
     test_arbitrary_text_is_refused()
     test_bank_phrase_speaks()
+    test_sentence_final_danda_still_matches()
     test_every_language_has_a_bank_and_speaks_it()
     print("\nPASS")

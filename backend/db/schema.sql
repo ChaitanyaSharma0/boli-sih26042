@@ -16,8 +16,8 @@
 CREATE TABLE IF NOT EXISTS lessons (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    source_text TEXT NOT NULL,           -- original Hindi, typed or OCR'd
-    source_type TEXT NOT NULL,           -- 'typed' | 'ocr'
+    source_text TEXT NOT NULL,           -- original Hindi: typed, OCR'd, from a PDF chapter or dictated
+    source_type TEXT NOT NULL,           -- 'typed' | 'ocr' | 'pdf_chapter' | 'asr'
     adapted_text TEXT,                   -- pedagogy output, JSON-encoded array
     santali_translation TEXT,            -- Ol Chiki, null if not requested
     languages_requested TEXT NOT NULL    -- JSON array, e.g. ["hoc","sat"]

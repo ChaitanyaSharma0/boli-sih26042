@@ -66,11 +66,18 @@ def lookup(lang: str, text: str) -> dict | None:
     match at all: an unmatched string returns None, and /speak turns that
     into a refusal rather than synthesising text nobody has checked.
     """
-    wanted = " ".join(text.split())
+    wanted = _normalise(text)
     for p in options(lang):
-        if wanted in (
-            " ".join(p["hindi_source"].split()),
-            " ".join(p["target_text"].split()),
-        ):
+        if wanted in (_normalise(p["hindi_source"]), _normalise(p["target_text"])):
             return p
     return None
+
+
+def _normalise(text: str) -> str:
+    """Collapse whitespace and drop sentence-final punctuation.
+
+    The chapter splitter, OCR and typing all end a sentence with a danda
+    (or not) at will. "पानी हमारा जीवन है।" is the same phrase as the bank's
+    "पानी हमारा जीवन है"; nothing inside the sentence is loosened.
+    """
+    return " ".join(text.split()).rstrip("।॥?!. ")
