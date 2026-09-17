@@ -15,6 +15,7 @@ router = APIRouter()
 class TranslateRequest(BaseModel):
     text: str
     target: str = "sat_Olck"
+    source: str | None = None
 
 
 @router.post("/translate")
@@ -23,13 +24,15 @@ def translate(req: TranslateRequest):
         raise HTTPException(
             501,
             f"No translation model exists for '{req.target}'. Santali (sat_Olck) is "
-            "the only language here with a parallel corpus. Ho, Mundari, Kurukh and "
+            "the primary tribal language here with a parallel corpus. Ho, Mundari, Kurukh and "
             "Sadri are served by the curated phrase bank via /speak instead.",
         )
     try:
-        translated = translation.translate(req.text, req.target)
+        translated = translation.translate(req.text, req.target, req.source)
     except ValueError as e:
         raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(500, str(e))
 
     # Report the one failure mode we have actually measured, rather than
     # handing back broken output that looks fine. A caller that renders

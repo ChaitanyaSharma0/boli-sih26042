@@ -129,13 +129,20 @@ export default function Result({
             if (idx === 0) setSimplifyError(e.message);
           }
 
-          // 3. Translate where real model exists
-          if (simplified) {
-            for (const language of picked) {
-              const target = translateTargetFor(language);
-              if (!target) continue;
-              setStage(`Translating into ${language.name}…`);
-              for (const sentence of simplified.adapted_hindi) {
+          // 3. Translate where real model exists (fallback to currentText if simplify failed or is empty)
+          const sentencesToTranslate =
+            simplified &&
+            Array.isArray(simplified.adapted_hindi) &&
+            simplified.adapted_hindi.length > 0
+              ? simplified.adapted_hindi
+              : [currentText];
+
+          for (const language of picked) {
+            const target = translateTargetFor(language);
+            if (!target) continue;
+            setStage(`Translating into ${language.name}…`);
+            for (const sentence of sentencesToTranslate) {
+              try {
                 const result = await translate(sentence, target);
                 if (cancelled) return;
                 const transObj = {
@@ -149,6 +156,8 @@ export default function Result({
                 if (idx === 0) {
                   setTranslations((prev) => [...prev, transObj]);
                 }
+              } catch (transErr) {
+                console.warn(`Translation error for ${language.name}:`, transErr);
               }
             }
           }
