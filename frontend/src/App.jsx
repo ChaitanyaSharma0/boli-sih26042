@@ -37,6 +37,10 @@ function Rail({ step }) {
 export default function App() {
   const [step, setStep] = useState(0);
   const [hindiText, setHindiText] = useState("");
+  // Grade-level selector: Class 1-5 (default Class 2)
+  const [grade, setGrade] = useState(2);
+  // PDF Chapter extracted sentences
+  const [chapterSentences, setChapterSentences] = useState([]);
   // Whether the text came off a photo or a keyboard, for the lesson row.
   const [sourceType, setSourceType] = useState("typed");
   const [selectedLangs, setSelectedLangs] = useState([]);
@@ -81,6 +85,10 @@ export default function App() {
           <Capture
             hindiText={hindiText}
             setHindiText={setHindiText}
+            grade={grade}
+            setGrade={setGrade}
+            chapterSentences={chapterSentences}
+            setChapterSentences={setChapterSentences}
             setSourceType={setSourceType}
             onNext={next}
           />
@@ -96,6 +104,8 @@ export default function App() {
         {step === 2 && (
           <Result
             hindiText={hindiText}
+            grade={grade}
+            chapterSentences={chapterSentences}
             sourceType={sourceType}
             selectedLangs={selectedLangs}
             onBack={back}

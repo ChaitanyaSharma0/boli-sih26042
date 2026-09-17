@@ -41,8 +41,10 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from db import db  # noqa: E402
-from models import translation, tts  # noqa: E402
+from models import asr, translation, tts  # noqa: E402
 from routes import (  # noqa: E402
+    asr as asr_route,
+    chapter,
     correct,
     languages,
     lessons,
@@ -60,6 +62,7 @@ async def lifespan(app: FastAPI):
     # Costs ~a minute on a cold HF cache; makes each teacher request seconds.
     translation.warmup()
     tts.warmup()
+    asr.warmup()
     yield
 
 
@@ -81,7 +84,7 @@ _AUDIO_DIR = Path(__file__).resolve().parent / "static" / "audio"
 _AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/audio", StaticFiles(directory=_AUDIO_DIR), name="audio")
 
-for module in (ocr, pedagogy, translate, speak, correct, languages, lessons):
+for module in (ocr, chapter, pedagogy, translate, speak, asr_route, correct, languages, lessons):
     app.include_router(module.router)
 
 

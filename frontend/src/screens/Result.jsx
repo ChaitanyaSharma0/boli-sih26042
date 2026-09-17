@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import JSZip from "jszip";
 import {
   createLesson,
   languages as fetchLanguages,
@@ -16,6 +17,7 @@ import CorrectionForm from "../components/CorrectionForm";
 
 // Screen 3 — the lesson, adapted, translated where that is real, and
 // spoken where a voice exists.
+// Supports single sentences or whole chapter multi-sentence extraction.
 //
 // The calls run in sequence, not in parallel (ARCHITECTURE.md §5), and
 // the order matters: the phrase-bank languages are spoken BEFORE
@@ -23,7 +25,8 @@ import CorrectionForm from "../components/CorrectionForm";
 // failing Gemini must not delay or cancel results that never needed it
 // (PLAN.md Phase 8.5, added after a live 503 took the whole screen with
 // it). A /simplify failure is caught and scoped to the languages that
-// actually depended on it.
+// actually depended on it. In chapter mode this ordering holds per
+// sentence.
 //
 // PRD.md §4's boundary is enforced here by construction, not by a check
 // that could be forgotten: translateTargetFor() returns null for every
@@ -31,9 +34,10 @@ import CorrectionForm from "../components/CorrectionForm";
 // Mundari, Kurukh or Sadri. They reach /speak only, which matches the
 // text against the curated bank and refuses anything else. The backend
 // 501s them too; this is the belt to those braces.
-
 export default function Result({
   hindiText,
+  grade = 2,
+  chapterSentences = [],
   sourceType,
   selectedLangs,
   onBack,
@@ -47,14 +51,20 @@ export default function Result({
   const [lessonId, setLessonId] = useState(null);
   // Scoped to the languages that needed pedagogy — never fatal.
   const [simplifyError, setSimplifyError] = useState("");
+  // Multi-sentence chapter processing results
+  const [chapterResults, setChapterResults] = useState([]);
+  const [isZipping, setIsZipping] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     async function run() {
-      // Accumulated locally as the sequence runs, then mirrored into
-      // state. Reading React state mid-loop would read a stale snapshot.
-      const translated = [];
+      const sentenceList =
+        chapterSentences && chapterSentences.length > 0
+          ? chapterSentences
+          : [hindiText].filter(Boolean);
+
+      if (sentenceList.length === 0) return;
 
       try {
         const all = await fetchLanguages();
@@ -62,92 +72,138 @@ export default function Result({
         const picked = all.filter((l) => selectedLangs.includes(l.code));
         setChosen(picked);
 
-        // 0. Record the submission, so any correction below points at a
-        // real lesson row rather than a placeholder (ARCHITECTURE.md §3).
-        const lesson = await createLesson({
-          sourceText: hindiText,
-          sourceType,
-          languages: selectedLangs,
-        });
-        if (cancelled) return;
-        setLessonId(lesson.id);
+        const accumulatedChapterResults = [];
 
-        // Speak one language and record the outcome. A failure is stored
-        // against that language, never thrown — one checkpoint failing
-        // must not lose everybody else's results.
-        async function speakInto(language, text) {
-          setStage("Generating " + language.name + " audio…");
+        for (let idx = 0; idx < sentenceList.length; idx++) {
+          const currentText = sentenceList[idx];
+          setStage(
+            sentenceList.length > 1
+              ? `Processing sentence ${idx + 1} of ${sentenceList.length}…`
+              : "Processing lesson…"
+          );
+
+          // 0. Record lesson submission
+          let currentLessonId = null;
           try {
-            const result = await speak(text, language.code);
+            const lesson = await createLesson({
+              sourceText: currentText,
+              sourceType,
+              languages: selectedLangs,
+            });
             if (cancelled) return;
-            setAudio((prev) => ({
-              ...prev,
-              [language.code]: { ...result, text, textIsTarget: false },
-            }));
-          } catch (e) {
-            if (cancelled) return;
-            setAudio((prev) => ({
-              ...prev,
-              [language.code]: { kind: "error", error: e.message },
-            }));
+            currentLessonId = lesson.id;
+            if (idx === 0) setLessonId(lesson.id);
+          } catch {
+            // Non-fatal if lesson logging fails
           }
-        }
 
-        // 1. Speak the languages that do not need the LLM, first. The
-        // phrase bank is keyed on the teacher's own Hindi; if the
-        // sentence is not in it, /speak refuses and that refusal is
-        // rendered as a refusal.
-        for (const language of picked.filter(speaksWithoutPedagogy)) {
-          await speakInto(language, hindiText);
-          if (cancelled) return;
-        }
+          const currentAudio = {};
+          const currentTranslations = [];
 
-        // 2. Simplify. Hindi to Hindi; no boundary crossed. Everything
-        // above is already on screen if this fails.
-        setStage("Simplifying the lesson…");
-        let simplified = null;
-        try {
-          simplified = await simplify(hindiText);
-          if (cancelled) return;
-          setAdapted(simplified);
-        } catch (e) {
-          if (cancelled) return;
-          setSimplifyError(e.message);
-        }
-
-        // 3. Translate — only languages with a real model behind them,
-        // and only if there is adapted text to translate. Translating the
-        // unsimplified sentence instead would produce exactly the broken
-        // output the pedagogy step exists to prevent (PLAN.md Phase 8.5).
-        if (simplified) {
-          for (const language of picked) {
-            const target = translateTargetFor(language);
-            if (!target) continue; // phrase-bank language: never translated
-            setStage("Translating into " + language.name + "…");
-            for (const sentence of simplified.adapted_hindi) {
-              const result = await translate(sentence, target);
+          // Helper to speak one language.
+          //
+          // textIsTarget is false: /speak returns wav bytes only, so on a
+          // phrase-bank hit the text held here is the Hindi that was sent,
+          // not the phrase that was spoken. The render uses this flag so it
+          // never presents that Hindi as the spoken output.
+          async function speakInto(language, text) {
+            setStage(`Generating ${language.name} audio…`);
+            try {
+              const result = await speak(text, language.code);
               if (cancelled) return;
-              translated.push({
-                code: language.code,
-                name: language.name,
-                sentence,
-                translated: result.translated,
-                contaminated: result.script_contamination,
-              });
-              setTranslations([...translated]);
+              currentAudio[language.code] = {
+                ...result,
+                text,
+                textIsTarget: false,
+              };
+              if (idx === 0) {
+                setAudio((prev) => ({
+                  ...prev,
+                  [language.code]: { ...result, text, textIsTarget: false },
+                }));
+              }
+            } catch (e) {
+              if (cancelled) return;
+              currentAudio[language.code] = { kind: "error", error: e.message };
+              if (idx === 0) {
+                setAudio((prev) => ({
+                  ...prev,
+                  [language.code]: { kind: "error", error: e.message },
+                }));
+              }
             }
           }
-        }
 
-        // 4. Speak anything that has both a translation and a voice.
-        // Nothing does today — Santali has no TTS checkpoint — but the
-        // step is here so adding one needs no new wiring.
-        for (const language of picked) {
-          if (language.tts !== "full" || speaksWithoutPedagogy(language)) continue;
-          const mine = translated.filter((t) => t.code === language.code);
-          if (!mine.length) continue;
-          await speakInto(language, mine.map((t) => t.translated).join(" "));
-          if (cancelled) return;
+          // 1. Speak phrase bank languages that do not depend on LLM
+          for (const language of picked.filter(speaksWithoutPedagogy)) {
+            await speakInto(language, currentText);
+            if (cancelled) return;
+          }
+
+          // 2. Simplify with grade level
+          setStage(
+            sentenceList.length > 1
+              ? `Simplifying sentence ${idx + 1} of ${sentenceList.length} (Class ${grade})…`
+              : `Simplifying lesson (Class ${grade})…`
+          );
+          let simplified = null;
+          try {
+            simplified = await simplify(currentText, grade);
+            if (cancelled) return;
+            if (idx === 0) setAdapted(simplified);
+          } catch (e) {
+            if (cancelled) return;
+            if (idx === 0) setSimplifyError(e.message);
+          }
+
+          // 3. Translate where real model exists
+          if (simplified) {
+            for (const language of picked) {
+              const target = translateTargetFor(language);
+              if (!target) continue;
+              setStage(`Translating into ${language.name}…`);
+              for (const sentence of simplified.adapted_hindi) {
+                const result = await translate(sentence, target);
+                if (cancelled) return;
+                const transObj = {
+                  code: language.code,
+                  name: language.name,
+                  sentence,
+                  translated: result.translated,
+                  contaminated: result.script_contamination,
+                };
+                currentTranslations.push(transObj);
+                if (idx === 0) {
+                  setTranslations((prev) => [...prev, transObj]);
+                }
+              }
+            }
+          }
+
+          // 4. Speak anything with translation + voice
+          for (const language of picked) {
+            if (language.tts !== "full" || speaksWithoutPedagogy(language))
+              continue;
+            const mine = currentTranslations.filter(
+              (t) => t.code === language.code
+            );
+            if (!mine.length) continue;
+            await speakInto(
+              language,
+              mine.map((t) => t.translated).join(" ")
+            );
+            if (cancelled) return;
+          }
+
+          accumulatedChapterResults.push({
+            sentenceIndex: idx,
+            sourceText: currentText,
+            lessonId: currentLessonId,
+            adapted: simplified,
+            translations: currentTranslations,
+            audio: currentAudio,
+          });
+          setChapterResults([...accumulatedChapterResults]);
         }
 
         setStage("");
@@ -162,7 +218,117 @@ export default function Result({
     return () => {
       cancelled = true;
     };
-  }, [hindiText, sourceType, selectedLangs]);
+  }, [hindiText, grade, chapterSentences, sourceType, selectedLangs]);
+
+  async function handleDownloadOfflinePack() {
+    setIsZipping(true);
+    try {
+      const zip = new JSZip();
+      let summaryText = "BOLI — Mother-Tongue Lesson Pack\n";
+      summaryText += `Grade / Class Level: Class ${grade}\n`;
+      summaryText += `Total Sentences: ${chapterResults.length}\n\n`;
+
+      const audioFolder = zip.folder("audio");
+
+      chapterResults.forEach((item, idx) => {
+        summaryText += "===============================\n";
+        summaryText += `Sentence ${idx + 1}: ${item.sourceText}\n`;
+        if (item.adapted) {
+          summaryText += `Concept: ${item.adapted.concept}\n`;
+          summaryText += `Simplified Hindi: ${item.adapted.adapted_hindi.join(" ")}\n`;
+          if (item.adapted.substitutions?.length > 0) {
+            summaryText += "Substitutions:\n";
+            item.adapted.substitutions.forEach((sub) => {
+              summaryText += `  - ${sub.from} -> ${sub.to} (${sub.why})\n`;
+            });
+          }
+        }
+        if (item.translations?.length > 0) {
+          summaryText += "Translations:\n";
+          item.translations.forEach((t) => {
+            summaryText += `  [${t.name}]: ${t.translated}\n`;
+          });
+        }
+        summaryText += "\n";
+
+        if (item.audio) {
+          Object.entries(item.audio).forEach(([langCode, data]) => {
+            if (data.kind === "audio" && data.blob) {
+              audioFolder.file(`sentence_${idx + 1}_${langCode}.wav`, data.blob);
+            }
+          });
+        }
+      });
+
+      zip.file("summary.txt", summaryText);
+      zip.file("data.json", JSON.stringify(chapterResults, null, 2));
+
+      const htmlContent = `<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <title>BOLI — Offline Classroom Pack</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+    h1 { color: #1E3A5F; }
+    .card { background: #F1F4F8; padding: 1.2rem; margin-bottom: 1.2rem; border-radius: 8px; border-left: 5px solid #1B6B45; }
+    .meta { color: #666; font-size: 0.9rem; }
+    .trans-box { margin-top: 0.5rem; padding: 0.5rem; background: #fff; border-radius: 4px; }
+    audio { display: block; margin-top: 0.5rem; width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>BOLI — Offline Classroom Lesson</h1>
+  <p class="meta">Class ${grade} · Zero-Connectivity Offline Classroom Pack</p>
+  ${chapterResults
+    .map(
+      (item, idx) => `
+    <div class="card">
+      <h3>Sentence ${idx + 1}</h3>
+      <p><strong>Original Hindi:</strong> ${item.sourceText}</p>
+      ${
+        item.adapted
+          ? `<p><strong>Simplified Hindi:</strong> ${item.adapted.adapted_hindi.join(" ")}</p>`
+          : ""
+      }
+      ${(item.translations || [])
+        .map(
+          (t) => `
+        <div class="trans-box">
+          <strong>${t.name}:</strong> ${t.translated}
+        </div>`
+        )
+        .join("")}
+      ${Object.entries(item.audio || {})
+        .filter(([, a]) => a.kind === "audio")
+        .map(
+          ([langCode, a]) => `
+        <div class="trans-box">
+          <strong>Audio (${langCode}):</strong> <em>${a.text || ""}</em>
+          <audio controls src="audio/sentence_${idx + 1}_${langCode}.wav"></audio>
+        </div>`
+        )
+        .join("")}
+    </div>`
+    )
+    .join("")}
+</body>
+</html>`;
+      zip.file("index.html", htmlContent);
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `boli_class_${grade}_offline_pack.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError("Failed to create offline pack: " + err.message);
+    } finally {
+      setIsZipping(false);
+    }
+  }
 
   // Play one phrase from the bank, when the teacher's own sentence was not
   // in it. Same /speak route, same rules — just a phrase that will match.
@@ -196,184 +362,300 @@ export default function Result({
       </div>
       {error && <p className="error">{error}</p>}
 
-      {ordered.map((language) => {
-        const mine = translations.filter((t) => t.code === language.code);
-        const spoken = audio[language.code];
-        const isBank = language.translation === "phrase_bank";
-        const native = nativeName(language);
+      <div style={{ margin: "1rem 0", display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+        <button
+          type="button"
+          className="button button--primary"
+          onClick={handleDownloadOfflinePack}
+          disabled={isZipping || chapterResults.length === 0}
+        >
+          {isZipping ? "Packaging ZIP…" : "📦 Download Offline Pack (.zip)"}
+        </button>
+        {chapterResults.length > 1 && (
+          <span style={{ fontSize: "0.9rem", color: "#555" }}>
+            Chapter mode: {chapterResults.length} sentences processed (Class {grade})
+          </span>
+        )}
+      </div>
 
-        return (
-          <article
-            key={language.code}
-            className={`result cap-${language.translation}`}
-            aria-labelledby={`result-${language.code}`}
-          >
-            <div className="result-head">
-              <h2 id={`result-${language.code}`}>{language.name}</h2>
-              {native && (
-                <span className="in-script" lang={language.code}>
-                  {native}
+      {chapterResults.length > 1 ? (
+        <div className="chapter-results-list" style={{ display: "grid", gap: "1.2rem" }}>
+          {chapterResults.map((item, idx) => (
+            <div
+              key={idx}
+              className="work"
+              style={{
+                borderLeft: "4px solid var(--accent, #1B6B45)",
+                padding: "1rem",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                <span className="field-label" style={{ margin: 0 }}>
+                  Sentence {idx + 1} of {chapterResults.length}
                 </span>
-              )}
-              <span className="badge">
-                {isBank ? "Phrase bank only" : "AI translation"}
-              </span>
-            </div>
-
-            {spoken?.kind === "audio" && (
-              <>
-                <AudioPlayer
-                  blob={spoken.blob}
-                  label={`${language.name} audio`}
-                />
-                {spoken.textIsTarget ? (
-                  <p className="target-text" lang={language.code}>
-                    {spoken.text}
-                  </p>
-                ) : (
-                  <p className="asked-for">
-                    The {language.name} phrase for{" "}
-                    <span lang="hi">{spoken.text}</span>
-                  </p>
-                )}
-                {/* Only claim something was spoken when it actually was. */}
-                {isBank && (
-                  <p className="section-note">
-                    From the curated phrase bank, not translated from your
-                    sentence. No native speaker has checked it yet.
-                  </p>
-                )}
-              </>
-            )}
-
-            {spoken?.kind === "phrase_bank_only" && (
-              <>
-                <p className="note">{spoken.reason}</p>
-                <p className="field-label">
-                  What BOLI can say in {language.name} today
-                </p>
-                <ul className="phrase-options">
-                  {spoken.options.map((phrase) => (
-                    <li key={phrase.id}>
-                      {phrase.hindi_source} —{" "}
-                      <span className="in-script" lang={language.code}>
-                        {phrase.target_text}
-                      </span>{" "}
-                      <button
-                        className="link"
-                        onClick={() => playPhrase(language.code, phrase)}
-                      >
-                        Play this one
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-
-            {spoken?.kind === "error" && (
-              <p className="error">Couldn't make the audio. {spoken.error}</p>
-            )}
-
-            {simplifyError && !isBank && (
-              <p className="error">
-                No {language.name} this time: it needs the simplification step,
-                which failed. The other languages here were not affected.
+                <span style={{ fontSize: "0.8rem", color: "#666" }}>Class {grade}</span>
+              </div>
+              <p style={{ fontWeight: "bold", fontSize: "1.05rem", margin: "0.25rem 0" }} lang="hi">
+                {item.sourceText}
               </p>
-            )}
 
-            {mine.length > 0 && (
-              <>
-                <ol className="sentences target" lang={language.code}>
-                  {mine.map((t, i) => (
-                    <li key={i}>
-                      {t.translated}
+              {item.adapted && (
+                <div style={{ margin: "0.75rem 0", padding: "0.5rem", background: "rgba(0,0,0,0.03)", borderRadius: "4px" }}>
+                  <p style={{ margin: "0 0 0.25rem 0", fontSize: "0.85rem", color: "#555" }}>
+                    Concept: {item.adapted.concept}
+                  </p>
+                  <p style={{ margin: 0, fontWeight: 500 }} lang="hi">
+                    {item.adapted.adapted_hindi.join(" ")}
+                  </p>
+                </div>
+              )}
+
+              {item.translations?.length > 0 && (
+                <div style={{ marginTop: "0.5rem" }}>
+                  {item.translations.map((t, tIdx) => (
+                    <div key={tIdx} style={{ fontSize: "0.95rem", margin: "0.25rem 0" }}>
+                      <strong>{t.name}:</strong> <span lang={t.code}>{t.translated}</span>
                       {t.contaminated && (
-                        <span className="warn">
-                          The model doesn't know a word in this sentence, so
-                          part of this line is in the wrong script. Try simpler,
-                          more local wording.
+                        <span className="warn" style={{ display: "block", fontSize: "0.8rem" }}>
+                          (Script contamination detected)
                         </span>
                       )}
-                    </li>
+                    </div>
                   ))}
-                </ol>
-                <CorrectionForm
-                  lang={language.code}
-                  original={mine.map((t) => t.translated).join(" ")}
-                  lessonId={lessonId}
-                />
-              </>
-            )}
+                </div>
+              )}
 
-            {language.tts === "none" && (
-              <p className="note">
-                {language.note ?? "There is no voice for this language."} This is
-                text only.
-              </p>
-            )}
+              {item.audio && Object.keys(item.audio).length > 0 && (
+                <div style={{ marginTop: "0.75rem", display: "grid", gap: "0.5rem" }}>
+                  {Object.entries(item.audio).map(([langCode, a]) => {
+                    const langObj = chosen.find((c) => c.code === langCode);
+                    const langName = langObj ? langObj.name : langCode;
+                    return (
+                      <div key={langCode}>
+                        {a.kind === "audio" && (
+                          <>
+                            <AudioPlayer blob={a.blob} label={`${langName} audio`} />
+                            {a.text && (
+                              <p className="note" style={{ margin: "0.2rem 0" }}>
+                                {a.textIsTarget ? (
+                                  <>
+                                    Spoken ({langName}):{" "}
+                                    <span lang={langCode}>{a.text}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    The {langName} phrase for{" "}
+                                    <span lang="hi">{a.text}</span>
+                                  </>
+                                )}
+                              </p>
+                            )}
+                          </>
+                        )}
+                        {a.kind === "phrase_bank_only" && (
+                          <p className="note" style={{ margin: "0.2rem 0" }}>
+                            {langName}: Not in phrase bank today.
+                          </p>
+                        )}
+                        {a.kind === "error" && (
+                          <p className="error" style={{ margin: "0.2rem 0" }}>
+                            {langName}: {a.error}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <>
+          {ordered.map((language) => {
+            const mine = translations.filter((t) => t.code === language.code);
+            const spoken = audio[language.code];
+            const isBank = language.translation === "phrase_bank";
+            const native = nativeName(language);
 
-            {spoken?.kind === "audio" && isBank && (
-              <CorrectionForm
-                lang={language.code}
-                original={spoken.text}
-                lessonId={lessonId}
-              />
-            )}
-          </article>
-        );
-      })}
-
-      {/* The pedagogy step's evidence. The headline swap stays open, because
-          it is the argument the whole approach rests on; the full working is
-          one click away. */}
-      {(adapted || simplifyError) && (
-        <div className="work">
-          <h2>What we changed in the Hindi</h2>
-          {simplifyError ? (
-            <p className="error">
-              Couldn't simplify the lesson this time. {simplifyError}
-            </p>
-          ) : (
-            <>
-              <p className="summary-line">
-                {adapted.substitutions.length > 0 && (
-                  <>
-                    <span className="swap" lang="hi">
-                      {adapted.substitutions[0].from} → {adapted.substitutions[0].to}
+            return (
+              <article
+                key={language.code}
+                className={`result cap-${language.translation}`}
+                aria-labelledby={`result-${language.code}`}
+              >
+                <div className="result-head">
+                  <h2 id={`result-${language.code}`}>{language.name}</h2>
+                  {native && (
+                    <span className="in-script" lang={language.code}>
+                      {native}
                     </span>
-                    {", and "}
+                  )}
+                  <span className="badge">
+                    {isBank ? "Phrase bank only" : "AI translation"}
+                  </span>
+                </div>
+
+                {spoken?.kind === "audio" && (
+                  <>
+                    <AudioPlayer
+                      blob={spoken.blob}
+                      label={`${language.name} audio`}
+                    />
+                    {spoken.textIsTarget ? (
+                      <p className="target-text" lang={language.code}>
+                        {spoken.text}
+                      </p>
+                    ) : (
+                      <p className="asked-for">
+                        The {language.name} phrase for{" "}
+                        <span lang="hi">{spoken.text}</span>
+                      </p>
+                    )}
+                    {/* Only claim something was spoken when it actually was. */}
+                    {isBank && (
+                      <p className="section-note">
+                        From the curated phrase bank, not translated from your
+                        sentence. No native speaker has checked it yet.
+                      </p>
+                    )}
                   </>
                 )}
-                {adapted.adapted_hindi.length} shorter sentence
-                {adapted.adapted_hindi.length === 1 ? "" : "s"}
-                {adapted.readability &&
-                  ` (${adapted.readability.before_wps} words per sentence down to ${adapted.readability.after_wps})`}
-                .
-              </p>
-              <details className="detail">
-                <summary>See the full rewrite</summary>
-                <ol className="sentences" lang="hi">
-                  {adapted.adapted_hindi.map((sentence, i) => (
-                    <li key={i}>{sentence}</li>
-                  ))}
-                </ol>
-                {adapted.substitutions.length > 0 && (
-                  <ul className="subs">
-                    {adapted.substitutions.map((s, i) => (
-                      <li key={i}>
-                        <span lang="hi">
-                          {s.from} → {s.to}
-                        </span>{" "}
-                        — {s.why}
-                      </li>
-                    ))}
-                  </ul>
+
+                {spoken?.kind === "phrase_bank_only" && (
+                  <>
+                    <p className="note">{spoken.reason}</p>
+                    <p className="field-label">
+                      What BOLI can say in {language.name} today
+                    </p>
+                    <ul className="phrase-options">
+                      {spoken.options.map((phrase) => (
+                        <li key={phrase.id}>
+                          {phrase.hindi_source} —{" "}
+                          <span className="in-script" lang={language.code}>
+                            {phrase.target_text}
+                          </span>{" "}
+                          <button
+                            className="link"
+                            onClick={() => playPhrase(language.code, phrase)}
+                          >
+                            Play this one
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
                 )}
-              </details>
-            </>
+
+                {spoken?.kind === "error" && (
+                  <p className="error">Couldn't make the audio. {spoken.error}</p>
+                )}
+
+                {simplifyError && !isBank && (
+                  <p className="error">
+                    No {language.name} this time: it needs the simplification
+                    step, which failed. The other languages here were not
+                    affected.
+                  </p>
+                )}
+
+                {mine.length > 0 && (
+                  <>
+                    <ol className="sentences target" lang={language.code}>
+                      {mine.map((t, i) => (
+                        <li key={i}>
+                          {t.translated}
+                          {t.contaminated && (
+                            <span className="warn">
+                              The model doesn't know a word in this sentence, so
+                              part of this line is in the wrong script. Try
+                              simpler, more local wording.
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                    <CorrectionForm
+                      lang={language.code}
+                      original={mine.map((t) => t.translated).join(" ")}
+                      lessonId={lessonId}
+                    />
+                  </>
+                )}
+
+                {language.tts === "none" && (
+                  <p className="note">
+                    {language.note ?? "There is no voice for this language."}{" "}
+                    This is text only.
+                  </p>
+                )}
+
+                {spoken?.kind === "audio" && isBank && (
+                  <CorrectionForm
+                    lang={language.code}
+                    original={spoken.text}
+                    lessonId={lessonId}
+                  />
+                )}
+              </article>
+            );
+          })}
+
+          {/* The pedagogy step's evidence. The headline swap stays open,
+              because it is the argument the whole approach rests on; the
+              full working is one click away. Single-sentence mode only: in
+              chapter mode each sentence card shows its own rewrite, and this
+              panel only ever holds sentence 1. */}
+          {(adapted || simplifyError) && (
+            <div className="work">
+              <h2>What we changed in the Hindi</h2>
+              {simplifyError ? (
+                <p className="error">
+                  Couldn't simplify the lesson this time. {simplifyError}
+                </p>
+              ) : (
+                <>
+                  <p className="summary-line">
+                    {adapted.substitutions.length > 0 && (
+                      <>
+                        <span className="swap" lang="hi">
+                          {adapted.substitutions[0].from} →{" "}
+                          {adapted.substitutions[0].to}
+                        </span>
+                        {", and "}
+                      </>
+                    )}
+                    {adapted.adapted_hindi.length} shorter sentence
+                    {adapted.adapted_hindi.length === 1 ? "" : "s"}
+                    {adapted.readability &&
+                      ` (${adapted.readability.before_wps} words per sentence down to ${adapted.readability.after_wps})`}
+                    .
+                  </p>
+                  <details className="detail">
+                    <summary>See the full rewrite</summary>
+                    <ol className="sentences" lang="hi">
+                      {adapted.adapted_hindi.map((sentence, i) => (
+                        <li key={i}>{sentence}</li>
+                      ))}
+                    </ol>
+                    {adapted.substitutions.length > 0 && (
+                      <ul className="subs">
+                        {adapted.substitutions.map((s, i) => (
+                          <li key={i}>
+                            <span lang="hi">
+                              {s.from} → {s.to}
+                            </span>{" "}
+                            — {s.why}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </details>
+                </>
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
 
       <div className="actions">

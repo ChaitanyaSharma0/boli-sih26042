@@ -54,9 +54,18 @@ RETRY_STATUSES = (503,)
 RETRIES = 2  # three attempts in total
 BACKOFF_S = (1, 3)
 
+GRADE_GUIDANCE = {
+    1: "The children are in Class 1 (approx 5-6 years old). Use the simplest everyday home words. Aim for 3-4 words per sentence.",
+    2: "The children are in Class 2 (approx 6-7 years old). Use everyday spoken words a village child already knows. Aim for about 5 words per sentence.",
+    3: "The children are in Class 3 (approx 7-8 years old). Use familiar primary vocabulary. Aim for 6-7 words per sentence.",
+    4: "The children are in Class 4 (approx 8-9 years old). Introduce standard primary textbook words with cultural grounding. Aim for 7-9 words per sentence.",
+    5: "The children are in Class 5 (approx 9-10 years old). Connect textbook ideas to local context with Class 5 vocabulary. Aim for 8-10 words per sentence.",
+}
+
 SIMPLIFY_PROMPT = """You are helping a primary-school teacher in Jharkhand, India.
 
-The children in the class are 6-10 years old. Hindi is the language of the
+{grade_instruction}
+Hindi is the language of the
 textbook, but it is NOT most of these children's mother tongue — they speak
 Ho, Mundari, Kurukh, Sadri or Santali at home. The teacher needs the lesson
 rewritten in Hindi that these children can actually follow.
@@ -70,7 +79,7 @@ Rewrite the sentence below. Keep it in Hindi. Apply all three of these:
    not grown in Jharkhand, unfamiliar city objects, or festivals from
    elsewhere. Keep the lesson's meaning; change the example.
 3. SENTENCE SPLITTING — break long sentences into several short ones. Aim
-   for about 5 words per sentence. One idea per sentence.
+   for sentence lengths matching this grade level. One idea per sentence.
 
 Return JSON only:
 - "concept": one short sentence, in English, naming the idea the lesson is
@@ -324,13 +333,17 @@ def _call_openai_compatible(prompt: str, config: dict) -> dict:
         raise RuntimeError(f"Could not read the simplification response: {e}")
 
 
-def simplify(text: str) -> dict:
+def simplify(text: str, grade: int = 2) -> dict:
     """Return the DATA_DICTIONARY.md §4 /simplify shape. Raises on failure."""
     if not text.strip():
         raise ValueError("Nothing to simplify — the text was empty.")
 
     config = _config()
-    prompt = SIMPLIFY_PROMPT.format(text=text.strip())
+    grade_instruction = GRADE_GUIDANCE.get(grade, GRADE_GUIDANCE[2])
+    prompt = SIMPLIFY_PROMPT.format(
+        text=text.strip(),
+        grade_instruction=grade_instruction,
+    )
     if config["provider"] == "gemini":
         result = _call_gemini(prompt, config["key"])
     else:
