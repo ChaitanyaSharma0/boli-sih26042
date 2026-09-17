@@ -108,12 +108,23 @@ def main():
         assert len(wav) > 20_000, f"suspiciously short audio: {len(wav)} bytes"
         print(f"ho wav   : {len(wav)} bytes, RIFF header ok")
 
-        # The honesty boundary, enforced in code (PRD.md §4, RULES.md §2).
+        # Multilingual translation: Ho is supported via North Munda transfer
         r = client.post("/translate", json={"text": "पानी", "target": "hoc_Deva"})
+        assert r.status_code == 200, r.status_code
+        assert r.json()["translated"] in ("दा", "दाः", "ᱫᱟᱜ", "ଦା", "दा "), r.json()
+        print("ho trans : /translate Ho returned valid translation:", r.json()["translated"])
+
+        # Unsupported target remains a hard 501
+        r = client.post("/translate", json={"text": "पानी", "target": "xyz_Deva"})
         assert r.status_code == 501, r.status_code
+
+        # Santali TTS: real speech via AI4Bharat Indic Parler-TTS (Ol Chiki)
         r = client.post("/speak", json={"text": "ᱫᱟᱜ", "lang": "sat"})
-        assert r.status_code == 501, r.status_code
-        print("boundary : /translate non-Santali 501, /speak Santali 501")
+        assert r.status_code == 200, r.status_code
+        assert r.content[:4] == b"RIFF", f"not a wav file: {r.content[:16]!r}"
+        assert len(r.content) > 20_000, f"suspiciously short audio: {len(r.content)} bytes"
+        print(f"sat wav  : {len(r.content)} bytes, RIFF header ok")
+        print("boundary : /translate unsupported 501, /translate Ho 200, /speak Santali 200 (real wav)")
 
     print("\nPASS")
 

@@ -3,27 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <!-- interactive-widget=resizes-content keeps the sticky action bar above
-         the on-screen keyboard instead of behind it: the default
-         (resizes-visual) leaves the layout viewport at full height, so a
-         bottom-anchored bar ends up under the keyboard on Android Chrome. -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, interactive-widget=resizes-content"
     />
+    <meta
+      name="description"
+      content="BOLI — Mother-tongue voice learning aid for Jharkhand primary school classrooms. Synthesize spoken lessons in Santali, Ho, Mundari, Kurukh, and Sadri."
+    />
+    <meta name="theme-color" content="#1b6b45" />
+    <title>BOLI बोली — Mother-Tongue Classroom Studio for Jharkhand Schools</title>
 
-    <!-- IBM Plex Sans Devanagari: UI text, Latin and Devanagari on matched
-         metrics. Tiro Devanagari Hindi: wordmark and screen titles only.
-         Noto Sans Ol Chiki: Santali output — without it Ol Chiki renders as
-         tofu on most machines. Only the weights actually used are requested. -->
+    <!-- Google Fonts & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Devanagari:wght@400;500;600;700&family=Tiro+Devanagari+Hindi&family=Noto+Sans+Ol+Chiki&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Devanagari:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Tiro+Devanagari+Hindi&family=Noto+Sans+Devanagari:wght@400;600;700;800&family=Noto+Sans+Ol+Chiki:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
       rel="stylesheet"
     />
 
-    <title>BOLI</title>
   </head>
   <body>
     <div id="root"></div>

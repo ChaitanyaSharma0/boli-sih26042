@@ -27,18 +27,23 @@ LANG = "hin"
 LOW_CONFIDENCE_BELOW = 70
 
 _WINDOWS_DEFAULT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+_MACOS_DEFAULTS = ("/opt/homebrew/bin/tesseract", "/usr/local/bin/tesseract")
 
 
 @lru_cache(maxsize=1)
 def _binary() -> str:
-    """Env override, then PATH, then the Windows default install location.
+    """Env override, then PATH, then macOS Homebrew and Windows default locations.
 
-    The Windows installer does not add Tesseract to PATH, so PATH alone
-    fails locally while working fine on a Linux deploy. TESSERACT_CMD in
-    .env overrides both if a machine puts it somewhere else.
+    The Windows and macOS Homebrew installers may not be on PATH in non-login shells.
+    TESSERACT_CMD in .env overrides all if a machine puts it somewhere else.
     """
-    for candidate in (os.getenv("TESSERACT_CMD"), shutil.which("tesseract")):
-        if candidate:
+    candidates = [
+        os.getenv("TESSERACT_CMD"),
+        shutil.which("tesseract"),
+        *_MACOS_DEFAULTS,
+    ]
+    for candidate in candidates:
+        if candidate and (os.path.exists(candidate) or shutil.which(candidate)):
             return candidate
     if os.path.exists(_WINDOWS_DEFAULT):
         return _WINDOWS_DEFAULT

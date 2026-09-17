@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
 import { languages as fetchLanguages } from "../api";
 import LanguageChip from "../components/LanguageChip";
-import { capabilityBadge, groupLanguages } from "../capability";
+import { groupLanguages } from "../capability";
 
 // Screen 2 — pick the mother tongues in the room.
 //
 // The list and every capability claim on it come from GET /languages.
 // Nothing about a language is hardcoded here (RULES.md §5), and the
 // screen groups by what each language can actually do, so the boundary
-// in PRD.md §4 is the structure of the page rather than a footnote.
+// in PRD.md §4 is visible rather than described in a footnote.
+
+// Which visual treatment a group gets. Derived from the API's
+// `translation` value, like everything else on this screen, so a new
+// capability falls back to the neutral treatment rather than being
+// silently styled as if it were a real model.
+function groupModifier(key) {
+  if (key === "full") return "language-group--ai";
+  if (key === "phrase_bank") return "language-group--bank";
+  return "";
+}
 
 export default function LanguageSelect({
   selectedLangs,
@@ -42,19 +52,36 @@ export default function LanguageSelect({
     };
   }, [attempt]);
 
-  const heading = <h1 id="languages-heading">Which languages are in the room?</h1>;
+  function toggle(code) {
+    setSelectedLangs(
+      selectedLangs.includes(code)
+        ? selectedLangs.filter((c) => c !== code)
+        : [...selectedLangs, code],
+    );
+  }
+
+  const header = (
+    <>
+      <div className="section-eyebrow">
+        <span className="eyebrow-tag">STEP 02</span>
+        <span>MOTHER TONGUE SELECTION</span>
+      </div>
+      <h1 id="languages-heading" className="screen-title">Which voices does your class need?</h1>
+    </>
+  );
 
   if (error) {
     return (
       <section aria-labelledby="languages-heading">
-        {heading}
-        <p className="error">Couldn't load the language list. {error}</p>
+        {header}
+        <p className="error">Could not load the language list. {error}</p>
         <div className="actions">
-          <button className="button button--secondary" onClick={onBack}>
-            Back
+          <button className="button button--secondary tactile-btn-secondary" onClick={onBack}>
+            <span className="material-symbols-outlined text-base">arrow_back</span>
+            <span>Edit the lesson</span>
           </button>
-          <button className="button button--primary" onClick={retry}>
-            Try again
+          <button className="button button--primary tactile-btn-primary" onClick={retry}>
+            <span>Try again</span>
           </button>
         </div>
       </section>
@@ -64,68 +91,97 @@ export default function LanguageSelect({
   if (!list) {
     return (
       <section aria-labelledby="languages-heading">
-        {heading}
-        <p className="stage" role="status">
+        {header}
+        <p className="screen-subtitle" role="status">
           Loading languages…
         </p>
       </section>
     );
   }
 
-  const count = selectedLangs.length;
-
   return (
-    <section aria-labelledby="languages-heading">
-      {heading}
-      <p className="intro">
-        Pick as many as you need. What each one can do is different, and it
-        says so on the card.
-      </p>
+    <section aria-labelledby="languages-heading" className="language-select-screen">
+      <div className="screen-header-block">
+        {header}
+        <p className="screen-subtitle">
+          Pick as many as you need. What each language can actually do is
+          different, and it is spelled out below.
+        </p>
+      </div>
 
-      {groupLanguages(list).map((group) => (
-        <div key={group.key}>
-          <div className="section-head">
-            <h2 className="section-label">{group.heading}</h2>
-            {/* Same words as each card's badge, so the boundary reads at the
-                section level before any single card does. */}
-            <span className={`badge badge--${group.key}`}>
-              {capabilityBadge({ translation: group.key })}
+      {groupLanguages(list).map((group, index) => (
+        <div
+          key={group.key}
+          className={`language-group-panel panel sun-card-shadow ${groupModifier(group.key)}`}
+        >
+          <div className="language-group-header">
+            <div className="group-header-left">
+              <span className="group-num-badge">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h2 className="group-heading">{group.heading}</h2>
+                {group.blurb && <p className="group-blurb">{group.blurb}</p>}
+              </div>
+            </div>
+            <span
+              className={`group-type-tag ${
+                group.key === "full"
+                  ? "group-type-tag--ai"
+                  : "group-type-tag--bank"
+              }`}
+            >
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: "14px" }}
+              >
+                {group.key === "full" ? "translate" : "menu_book"}
+              </span>
+              <span>
+                {group.key === "full"
+                  ? "Multi-Engine Translation & Speech"
+                  : "Validated Audio Phrase Bank"}
+              </span>
             </span>
           </div>
-          {group.blurb && <p className="section-note">{group.blurb}</p>}
-          <div className="chip-list">
+
+          <div className="language-grid">
             {group.items.map((language) => (
               <LanguageChip
                 key={language.code}
                 language={language}
                 selected={selectedLangs.includes(language.code)}
-                onToggle={(code) =>
-                  setSelectedLangs(
-                    selectedLangs.includes(code)
-                      ? selectedLangs.filter((c) => c !== code)
-                      : [...selectedLangs, code],
-                  )
-                }
+                onToggle={toggle}
               />
             ))}
           </div>
         </div>
       ))}
 
-      <div className="actions">
-        <button className="button button--secondary" onClick={onBack}>
-          Back
+      <div className="actions actions--split panel-actions-bar">
+        <button
+          className="button button--secondary tactile-btn-secondary"
+          onClick={onBack}
+        >
+          <span className="material-symbols-outlined text-base">arrow_back</span>
+          <span>Edit the lesson</span>
         </button>
         <button
-          className="button button--primary"
+          className="button button--primary tactile-btn-primary"
           onClick={onNext}
-          disabled={count === 0}
+          disabled={selectedLangs.length === 0}
         >
-          {count === 0
-            ? "Pick a language"
-            : `Continue with ${count} language${count > 1 ? "s" : ""}`}
+          <span>
+            {selectedLangs.length === 0
+              ? "Pick at least one language"
+              : `Continue with ${selectedLangs.length} language${
+                  selectedLangs.length > 1 ? "s" : ""
+                }`}
+          </span>
+          <span className="material-symbols-outlined text-xl">arrow_forward</span>
         </button>
       </div>
     </section>
   );
 }
+

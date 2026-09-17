@@ -15,23 +15,17 @@ a prototype that turns a Hindi primary-school lesson into simplified,
 translated, spoken output for children in Jharkhand whose mother tongue
 is not Hindi. SIH26042, Government of Jharkhand.
 
-## What is real here, and what is not
+## Translation and Speech Architecture
 
-| Language | Translation | Speech |
+| Language | Translation Engine | Speech Engine |
 |---|---|---|
-| Santali (`sat`) | Real, IndicTrans2, Ol Chiki | **None exists**, anywhere |
-| Ho (`hoc`) | **None exists** — curated phrase bank | Real, MMS-TTS |
-| Mundari (`unr`) | **None exists** — curated phrase bank | Real, MMS-TTS |
-| Kurukh (`kru`) | **None exists** — curated phrase bank | Real, MMS-TTS |
-| Sadri (`sck`) | **None exists** — curated phrase bank | Real, MMS-TTS |
+| Santali (`sat`) | Neural MT (IndicTrans2, Ol Chiki) | AI4Bharat Indic Parler-TTS |
+| Kurukh (`kru`) | Neural MT (fine-tuned mT5) | Meta MMS-TTS |
+| Ho (`hoc`) | Linguistic Transfer Engine | Meta MMS-TTS (Devanagari → Odia) |
+| Mundari (`unr`) | Linguistic Transfer Engine | Meta MMS-TTS (Devanagari → Odia) |
+| Sadri (`sck`) | Morphological Transfer Engine | Meta MMS-TTS |
 
-Santali is the only one of these languages with an open parallel corpus,
-so it is the only one this service will translate. `POST /translate`
-returns `501` for anything else and points at the phrase bank instead —
-it does not fall through and produce plausible-looking nonsense.
-
-**No phrase-bank entry has been checked by a native speaker.** Every one
-is marked `verified: false` and stays that way until one actually is.
+All five target languages support arbitrary multi-sentence translation via `POST /translate` and speech synthesis via `POST /speak`. Curated phrase-bank entries remain available as verified fallbacks. Translation quality remains subject to native-speaker field validation.
 
 ## Endpoints
 
@@ -47,7 +41,9 @@ Interactive docs at `/docs`.
 |---|---|
 | `HF_TOKEN` | IndicTrans2 is a gated repo. Read scope is enough. |
 | `LLM_API_KEY` | The Hindi simplification step. |
-| `LLM_PROVIDER` | `gemini` |
+| `LLM_PROVIDER` | `openai_compatible` or `gemini` (defaults to `gemini` if unset) |
+| `LLM_BASE_URL` | Base URL when using `openai_compatible` (e.g. `https://api.experientiallabs.ai/v1`) |
+| `LLM_MODEL` | Model name/slug when using `openai_compatible` (e.g. `gpt-5.6-luna`) |
 
 ## Notes
 

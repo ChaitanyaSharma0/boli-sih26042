@@ -333,37 +333,98 @@ def _call_openai_compatible(prompt: str, config: dict) -> dict:
         raise RuntimeError(f"Could not read the simplification response: {e}")
 
 
-def simplify(text: str, grade: int = 2) -> dict:
+JHARKHAND_CULTURAL_SUBS = (
+    ("गेहूँ", "धान", "Wheat is not grown in Jharkhand; paddy/rice is the local staple."),
+    ("बाज़ार", "हाट", "Haat is the traditional weekly village market across Jharkhand."),
+    ("विद्यालय", "स्कूल", "School is the everyday conversational term understood by village children."),
+    ("जल", "पानी", "Paani is the everyday spoken word for water."),
+    ("कृषक", "किसान", "Kisan is the standard spoken term for farmer."),
+    ("पुस्तक", "किताब", "Kitaab is the common spoken term for book."),
+    ("भोजन", "खाना", "Khaana is everyday spoken word for food."),
+    ("वृक्ष", "पेड़", "Ped is the common spoken word for tree."),
+)
+
+
+def local_deterministic_simplify(text: str, grade: int = 2) -> dict:
+    subs = []
+    adapted_text = text
+    for orig, rep, why in JHARKHAND_CULTURAL_SUBS:
+        if orig in text:
+            adapted_text = adapted_text.replace(orig, rep)
+            subs.append({"from": orig, "to": rep, "why": why})
+
+    parts = [s.strip() for s in re.split(r"[।॥.!?\n]+", adapted_text) if s.strip()]
+    if not parts:
+        parts = [text.strip()]
+
+    final_sents = []
+    for s in parts:
+        if grade <= 2 and " और " in s:
+            subparts = [p.strip() for p in s.split(" और ") if p.strip()]
+            for sp in subparts:
+                if not sp.endswith(("।", "॥", "?", "!")):
+                    sp += "।"
+                final_sents.append(sp)
+        else:
+            if not s.endswith(("।", "॥", "?", "!")):
+                s += "।"
+            final_sents.append(s)
+
+    before_wps = _words_per_sentence(_split_sentences(text))
+    after_wps = _words_per_sentence(final_sents)
+
+    return {
+        "concept": f"Class {grade} curriculum adaptation (rule-based local fallback).",
+        "adapted_hindi": final_sents,
+        "substitutions": subs,
+        "readability": {
+            "before_wps": before_wps,
+            "after_wps": after_wps,
+        },
+        "service_status": "local_fallback",
+    }
+
+
+def simplify(text: str, grade: int = 2, allow_fallback: bool = True) -> dict:
     """Return the DATA_DICTIONARY.md §4 /simplify shape. Raises on failure."""
     if not text.strip():
         raise ValueError("Nothing to simplify — the text was empty.")
 
-    config = _config()
-    grade_instruction = GRADE_GUIDANCE.get(grade, GRADE_GUIDANCE[2])
-    prompt = SIMPLIFY_PROMPT.format(
-        text=text.strip(),
-        grade_instruction=grade_instruction,
-    )
-    if config["provider"] == "gemini":
-        result = _call_gemini(prompt, config["key"])
-    else:
-        result = _call_openai_compatible(prompt, config)
-
-    adapted = [s.strip() for s in result.get("adapted_hindi", []) if s.strip()]
-    if not adapted:
-        raise RuntimeError(
-            "The simplification came back with no sentences — try a shorter "
-            "or clearer sentence."
+    try:
+        config = _config()
+        grade_instruction = GRADE_GUIDANCE.get(grade, GRADE_GUIDANCE[2])
+        prompt = SIMPLIFY_PROMPT.format(
+            text=text.strip(),
+            grade_instruction=grade_instruction,
         )
+        if config["provider"] == "gemini":
+            result = _call_gemini(prompt, config["key"])
+        else:
+            result = _call_openai_compatible(prompt, config)
 
-    # Readability is measured here, not asked of the model. A model counting
-    # its own words is a claim; this is a measurement.
-    return {
-        "concept": result.get("concept", ""),
-        "adapted_hindi": adapted,
-        "substitutions": result.get("substitutions", []),
-        "readability": {
-            "before_wps": _words_per_sentence(_split_sentences(text)),
-            "after_wps": _words_per_sentence(adapted),
-        },
-    }
+        adapted = [s.strip() for s in result.get("adapted_hindi", []) if s.strip()]
+        if not adapted:
+            raise RuntimeError(
+                "The simplification came back with no sentences — try a shorter "
+                "or clearer sentence."
+            )
+
+        # Readability is measured here, not asked of the model. A model counting
+        # its own words is a claim; this is a measurement.
+        return {
+            "concept": result.get("concept", ""),
+            "adapted_hindi": adapted,
+            "substitutions": result.get("substitutions", []),
+            "readability": {
+                "before_wps": _words_per_sentence(_split_sentences(text)),
+                "after_wps": _words_per_sentence(adapted),
+            },
+        }
+    except RuntimeError as e:
+        if allow_fallback:
+            log.warning(
+                "Upstream simplification failed (%s); falling back to local deterministic simplification.",
+                e,
+            )
+            return local_deterministic_simplify(text, grade=grade)
+        raise

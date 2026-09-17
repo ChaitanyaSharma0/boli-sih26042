@@ -20,6 +20,7 @@ router = APIRouter()
 SOURCE_TYPES = ("typed", "ocr", "pdf_chapter", "asr")
 
 
+
 class LessonRequest(BaseModel):
     source_text: str
     source_type: str

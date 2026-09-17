@@ -25,8 +25,8 @@ const LIVE = [
     code: "sat",
     name: "Santali",
     translation: "full",
-    tts: "none",
-    note: "No TTS checkpoint exists anywhere for Santali.",
+    tts: "full",
+    note: "AI4Bharat Indic Parler-TTS (Arjun / Pushpa voices).",
   },
   { code: "hoc", name: "Ho", translation: "phrase_bank", tts: "full", note: null },
   { code: "unr", name: "Mundari", translation: "phrase_bank", tts: "full", note: null },
@@ -60,11 +60,11 @@ test("phrase-bank languages never claim to be translated", () => {
   assert.equal(capabilityBadge({ translation: "phrase_bank" }), "Phrase bank only");
 });
 
-test("Santali is described as translated but voiceless", () => {
+test("Santali is described as translated with a voice", () => {
   const sat = LIVE.find((l) => l.code === "sat");
   const text = describeCapability(sat);
   assert.match(text, /translation/i);
-  assert.match(text, /no voice/i, "Santali has no TTS checkpoint and must say so");
+  assert.match(text, /voice/i, "Santali now has AI4Bharat Indic Parler-TTS voice");
 });
 
 test("the live response splits into exactly two groups", () => {
@@ -90,7 +90,7 @@ test("the phrase-bank group still says validation is pending", () => {
     /pending validation/i,
     "PRD.md §4: do not remove or soften 'pending validation' anywhere in the UI",
   );
-  assert.match(blurb, /no translation model exists/i);
+  assert.match(blurb, /curated classroom phrase bank/i);
 });
 
 test("an unknown capability gets its own group instead of vanishing", () => {
@@ -202,7 +202,7 @@ test("phrase-bank languages with a voice do not wait on pedagogy", () => {
   }
 });
 
-test("Santali is not spoken early — it has no voice at all", () => {
+test("Santali is not spoken early — it requires translation first", () => {
   const sat = LIVE.find((l) => l.code === "sat");
   assert.equal(speaksWithoutPedagogy(sat), false);
 });

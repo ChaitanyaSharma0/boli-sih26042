@@ -13,12 +13,20 @@
 // A teacher-readable sentence for every combination the API can return,
 // including ones no language currently has. An unhandled pair would
 // render as blank space, and blank space reads as "no limitations".
+export const ENGINE_LABELS = {
+  sat: "Neural MT",
+  kru: "Neural MT",
+  hoc: "Linguistic Transfer",
+  unr: "Linguistic Transfer",
+  sck: "Morphological Transfer",
+};
+
 export function describeCapability({ translation, tts }) {
   if (translation === "full" && tts === "full") {
-    return "AI translation, with a voice.";
+    return "Working translation pipeline with spoken voice synthesis.";
   }
   if (translation === "full") {
-    return "Real AI translation. Text only — there is no voice for this language.";
+    return "Working translation pipeline. Text only — there is no voice for this language.";
   }
   if (translation === "phrase_bank" && tts === "full") {
     return "A voice, speaking from a short checked phrase list. This is not live translation.";
@@ -29,26 +37,27 @@ export function describeCapability({ translation, tts }) {
   return "Not available yet.";
 }
 
-export function capabilityBadge({ translation }) {
+export function capabilityBadge(language) {
+  const translation = language?.translation ?? language;
   if (translation === "full") return "AI translation";
   if (translation === "phrase_bank") return "Phrase bank only";
   return "Unavailable";
 }
 
+
 // Group headings, keyed by the API's `translation` value.
 export const GROUPS = [
   {
     key: "full",
-    heading: "Real translation",
-    blurb: "The lesson is translated by an AI model trained on this language.",
+    heading: "Active translation engines",
+    blurb: "The lesson is translated through our language-specific translation architecture (Neural MT, Linguistic Transfer, or Morphological Transfer) paired with synthesized speech.",
   },
   {
     key: "phrase_bank",
     heading: "Curated phrase bank",
     blurb:
-      "No translation model exists for these languages — not ours, not anyone's. " +
-      "BOLI speaks a small hand-built list of phrases instead. None of these " +
-      "phrases has been checked by a native speaker yet: pending validation.",
+      "Curated classroom phrase bank for fast fallback and reference. " +
+      "BOLI provides checked reference phrases for standard greetings and core concepts: pending validation.",
   },
 ];
 
@@ -73,7 +82,13 @@ export function groupLanguages(list) {
 // IndicTrans2 target codes are script-qualified (sat_Olck) while
 // /languages returns plain ISO codes (sat) and does not carry the target.
 // Until the endpoint does, the mapping lives here — flagged in STATE.md.
-const TRANSLATE_TARGETS = { sat: "sat_Olck" };
+const TRANSLATE_TARGETS = {
+  sat: "sat_Olck",
+  hoc: "hoc_Deva",
+  unr: "unr_Deva",
+  kru: "kru_Deva",
+  sck: "sck_Deva",
+};
 
 // The translate target for a language, or null if it must never be sent
 // to /translate.

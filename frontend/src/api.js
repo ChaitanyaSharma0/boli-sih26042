@@ -2,7 +2,7 @@
 // directly — the gated HF token must never reach the browser
 // (ARCHITECTURE.md §1).
 
-const BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000";
+const BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8001";
 
 // FastAPI puts its error message in `detail`. Surface that to the teacher
 // rather than a generic failure — the backend's messages are written to be
@@ -57,7 +57,7 @@ export async function ocr(file) {
 
 // Hindi in, simpler Hindi out. Supports grade 1-5 (defaults to Class 2).
 export function simplify(text, grade = 2) {
-  return postJson("/simplify", { text, grade });
+  return postJson("/simplify", { text, grade, fallback: true });
   // { concept, adapted_hindi, substitutions, readability }
 }
 
@@ -85,11 +85,16 @@ export async function transcribeAudio(audioBlob) {
   return response.json(); // { text }
 }
 
-// Santali only. The backend returns 501 for any other target and this
-// wrapper does nothing to soften that — see translateTargetFor().
+// Santali, Ho, Mundari, Kurukh, Sadri, Hindi, English.
 export function translate(text, target) {
   return postJson("/translate", { text, target });
   // { translated, target, script_contamination }
+}
+
+// Single-call translation and speech synthesis with error isolation.
+// Returns translation metadata, audio_url, and audio_base64.
+export function translateAndSpeak(text, target, source = null) {
+  return postJson("/translate-and-speak", { text, target, source });
 }
 
 // One row per teacher submission. Called before the rest of the sequence,
@@ -102,10 +107,8 @@ export function createLesson({ sourceText, sourceType, languages }) {
   }); // { id }
 }
 
-// /speak answers in one of two shapes, and the difference matters:
-// either wav bytes, or a refusal saying the text is not in the curated
-// phrase bank. Collapsing those two into one "result" is how a caller
-// would end up rendering silence as success (ARCHITECTURE.md §3).
+// /speak answers in one of two shapes:
+// either wav bytes, or a refusal/options shape if phrase-bank only.
 export async function speak(text, lang) {
   const response = await send("/speak", {
     method: "POST",
@@ -116,7 +119,19 @@ export async function speak(text, lang) {
 
   const type = response.headers.get("content-type") ?? "";
   if (type.startsWith("audio/")) {
-    return { kind: "audio", blob: await response.blob() };
+    let targetText = null;
+    const headerVal = response.headers.get("x-target-text");
+    if (headerVal) {
+      try {
+        const binary = atob(headerVal);
+        const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+        targetText = new TextDecoder().decode(bytes);
+      } catch {
+        targetText = null;
+      }
+    }
+    const isPhraseBank = response.headers.get("x-phrase-bank-match") === "true";
+    return { kind: "audio", blob: await response.blob(), targetText, isPhraseBank };
   }
   const body = await response.json();
   return { kind: "phrase_bank_only", ...body }; // { reason, options: [...] }

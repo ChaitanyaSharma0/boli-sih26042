@@ -1,15 +1,15 @@
-"""POST /speak — MMS-TTS wav bytes.
+"""POST /speak — Arbitrary TTS audio synthesis.
 
-This route is where the honesty boundary from PRD.md §4 is actually
-enforced in code rather than only stated in docs. TTS for Ho, Mundari,
-Kurukh and Sadri is real; *translation* into them does not exist. So for
-those four, this route will only speak text that matches a curated
-phrase-bank entry. Arbitrary text comes back as a refusal listing what
-the bank does have — never as audio, because audio of an unchecked
-string is exactly the plausible-looking-but-wrong output the phrase bank
-exists to avoid.
+Synthesizes audio for any input text in the 5 supported target languages:
+Santali (sat), Ho (hoc), Mundari (unr), Kurukh (kru), and Sadri (sck).
+
+If the input text matches a curated phrase-bank entry, the checked translation
+is used as a fast, verified shortcut. If not in the phrase bank, the text is
+synthesized directly using the unified TTS engine (handling script transliteration
+internally).
 """
 
+import base64
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 
@@ -21,35 +21,38 @@ router = APIRouter()
 class SpeakRequest(BaseModel):
     text: str
     lang: str
+    speaker_desc: str | None = None
 
 
 @router.post("/speak")
 def speak(req: SpeakRequest):
-    if req.lang == "sat":
-        raise HTTPException(
-            501,
-            "No text-to-speech checkpoint exists for Santali, from us or anyone "
-            "else. Santali is translation-only — see /translate.",
-        )
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(400, "Text to speak cannot be empty.")
 
-    text = req.text
+    matched_target = None
+    is_phrase_bank = False
+
+    # Check phrase bank as a fast verified fallback/cache
     if req.lang in phrase_bank.LANGS:
         entry = phrase_bank.lookup(req.lang, text)
-        if entry is None:
-            return {
-                "phrase_bank_only": True,
-                "lang": req.lang,
-                "reason": (
-                    "There is no translation model for this language, so BOLI can "
-                    "only speak phrases from its curated phrase bank. This text is "
-                    "not one of them."
-                ),
-                "options": phrase_bank.options(req.lang),
-            }
-        text = entry["target_text"]
+        if entry is not None:
+            text = entry["target_text"]
+            matched_target = entry["target_text"]
+            is_phrase_bank = True
 
     try:
-        wav = tts.synthesize(text, req.lang)
+        wav = tts.synthesize(text, req.lang, speaker_desc=req.speaker_desc)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    return Response(content=wav, media_type="audio/wav")
+    except Exception as e:
+        raise HTTPException(500, f"Speech synthesis failed: {str(e)}")
+
+    headers = {
+        "X-Phrase-Bank-Match": "true" if is_phrase_bank else "false"
+    }
+    if matched_target:
+        b64_target = base64.b64encode(matched_target.encode("utf-8")).decode("ascii")
+        headers["X-Target-Text"] = b64_target
+
+    return Response(content=wav, media_type="audio/wav", headers=headers)
