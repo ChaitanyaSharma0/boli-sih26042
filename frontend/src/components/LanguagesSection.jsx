@@ -7,9 +7,9 @@ export default function LanguagesSection() {
       script: "Ol Chiki (ᱚᱞ ᱪᱤᱠᱤ)",
       region: "Santhal Parganas (Dumka, Deoghar, Godda, Sahibganj, Pakur, Jamtara)",
       speakers: "~7.6 Million speakers across Eastern India",
-      translationStatus: "Neural Machine Translation (AI Model)",
-      translationBadge: "AI Neural Model",
-      voiceStatus: "Neural Text-to-Speech (AI Model)",
+      translationStatus: "Neural Machine Translation (IndicTrans2)",
+      translationBadge: "Neural MT",
+      voiceStatus: "Neural Text-to-Speech (Indic Parler-TTS)",
       voiceBadge: "Spoken Voice Ready",
       details:
         "Trained using AI4Bharat IndicTrans2 engine on script-qualified sat_Olck tokens, paired with AI4Bharat Indic Parler-TTS for native Ol Chiki speech synthesis.",
@@ -21,12 +21,12 @@ export default function LanguagesSection() {
       script: "Warang Chiti (𑢹𑣉 ᱪᱤᱛᱤ) / Devanagari",
       region: "Kolhan Division (West Singhbhum, East Singhbhum, Seraikela Kharsawan)",
       speakers: "~1.4 Million speakers in Jharkhand & Odisha",
-      translationStatus: "Curated Classroom Phrase Bank",
-      translationBadge: "Phrase Bank Only",
-      voiceStatus: "Spoken Audio Voice Ready",
+      translationStatus: "Linguistic Transfer Engine",
+      translationBadge: "Linguistic Transfer",
+      voiceStatus: "Spoken Audio Voice Ready (MMS TTS)",
       voiceBadge: "Spoken Voice Ready",
       details:
-        "Hand-curated pedagogical phrases verified for primary school classrooms. Native pronunciation synthesized via Meta MMS speech engine.",
+        "Linguistic transfer engine with dedicated Ho lexical substitutions and grammar rules, with curated phrase-bank fallback and Meta MMS speech synthesis.",
     },
     {
       code: "unr",
@@ -35,12 +35,12 @@ export default function LanguagesSection() {
       script: "Mundari Bani / Devanagari",
       region: "South Chotanagpur (Ranchi, Khunti, Gumla, Simdega)",
       speakers: "~1.1 Million speakers across Jharkhand",
-      translationStatus: "Curated Classroom Phrase Bank",
-      translationBadge: "Phrase Bank Only",
-      voiceStatus: "Spoken Audio Voice Ready",
+      translationStatus: "Linguistic Transfer Engine",
+      translationBadge: "Linguistic Transfer",
+      voiceStatus: "Spoken Audio Voice Ready (MMS TTS)",
       voiceBadge: "Spoken Voice Ready",
       details:
-        "Austroasiatic Munda family language. Includes pedagogical vocabulary adapted to JCERT primary textbook units with native speech synthesis.",
+        "Austroasiatic Munda family language. Linguistic transfer engine with Mundari-specific lexical mapping, JCERT primary textbook vocabulary, and Meta MMS speech synthesis.",
     },
     {
       code: "kru",
@@ -49,12 +49,12 @@ export default function LanguagesSection() {
       script: "Tolong Siki / Devanagari",
       region: "Chotanagpur Plateau (Lohardaga, Gumla, Latehar, Ranchi)",
       speakers: "~2 Million speakers in Jharkhand, Chhattisgarh",
-      translationStatus: "Curated Classroom Phrase Bank",
-      translationBadge: "Phrase Bank Only",
-      voiceStatus: "Spoken Audio Voice Ready",
+      translationStatus: "Neural Machine Translation (mT5)",
+      translationBadge: "Neural MT",
+      voiceStatus: "Spoken Audio Voice Ready (MMS TTS)",
       voiceBadge: "Spoken Voice Ready",
       details:
-        "Dravidian language spoken by the Oraon community. Curated phrase list for primary school concepts and instructions.",
+        "Dravidian language spoken by the Oraon community. Neural MT using fine-tuned mT5 (ankitklakra/hindi-to-kurukh) paired with Meta MMS speech synthesis.",
     },
     {
       code: "sck",
@@ -63,12 +63,12 @@ export default function LanguagesSection() {
       script: "Devanagari (देवनागरी)",
       region: "Widespread lingua franca across rural Jharkhand",
       speakers: "~5+ Million speakers as mother tongue or inter-tribal link language",
-      translationStatus: "Curated Classroom Phrase Bank",
-      translationBadge: "Phrase Bank Only",
-      voiceStatus: "Spoken Audio Voice Ready",
+      translationStatus: "Morphological Transfer Engine",
+      translationBadge: "Morphological Transfer",
+      voiceStatus: "Spoken Audio Voice Ready (MMS TTS)",
       voiceBadge: "Spoken Voice Ready",
       details:
-        "Vital link language across diverse tribal communities in Jharkhand. Curated phrase bank enables classroom bridging from local dialects into standardized Hindi.",
+        "Vital link language across diverse tribal communities in Jharkhand. Morphological and rule-based transfer engine enabling classroom bridging from local dialects into standardized Hindi.",
     },
   ];
 
@@ -80,7 +80,7 @@ export default function LanguagesSection() {
       </div>
       <h2 className="screen-title">Languages of Jharkhand in Boli</h2>
       <p className="screen-subtitle">
-        Transparent and honest capability representation. Boli does not exaggerate AI claims: we clearly distinguish between neural translation models and verified phonetic phrase banks.
+        Transparent and honest capability representation. Boli does not exaggerate AI claims: we clearly distinguish between neural translation models, linguistic transfer engines, and morphological rule transfer.
       </p>
 
       <div className="languages-cards-grid">

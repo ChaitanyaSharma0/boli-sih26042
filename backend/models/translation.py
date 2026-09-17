@@ -13,29 +13,26 @@ from IndicTransToolkit.processor import IndicProcessor
 
 CKPT = "ai4bharat/indictrans2-indic-indic-dist-320M"  # gated, needs HF_TOKEN
 
-# Supported FLORES language targets
-LANG_MAP = {
-    "sat": "sat_Olck",
-    "sat_Olck": "sat_Olck",
-    "hin": "hin_Deva",
-    "hin_Deva": "hin_Deva",
-    "hi": "hin_Deva",
-    "en": "eng_Latn",
-    "eng": "eng_Latn",
-    "eng_Latn": "eng_Latn",
-    "bho": "bho_Deva",
-    "mag": "mag_Deva",
-    "mai": "mai_Deva",
-    "ben": "ben_Beng",
-    "ory": "ory_Orya",
-}
-
-SUPPORTED_TARGETS = tuple(LANG_MAP.keys())
+# Supported target languages across all integrated engines:
+# Santali (IndicTrans2), Kurukh (mT5), Mundari (North Munda), Sadri (Magadhan), Ho (North Munda), Hindi, English
+SUPPORTED_TARGETS = (
+    "sat", "sat_Olck",
+    "kru", "kru_Deva",
+    "unr", "unr_Deva",
+    "sck", "sck_Deva",
+    "hoc", "hoc_Deva",
+    "hin", "hin_Deva", "hi",
+    "eng", "eng_Latn", "en",
+    "bho", "bho_Deva",
+    "mag", "mag_Deva",
+    "mai", "mai_Deva",
+    "ben", "ben_Beng",
+    "ory", "ory_Orya",
+)
 
 # Meetei Mayek block. IndicTrans2 emits these characters when a Hindi word
 # is outside its Santali training distribution (गेहूँ, धान) — the model
-# falls back to another Indic script mid-sentence. Detecting it is what
-# makes the pedagogy argument demonstrable rather than anecdotal.
+# falls back to another Indic script mid-sentence.
 _MEETEI_MAYEK = ((0xABC0, 0xABFF), (0xAAE0, 0xAAFF))
 
 
@@ -54,65 +51,30 @@ def detect_source_lang(text: str) -> str:
     return "hin_Deva"
 
 
-@lru_cache(maxsize=1)
-def _load():
-    """Load once, keep for the process lifetime (ARCHITECTURE.md §4)."""
-    if not os.getenv("HF_TOKEN"):
-        raise RuntimeError(
-            "HF_TOKEN is not set. IndicTrans2 is a gated repo — put a Read "
-            "token in backend/.env (see .env.example) and accept the terms at "
-            f"https://huggingface.co/{CKPT}."
-        )
-    tok = AutoTokenizer.from_pretrained(CKPT, trust_remote_code=True)
-    model = AutoModelForSeq2SeqLM.from_pretrained(CKPT, trust_remote_code=True)
-    model.eval()
-    return tok, model, IndicProcessor(inference=True)
-
-
 def warmup():
-    _load()
+    """Warm up translation models at startup."""
+    try:
+        from .translation_router import get_router
+        router = get_router()
+        # Warm up IndicTrans2 if HF_TOKEN is present
+        if os.getenv("HF_TOKEN"):
+            router.indictrans.translate_sentences(["नमस्ते"], "hin_Deva", "sat_Olck")
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Translation warmup skipped: %s", e)
+
+
+def translate_detailed(text: str, target: str = "sat_Olck", source: str | None = None) -> dict:
+    """Translate text and return full routing and verification metadata."""
+    from .translation_router import get_router
+    router = get_router()
+    return router.translate(text, target=target, source=source)
 
 
 def translate(text: str, target: str = "sat_Olck", source: str | None = None) -> str:
-    if target not in LANG_MAP:
-        raise ValueError(
-            f"No translation model exists for '{target}'. Supported targets include: "
-            "Santali (sat_Olck / sat), Hindi (hin_Deva / hin), English (eng_Latn / eng). "
-            "Ho, Mundari, Kurukh and Sadri are low-resource dialects served by the curated "
-            "phrase bank via /speak."
-        )
-    if not text.strip():
-        raise ValueError("Nothing to translate — the text was empty.")
-
-    tgt_flores = LANG_MAP[target]
-    src_flores = LANG_MAP[source] if source and source in LANG_MAP else detect_source_lang(text)
-
-    tok, model, ip = _load()
-
-    # Preserve paragraph line breaks and multi-sentence structure cleanly
-    lines = text.split("\n")
-    translated_lines = []
-
-    for line in lines:
-        if not line.strip():
-            translated_lines.append("")
-            continue
-
-        # Split line into individual sentences using sentence boundary punctuation
-        sents = [s.strip() for s in re.split(r"(?<=[.?!।])\s+", line) if s.strip()]
-        if not sents:
-            sents = [line.strip()]
-
-        batch = ip.preprocess_batch(sents, src_lang=src_flores, tgt_lang=tgt_flores)
-        enc = tok(batch, truncation=True, padding="longest", return_tensors="pt")
-        with torch.no_grad():
-            out = model.generate(**enc, max_length=256, num_beams=5, early_stopping=True)
-        decoded = tok.batch_decode(out, skip_special_tokens=True)
-        t_sents = ip.postprocess_batch(decoded, lang=tgt_flores)
-        translated_lines.append(" ".join(t_sents))
-
-    result = "\n".join(translated_lines)
-    if not result.strip():
-        raise RuntimeError("Translation came back empty — try a shorter sentence.")
-    return result
+    """Translate text returning the translated string (backward compatible)."""
+    res = translate_detailed(text, target=target, source=source)
+    if not res.get("translated"):
+        raise RuntimeError(f"Translation came back empty for target '{target}'.")
+    return res["translated"]
 

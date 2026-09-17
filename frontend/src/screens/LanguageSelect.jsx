@@ -135,11 +135,11 @@ export default function LanguageSelect({
                 className="material-symbols-outlined"
                 style={{ fontSize: "14px" }}
               >
-                {group.key === "full" ? "neurology" : "menu_book"}
+                {group.key === "full" ? "translate" : "menu_book"}
               </span>
               <span>
                 {group.key === "full"
-                  ? "Neural AI Translation"
+                  ? "Multi-Engine Translation & Speech"
                   : "Validated Audio Phrase Bank"}
               </span>
             </span>

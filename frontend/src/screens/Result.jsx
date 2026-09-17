@@ -8,6 +8,7 @@ import {
   translate,
 } from "../api";
 import {
+  capabilityBadge,
   nativeName,
   speaksWithoutPedagogy,
   translateTargetFor,
@@ -113,7 +114,31 @@ export default function Result({
             if (cancelled) return;
           }
 
-          // 2. Simplify with grade level
+          // 2. Translate current text immediately (independent of simplification)
+          for (const language of picked) {
+            const target = translateTargetFor(language);
+            if (!target) continue;
+            setStage(`Translating into ${language.name}…`);
+            try {
+              const result = await translate(currentText, target);
+              if (cancelled) return;
+              const transObj = {
+                code: language.code,
+                name: language.name,
+                sentence: currentText,
+                translated: result.translated,
+                contaminated: result.script_contamination,
+              };
+              currentTranslations.push(transObj);
+              if (idx === 0) {
+                setTranslations((prev) => [...prev, transObj]);
+              }
+            } catch (transErr) {
+              console.warn(`Translation error for ${language.name}:`, transErr);
+            }
+          }
+
+          // 3. Simplify with grade level (enhances lesson with local pedagogy)
           setStage(
             sentenceList.length > 1
               ? `Simplifying sentence ${idx + 1} of ${sentenceList.length} (Class ${grade})…`
@@ -127,39 +152,6 @@ export default function Result({
           } catch (e) {
             if (cancelled) return;
             if (idx === 0) setSimplifyError(e.message);
-          }
-
-          // 3. Translate where real model exists (fallback to currentText if simplify failed or is empty)
-          const sentencesToTranslate =
-            simplified &&
-            Array.isArray(simplified.adapted_hindi) &&
-            simplified.adapted_hindi.length > 0
-              ? simplified.adapted_hindi
-              : [currentText];
-
-          for (const language of picked) {
-            const target = translateTargetFor(language);
-            if (!target) continue;
-            setStage(`Translating into ${language.name}…`);
-            for (const sentence of sentencesToTranslate) {
-              try {
-                const result = await translate(sentence, target);
-                if (cancelled) return;
-                const transObj = {
-                  code: language.code,
-                  name: language.name,
-                  sentence,
-                  translated: result.translated,
-                  contaminated: result.script_contamination,
-                };
-                currentTranslations.push(transObj);
-                if (idx === 0) {
-                  setTranslations((prev) => [...prev, transObj]);
-                }
-              } catch (transErr) {
-                console.warn(`Translation error for ${language.name}:`, transErr);
-              }
-            }
           }
 
           // 4. Speak anything with translation + voice
@@ -427,7 +419,7 @@ export default function Result({
                     <div key={tIdx} className="hero-script-display">
                       <div className="lang-card-header">
                         <span className="lang-name">{t.name}</span>
-                        <span className="chip-badge chip-badge--full">AI translation</span>
+                        <span className="chip-badge chip-badge--full">{capabilityBadge(t)}</span>
                       </div>
                       <div className="target-script-large" lang={t.code}>
                         {t.translated}
@@ -547,13 +539,13 @@ export default function Result({
                     )}
                   </h2>
                   <span className={`chip-badge chip-badge--${language.translation}`}>
-                    {isBank ? "Phrase bank only" : "AI translation"}
+                    {capabilityBadge(language)}
                   </span>
                 </div>
 
                 {isBank && (
                   <p className="group-desc" style={{ marginTop: "0.5rem" }}>
-                    No translation model exists for {language.name}. Anything below comes from the curated phrase bank, not from translating your sentence — and it is pending validation by a native speaker.
+                    This entry comes from the curated classroom phrase bank for {language.name} — pending validation by a native speaker.
                   </p>
                 )}
 
@@ -597,12 +589,13 @@ export default function Result({
                   <>
                     <div className="hero-script-display" style={{ borderLeft: "4px solid var(--amber)" }}>
                       <span className="field-label" style={{ fontSize: "0.8rem" }}>
-                        Spoken Phrase (Real Target Script):
+                        {isBank ? "Spoken Phrase (Real Target Script):" : "Spoken Audio:"}
                       </span>
-                      {/* Phase 12: Prominent target script */}
-                      <div className="target-script-large" lang={language.code}>
-                        {spoken.targetText || spoken.text}
-                      </div>
+                      {isBank && (
+                        <div className="target-script-large" lang={language.code}>
+                          {spoken.targetText || spoken.text}
+                        </div>
+                      )}
                       <AudioPlayer
                         blob={spoken.blob}
                         label={language.name + " audio"}

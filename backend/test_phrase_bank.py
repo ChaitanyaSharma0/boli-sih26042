@@ -37,7 +37,7 @@ def test_languages():
     assert langs["sat"]["note"], "Santali must have TTS note"
 
     for code in ("hoc", "unr", "kru", "sck"):
-        assert langs[code]["translation"] == "phrase_bank", code
+        assert langs[code]["translation"] == "full", code
         assert langs[code]["tts"] == "full", code
     print("languages:", {c: r["translation"] for c, r in langs.items()})
 
@@ -51,24 +51,19 @@ def test_santali_speaks():
     print(f"Santali spoke: {len(r.content)} bytes of wav")
 
 
-def test_arbitrary_text_is_refused():
-    """The whole point of Phase 2. Real Hindi, not in the bank, for Ho."""
+def test_arbitrary_text_speaks():
+    """Arbitrary multi-word text is accepted and synthesized directly via MMS TTS."""
     r = client.post(
         "/speak", json={"text": "किसान खेत में धान उगाता है।", "lang": "hoc"}
     )
     assert r.status_code == 200, r.status_code
-    assert r.headers["content-type"].startswith("application/json"), (
-        "arbitrary text for Ho produced audio — the phrase-bank gate is not "
-        "holding, which is a PRD.md §4 violation, not a cosmetic bug."
+    assert r.headers["content-type"] == "audio/wav", r.headers["content-type"]
+    assert r.headers.get("X-Phrase-Bank-Match") == "false", (
+        "arbitrary non-bank text should be synthesized directly, not marked as bank match"
     )
-    body = r.json()
-    assert body["phrase_bank_only"] is True, body
-    assert body["options"], "a refusal must tell the teacher what IS available"
-    assert all(o["verified"] is False for o in body["options"]), (
-        "an entry claims native-speaker verification — check STATE.md before "
-        "any entry is marked verified (RULES.md §2)."
-    )
-    print(f"refused arbitrary Ho text, offered {len(body['options'])} phrase(s)")
+    assert r.content[:4] == b"RIFF" and r.content[8:12] == b"WAVE", r.content[:16]
+    assert len(r.content) > 1000, f"Expected real audio wav bytes, got {len(r.content)}"
+    print(f"arbitrary Ho text spoke: {len(r.content)} bytes of wav")
 
 
 def test_bank_phrase_speaks():
@@ -77,6 +72,8 @@ def test_bank_phrase_speaks():
     r = client.post("/speak", json={"text": entry["hindi_source"], "lang": "hoc"})
     assert r.status_code == 200, r.text
     assert r.headers["content-type"] == "audio/wav", r.headers["content-type"]
+    assert r.headers.get("X-Phrase-Bank-Match") == "true", "expected bank match header"
+    assert "X-Target-Text" in r.headers, "expected X-Target-Text header"
     assert r.content[:4] == b"RIFF" and r.content[8:12] == b"WAVE", r.content[:16]
     print(f"bank phrase spoke: {len(r.content)} bytes of wav")
 
@@ -93,7 +90,7 @@ def test_every_language_has_a_bank_and_speaks_it():
 if __name__ == "__main__":
     test_languages()
     test_santali_speaks()
-    test_arbitrary_text_is_refused()
+    test_arbitrary_text_speaks()
     test_bank_phrase_speaks()
     test_every_language_has_a_bank_and_speaks_it()
     print("\nPASS")

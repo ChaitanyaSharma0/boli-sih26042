@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { transcribeAudio, simplify, translate, speak } from "../api";
+import { transcribeAudio, translate, speak, translateAndSpeak } from "../api";
 import AudioPlayer from "./AudioPlayer";
 
 export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
@@ -28,11 +28,11 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
   ];
 
   const DIALECTS = [
-    { code: "sat", name: "Santali (Ol Chiki ᱥᱟᱱᱛᱟᱲᱤ)", type: "ai", badge: "AI Translation + Voice" },
-    { code: "hoc", name: "Ho (ᱦᱳ ᱡᱟᱜᱟᱨ)", type: "bank", badge: "Curated Phrase Bank Voice" },
-    { code: "unr", name: "Mundari (मुंडारी)", type: "bank", badge: "Curated Phrase Bank Voice" },
-    { code: "kru", name: "Kurukh (कुड़ुख़)", type: "bank", badge: "Curated Phrase Bank Voice" },
-    { code: "sck", name: "Sadri (नागपुरी)", type: "bank", badge: "Curated Phrase Bank Voice" },
+    { code: "sat", name: "Santali (Ol Chiki ᱥᱟᱱᱛᱟᱲᱤ)", target: "sat_Olck", type: "neural", badge: "Neural MT" },
+    { code: "hoc", name: "Ho (हो Devanagari)", target: "hoc_Deva", type: "transfer", badge: "Linguistic Transfer" },
+    { code: "unr", name: "Mundari (मुंडारी)", target: "unr_Deva", type: "transfer", badge: "Linguistic Transfer" },
+    { code: "kru", name: "Kurukh (कुड़ुख़)", target: "kru_Deva", type: "neural", badge: "Neural MT" },
+    { code: "sck", name: "Sadri (नागपुरी)", target: "sck_Deva", type: "transfer", badge: "Morphological Transfer" },
   ];
 
   async function startRecording() {
@@ -91,57 +91,50 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
     const startTime = performance.now();
 
     try {
-      if (langCode === "sat") {
-        // Santali has real AI pipeline
-        setStatusMessage(`1/3: Adapting for Class ${currentGrade}…`);
-        const sim = await simplify(query, currentGrade);
+      const dialectMeta = DIALECTS.find((d) => d.code === langCode);
+      const target = dialectMeta?.target || (langCode === "sat" ? "sat_Olck" : `${langCode}_Deva`);
 
-        setStatusMessage("2/3: Translating into Santali Ol Chiki…");
-        const adaptedSentence = sim.adapted_hindi[0] || query;
-        const trans = await translate(adaptedSentence, "sat_Olck");
-
-        setStatusMessage("3/3: Synthesizing Indic Parler-TTS voice…");
-        const audioRes = await speak(trans.translated, "sat");
-
-        const endTime = performance.now();
-        const durationSec = ((endTime - startTime) / 1000).toFixed(2);
-        setMeasuredLatencySec(durationSec);
-
-        setLiveResult({
-          originalHindi: query,
-          simplifiedHindi: adaptedSentence,
-          concept: sim.concept,
-          targetScript: trans.translated,
-          isContaminated: trans.script_contamination,
-          audioBlob: audioRes.kind === "audio" ? audioRes.blob : null,
-          langName: "Santali (Ol Chiki)",
-          langCode: "sat",
-        });
-      } else {
-        // Ho, Mundari, Kurukh, Sadri use curated phrase bank
-        setStatusMessage(`Querying curated classroom phrase bank & MMS-TTS…`);
-        const audioRes = await speak(query, langCode);
-
-        const endTime = performance.now();
-        const durationSec = ((endTime - startTime) / 1000).toFixed(2);
-        setMeasuredLatencySec(durationSec);
-
-        if (audioRes.kind === "audio") {
-          const dialectMeta = DIALECTS.find((d) => d.code === langCode);
-          setLiveResult({
-            originalHindi: query,
-            targetScript: audioRes.targetText || query,
-            audioBlob: audioRes.blob,
-            langName: dialectMeta?.name || langCode,
-            langCode,
-            isBank: true,
-          });
-        } else if (audioRes.kind === "phrase_bank_only") {
-          setError(
-            `${audioRes.reason} (BOLI phrase bank contains: "${audioRes.options.map((o) => o.hindi_source).join('", "')}")`
-          );
+      // Translate and Speak whatever is written (preserves all sentences, no single-line truncation)
+      setStatusMessage(`Translating & synthesizing ${dialectMeta?.name || langCode}…`);
+      let resultData = null;
+      let audioBlob = null;
+      try {
+        resultData = await translateAndSpeak(query, target);
+        if (resultData.audio_base64) {
+          const binary = atob(resultData.audio_base64);
+          const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+          audioBlob = new Blob([bytes], { type: "audio/wav" });
+        } else if (resultData.translated) {
+          const audioRes = await speak(resultData.translation, langCode);
+          if (audioRes.kind === "audio") audioBlob = audioRes.blob;
         }
+      } catch (pipeErr) {
+        // Direct translate + speak fallback
+        const trans = await translate(query, target);
+        const audioRes = await speak(trans.translated, langCode);
+        resultData = {
+          translation: trans.translated,
+          script_contamination: trans.script_contamination,
+          engine: trans.engine,
+          mode: trans.mode,
+        };
+        if (audioRes.kind === "audio") audioBlob = audioRes.blob;
       }
+
+      const endTime = performance.now();
+      const durationSec = ((endTime - startTime) / 1000).toFixed(2);
+      setMeasuredLatencySec(durationSec);
+
+      setLiveResult({
+        originalHindi: query,
+        targetScript: resultData.translation,
+        isContaminated: resultData.script_contamination,
+        audioBlob,
+        langName: dialectMeta?.name || langCode,
+        langCode,
+        engine: resultData.engine,
+        mode: resultData.mode,
+      });
     } catch (err) {
       setError("Processing failed: " + err.message);
     } finally {
@@ -180,7 +173,7 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
               }}
             >
               <span className="lang-btn-name">{d.name}</span>
-              <span className={`lang-btn-tag tag-${d.type}`}>{d.type === "ai" ? "AI Neural" : "Phrase Bank"}</span>
+              <span className={`lang-btn-tag tag-${d.type}`}>{d.badge}</span>
             </button>
           ))}
         </div>
@@ -289,10 +282,10 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
               {liveResult.targetScript}
             </div>
 
-            {liveResult.simplifiedHindi && (
+            {liveResult.originalHindi && (
               <div className="simplified-subtext" lang="hi">
-                <span>आसान हिंदी: </span>
-                <strong>{liveResult.simplifiedHindi}</strong>
+                <span>शिक्षक का वाक्य (Hindi): </span>
+                <strong>{liveResult.originalHindi}</strong>
               </div>
             )}
 

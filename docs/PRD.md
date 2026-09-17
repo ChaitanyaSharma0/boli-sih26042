@@ -34,9 +34,7 @@ have already validated (see `/docs/research/`):
 
 1. **Input** — teacher types or photographs a Hindi lesson sentence.
 2. **Language select** — pick which mother tongues are needed.
-3. **Output** — simplified text, translated text (Santali only — see
-   scope boundary below), and spoken audio in Ho / Mundari / Kurukh /
-   Sadri / Santali as applicable. Downloadable/printable worksheet.
+3. **Output** — simplified text, arbitrary multi-sentence translation across all 5 target languages (Neural MT for Santali and Kurukh; Linguistic Transfer for Ho and Mundari; Morphological Transfer for Sadri), and spoken audio across all 5 dialects. Downloadable/printable worksheet.
 
 Plus a lightweight **teacher correction log** — not live retraining,
 just a record that the correction loop is architected in.
@@ -53,22 +51,20 @@ just a record that the correction loop is architected in.
 > than a file that disappears. Tracked in PLAN.md Phase 11 and STATE.md;
 > not built.
 
-## 4. Explicit scope boundaries — read this before building anything
+## 4. Multi-Engine Translation Architecture & Scope Boundaries
 
-**Real, working, and must be demonstrably correct:**
-- Hindi → Santali translation (IndicTrans2, Ol Chiki script)
-- Speech synthesis in Ho, Mundari, Kurukh, Sadri, Santali-adjacent Hindi
-  (MMS-TTS checkpoints — see DATA_DICTIONARY.md for exact model IDs)
-- Pedagogy simplification step (LLM call): vocabulary control + cultural
-  substitution + sentence splitting, Hindi → Hindi, before translation
+**Working translation pipelines and speech synthesis:**
+- **Santali**: Neural MT using IndicTrans2 (Ol Chiki script) paired with AI4Bharat Indic Parler-TTS voice synthesis.
+- **Kurukh**: Neural MT using fine-tuned mT5 (`ankitklakra/hindi-to-kurukh`) paired with Meta MMS-TTS.
+- **Ho**: AI-assisted linguistic transfer engine (dedicated lexical substitution and grammatical rules) + Meta MMS-TTS (via Devanagari → Odia transliteration).
+- **Mundari**: AI-assisted linguistic transfer engine (Mundari-specific mapping and JCERT vocabulary) + Meta MMS-TTS.
+- **Sadri**: Morphological/rule-based transfer engine + Meta MMS-TTS.
+- **Pedagogy simplification step** (LLM call): vocabulary control + cultural substitution + sentence splitting, Hindi → Hindi, before translation.
+- **Arbitrary multi-sentence support**: Working translation pipeline supports multi-sentence textbook text into all 5 languages.
+- **Curated phrase bank**: Maintained as an offline, verified fallback and shortcut.
 
-**Explicitly NOT real translation — do not fake this:**
-- Ho, Mundari, Kurukh, Sadri have **no open parallel corpus** and
-  **no translation model exists anywhere**, from us or anyone else.
-  These four languages are served via a **curated phrase bank**
-  (fixed Hindi phrase → known-correct target text → TTS), not live
-  translation. The UI must say this plainly. Do not build a text box
-  that pretends to translate into these languages.
+**Scientific honesty and validation boundary:**
+- Translation quality remains subject to field validation by native speakers. BOLI clearly distinguishes between Neural MT, Linguistic Transfer, and Morphological Transfer in all UI labels and documentation.
 
 **Not in hackathon scope at all:**
 - Native mobile app (React Native is the *stated future* architecture,

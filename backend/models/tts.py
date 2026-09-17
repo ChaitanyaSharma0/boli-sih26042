@@ -13,6 +13,7 @@ returning a silent empty wav.
 import io
 from functools import lru_cache
 
+import numpy as np
 import scipy.io.wavfile
 import torch
 from transformers import AutoTokenizer, VitsModel
@@ -110,6 +111,67 @@ def warmup(langs=None):
             _load_mms(lang)
 
 
+def deva_to_odia(text: str, target_lang: str = "hoc") -> str:
+    """Convert Devanagari text into Odia script for Ho and Mundari MMS-TTS.
+
+    Meta facebook/mms-tts-hoc and facebook/mms-tts-unr checkpoints were trained
+    on Odia script tokens. This function maps Devanagari (U+0900..U+097F) to
+    Odia (U+0B00..U+0B7F) via standard Unicode offset (+0x0200) and handles
+    vowel decompositions, missing graphemes, and language-specific phonological
+    substitutions for the checkpoint vocabularies.
+    """
+    vowel_replacements = {
+        "\u0908": "\u0907",           # ई -> इ
+        "\u090A": "\u0909",           # ऊ -> उ
+        "\u090B": "\u0930\u093F",     # ऋ -> रि
+        "\u0910": "\u0905\u0907",     # ऐ -> अइ
+        "\u0913": "\u0905\u094B",     # ओ -> अो
+        "\u0914": "\u0905\u0909",     # औ -> अउ
+    }
+    for k, v in vowel_replacements.items():
+        text = text.replace(k, v)
+
+    res = []
+    for ch in text:
+        cp = ord(ch)
+        if 0x0901 <= cp <= 0x094D:
+            res.append(chr(cp + 0x0200))
+        elif 0x0966 <= cp <= 0x096F:
+            res.append(chr(cp + 0x0200))
+        elif ch in ("\u0964", "\u0965"):
+            res.append(" ")
+        else:
+            res.append(ch)
+    odia_str = "".join(res)
+
+    if target_lang == "hoc":
+        hoc_map = {
+            "\u0B18": "\u0B17",  # ଘ -> ଗ
+            "\u0B20": "\u0B1F",  # ଠ -> ଟ
+            "\u0B27": "\u0B26",  # ଧ -> ଦ
+            "\u0B1B": "\u0B1A",  # ଛ -> ଚ
+            "\u0B1D": "\u0B1C",  # ଝ -> ଜ
+            "\u0B3C": "",        # nukta dropped
+            "\u0B37": "\u0B38",  # ଷ -> ସ
+            "\u0B2F": "\u0B5F",  # ଯ -> ୟ
+            "\u0B42": "\u0B41",  # ୂ -> ୁ
+        }
+        for k, v in hoc_map.items():
+            odia_str = odia_str.replace(k, v)
+    elif target_lang == "unr":
+        unr_map = {
+            "\u0B33": "\u0B32",  # ଳ -> ଲ
+            "\u0B48": "\u0B47",  # ୈ -> େ
+            "\u0B4C": "\u0B4B",  # ୌ -> ୋ
+            "\u0B42": "\u0B41",  # ୂ -> ୁ
+            "\u0B43": "\u0B3F",  # ୃ -> ି
+        }
+        for k, v in unr_map.items():
+            odia_str = odia_str.replace(k, v)
+
+    return odia_str
+
+
 def synthesize(text: str, lang: str, speaker_desc: str = None) -> bytes:
     """Return wav bytes. Raises ValueError on an unsupported or unspeakable input."""
     if lang not in MODELS:
@@ -135,15 +197,28 @@ def synthesize(text: str, lang: str, speaker_desc: str = None) -> bytes:
             )
 
         audio_arr = generation.cpu().numpy().squeeze()
+        max_val = np.max(np.abs(audio_arr))
+        if max_val > 0:
+            audio_norm = audio_arr / max(max_val, 1.0)
+        else:
+            audio_norm = audio_arr
+        audio_int16 = (audio_norm * 32767).astype(np.int16)
+
         buf = io.BytesIO()
         scipy.io.wavfile.write(
-            buf, rate=model.config.sampling_rate, data=audio_arr
+            buf, rate=model.config.sampling_rate, data=audio_int16
         )
         return buf.getvalue()
 
+    # Preprocess Devanagari to Odia script for Ho and Mundari MMS models
+    target_text = text
+    if lang in ("hoc", "unr"):
+        if any(0x0900 <= ord(c) <= 0x097F for c in text):
+            target_text = deva_to_odia(text, target_lang=lang)
+
     # MMS synthesis for hoc, unr, kru, sck
     model, tok = _load_mms(lang)
-    inputs = tok(text, return_tensors="pt")
+    inputs = tok(target_text, return_tensors="pt")
     if inputs["input_ids"].shape[1] == 0:
         raise ValueError(
             f"None of this text is in the {SCRIPTS[lang]} script that the {lang} "
@@ -151,11 +226,17 @@ def synthesize(text: str, lang: str, speaker_desc: str = None) -> bytes:
         )
 
     with torch.no_grad():
-        waveform = model(**inputs).waveform
+        waveform = model(**inputs).waveform.cpu().float().numpy().squeeze()
+
+    max_val = np.max(np.abs(waveform))
+    if max_val > 0:
+        audio_norm = waveform / max(max_val, 1.0)
+    else:
+        audio_norm = waveform
+    audio_int16 = (audio_norm * 32767).astype(np.int16)
 
     buf = io.BytesIO()
     scipy.io.wavfile.write(
-        buf, rate=model.config.sampling_rate, data=waveform.float().numpy().T
+        buf, rate=model.config.sampling_rate, data=audio_int16
     )
     return buf.getvalue()
-

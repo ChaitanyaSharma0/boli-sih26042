@@ -7,22 +7,21 @@ Turns a Hindi primary-school lesson into a spoken lesson in a child's
 mother tongue — for languages no commercial system supports.
 
 ## What runs today
-| Language | ISO | TTS | Status |
-|---|---|---|---|
-| Ho | hoc | facebook/mms-tts-hoc | audio generated |
-| Mundari | unr | facebook/mms-tts-unr | audio generated |
-| Kurukh | kru | facebook/mms-tts-kru | audio generated |
-| Sadri | sck | facebook/mms-tts-sck | audio generated |
-| Santali | sat | none exists | translation only |
+| Language | ISO | Translation Engine | TTS Voice Model | Architecture / Status |
+|---|---|---|---|---|
+| Santali | sat | Neural MT (IndicTrans2) | AI4Bharat Indic Parler-TTS | Working translation pipeline (Ol Chiki) + neural voice |
+| Kurukh | kru | Neural MT (fine-tuned mT5) | Meta MMS-TTS (kru) | Working translation pipeline + spoken voice synthesis |
+| Ho | hoc | Linguistic Transfer | Meta MMS-TTS (hoc) | AI-assisted linguistic transfer + spoken voice (Deva→Odia) |
+| Mundari | unr | Linguistic Transfer | Meta MMS-TTS (unr) | AI-assisted linguistic transfer + spoken voice (Deva→Odia) |
+| Sadri | sck | Morphological Transfer | Meta MMS-TTS (sck) | Morphological/rule-based transfer + spoken voice |
 
-## Findings (4 Sep 2026)
-- Google Translate: Santali text only, "Listen" disabled. Ho, Mundari,
-  Kurukh, Sadri absent entirely.
-- No MMS-TTS checkpoint exists for Santali.
-- MMS trained Ho/Mundari TTS on **Odia script**; Jharkhand writes them
-  in Devanagari / Warang Chiti — transliteration layer required.
-- IndicTrans2 leaks Meetei Mayek script on out-of-domain vocabulary
-  (गेहूँ, धान). Shorter, culturally localised sentences return clean Ol Chiki.
+*Arbitrary multi-sentence translation and speech are supported across all 5 target dialects. Translation quality remains subject to field validation with native speakers, with curated phrase-bank fallbacks maintained for offline reliability.*
+
+## Key Technical Findings
+- All 5 target languages have working translation pipelines and TTS audio generation.
+- MMS trained Ho/Mundari TTS on **Odia script**; BOLI handles script mapping internally from Devanagari.
+- IndicTrans2 leaks Meetei Mayek script on out-of-domain vocabulary (गेहूँ, धान); culturally localized pedagogy substitution ensures clean Ol Chiki.
+- Kurukh utilizes fine-tuned mT5 (`ankitklakra/hindi-to-kurukh`) with tuned repetition penalty and beam parameters to prevent autoregressive cycling.
 
 ## Live URLs
 

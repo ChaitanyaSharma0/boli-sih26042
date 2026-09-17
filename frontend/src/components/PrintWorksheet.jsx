@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode/lib/browser.js";
 
+const LANGUAGE_METADATA = {
+  sat: { name: "Santali", native: "ᱥᱟᱱᱛᱟᱲᱤ", script: "Ol Chiki (ᱚᱞ ᱪᱤᱠᱤ)", type: "Neural MT" },
+  hoc: { name: "Ho", native: "ᱦᱳ / हो", script: "Devanagari / Warang Citi", type: "Linguistic Transfer" },
+  unr: { name: "Mundari", native: "ᱢᱩᱱᱰᱟᱨᱤ / मुंडारी", script: "Devanagari / Mundari Bani", type: "Linguistic Transfer" },
+  kru: { name: "Kurukh", native: "कुड़ुख़ / ᱳᱨᱟᱶ", script: "Devanagari / Tolong Siki", type: "Neural MT" },
+  sck: { name: "Sadri", native: "सादरी / नागपुरी", script: "Devanagari", type: "Morphological Transfer" },
+};
+
 export default function PrintWorksheet({
   isOpen,
   onClose,
@@ -24,7 +32,7 @@ export default function PrintWorksheet({
     QRCode.toDataURL(audioUrl, {
       width: 140,
       margin: 1,
-      color: { dark: "#1E3A5F", light: "#FFFFFF" },
+      color: { dark: "#004024", light: "#FFFFFF" },
     })
       .then((url) => setQrDataUrl(url))
       .catch((err) => console.error("QR Code error:", err));
@@ -36,12 +44,53 @@ export default function PrintWorksheet({
     window.print();
   }
 
+  // Deduplicate and assemble mother-tongue items
+  const displayLangs = [];
+  const seenCodes = new Set();
+
+  for (const t of translations) {
+    if (!t.translated) continue;
+    const meta = LANGUAGE_METADATA[t.code] || { name: t.name || t.code, native: "", script: "Devanagari", type: "Translation" };
+    displayLangs.push({
+      code: t.code,
+      name: meta.name,
+      native: meta.native,
+      script: meta.script,
+      type: meta.type,
+      text: t.translated,
+      source: "translation",
+    });
+    seenCodes.add(t.code);
+  }
+
+  for (const [langCode, a] of Object.entries(audio)) {
+    if (seenCodes.has(langCode) || a.kind !== "audio" || !a.targetText) continue;
+    const meta = LANGUAGE_METADATA[langCode] || { name: langCode, native: "", script: "Devanagari", type: "Spoken Phrase" };
+    displayLangs.push({
+      code: langCode,
+      name: meta.name,
+      native: meta.native,
+      script: meta.script,
+      type: meta.type,
+      text: a.targetText,
+      source: "audio_target",
+    });
+    seenCodes.add(langCode);
+  }
+
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal-content worksheet-modal">
-        <div className="modal-header no-print">
-          <h2>Printable Classroom Worksheet</h2>
-          <div className="modal-actions">
+    <div className="modal-backdrop worksheet-modal-backdrop" role="dialog" aria-modal="true">
+      <div className="modal-content worksheet-modal-dialog">
+        {/* Interactive Top Actions (Hidden during physical print) */}
+        <div className="worksheet-modal-toolbar no-print">
+          <div className="toolbar-left">
+            <span className="material-symbols-outlined text-primary">description</span>
+            <div>
+              <h2 className="toolbar-title">Printable Classroom Worksheet</h2>
+              <p className="toolbar-sub">A4 Ready-to-print activity sheet with QR audio link for Jharkhand teachers</p>
+            </div>
+          </div>
+          <div className="toolbar-actions">
             <button className="button button--primary tactile-btn-primary" onClick={handlePrint}>
               <span className="material-symbols-outlined text-base">print</span>
               <span>Print / Save as PDF</span>
@@ -53,114 +102,169 @@ export default function PrintWorksheet({
           </div>
         </div>
 
-        {/* The Printable A4 Worksheet Sheet */}
-        <div className="worksheet-sheet">
-          <header className="worksheet-header">
-            <div className="worksheet-branding">
-              <div className="worksheet-logo">बो</div>
-              <div>
-                <h1 className="worksheet-title">BOLI — Multilingual Classroom Worksheet</h1>
-                <p className="worksheet-subtitle">
-                  SIH Prototype · Primary Mother-Tongue Learning Aid
+        {/* Structured Printable A4 Sheet Document */}
+        <article className="worksheet-document">
+          {/* Header Banner */}
+          <header className="ws-header">
+            <div className="ws-brand-cluster">
+              <div className="ws-logo">बो</div>
+              <div className="ws-title-group">
+                <h1 className="ws-main-title">BOLI — Multilingual Classroom Worksheet</h1>
+                <p className="ws-tagline">
+                  Primary Mother-Tongue Learning & Bridge Pedagogy Aid · Jharkhand Multilingual Education
                 </p>
               </div>
             </div>
-            <div className="worksheet-badge">Class {grade}</div>
+            <div className="ws-meta-pills">
+              <span className="ws-grade-badge">Class {grade}</span>
+              <span className="ws-sih-badge">SIH26042</span>
+            </div>
           </header>
 
-          <div className="worksheet-student-bar">
-            <div><strong>Student Name:</strong> ___________________________</div>
-            <div><strong>Roll No:</strong> _______</div>
-            <div><strong>Date:</strong> _________</div>
+          {/* Student Info Bar */}
+          <div className="ws-student-bar">
+            <div className="ws-field ws-field--name">
+              <span className="ws-label">Student Name:</span>
+              <span className="ws-line"></span>
+            </div>
+            <div className="ws-field ws-field--roll">
+              <span className="ws-label">Roll No:</span>
+              <span className="ws-line"></span>
+            </div>
+            <div className="ws-field ws-field--date">
+              <span className="ws-label">Date:</span>
+              <span className="ws-line"></span>
+            </div>
           </div>
 
-          <section className="worksheet-section">
-            <h3 className="section-heading">1. Original Textbook Lesson (Hindi)</h3>
-            <div className="worksheet-box hindi-box" lang="hi">
-              {hindiText}
+          {/* Section 1: Original Hindi Lesson */}
+          <section className="ws-section">
+            <div className="ws-section-header">
+              <span className="ws-step-num">1</span>
+              <div>
+                <h2 className="ws-section-title">Original Textbook Lesson (पाठ्यपुस्तक पाठ)</h2>
+                <p className="ws-section-desc">Standard state curriculum source text</p>
+              </div>
+            </div>
+            <div className="ws-card ws-card--hindi" lang="hi">
+              <p className="ws-hindi-original-text">{hindiText}</p>
             </div>
           </section>
 
+          {/* Section 2: Classroom Simplified & Culturally Adapted Hindi */}
           {adapted && (
-            <section className="worksheet-section">
-              <h3 className="section-heading">
-                2. Classroom Simplified Hindi (आसान हिंदी)
-                <span className="concept-tag">{adapted.concept}</span>
-              </h3>
-              <div className="worksheet-box simplified-box" lang="hi">
-                <ol className="worksheet-sentences">
-                  {adapted.adapted_hindi.map((s, idx) => (
-                    <li key={idx}>{s}</li>
-                  ))}
-                </ol>
+            <section className="ws-section">
+              <div className="ws-section-header">
+                <span className="ws-step-num">2</span>
+                <div className="ws-header-with-tag">
+                  <h2 className="ws-section-title">Classroom Simplified Hindi (आसान हिंदी)</h2>
+                  {adapted.concept && (
+                    <span className="ws-concept-pill">
+                      <span className="material-symbols-outlined ws-inline-icon">school</span>
+                      Concept: {adapted.concept}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {adapted.substitutions?.length > 0 && (
-                <div className="worksheet-subs">
-                  <strong>Cultural Vocabulary Adaptation:</strong>
-                  {adapted.substitutions.map((sub, idx) => (
-                    <span key={idx} className="sub-tag">
-                      {sub.from} → <strong>{sub.to}</strong> ({sub.why})
-                    </span>
+              <div className="ws-card ws-card--simplified">
+                <ol className="ws-simplified-list" lang="hi">
+                  {adapted.adapted_hindi?.map((sent, idx) => (
+                    <li key={idx} className="ws-sentence-item">
+                      <span className="ws-sentence-bullet">{idx + 1}</span>
+                      <span className="ws-sentence-text">{sent}</span>
+                    </li>
                   ))}
-                </div>
-              )}
+                </ol>
+
+                {adapted.substitutions?.length > 0 && (
+                  <div className="ws-substitutions-panel">
+                    <div className="ws-subs-title">
+                      <span className="material-symbols-outlined ws-inline-icon">local_florist</span>
+                      <span>Cultural Vocabulary Adaptations (स्थानीय भाषा अनुकूलन):</span>
+                    </div>
+                    <div className="ws-subs-grid">
+                      {adapted.substitutions.map((sub, idx) => (
+                        <div key={idx} className="ws-sub-chip">
+                          <span className="ws-sub-from">{sub.from}</span>
+                          <span className="ws-sub-arrow">→</span>
+                          <strong className="ws-sub-to">{sub.to}</strong>
+                          <span className="ws-sub-why">({sub.why})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </section>
           )}
 
-          <section className="worksheet-section">
-            <h3 className="section-heading">3. Mother-Tongue Translations & Transliterations</h3>
-            <div className="worksheet-languages-grid">
-              {translations.map((t, idx) => (
-                <div key={idx} className="worksheet-lang-card">
-                  <div className="lang-card-header">
-                    <span className="lang-name">{t.name}</span>
-                    <span className="lang-tag">Classroom translation</span>
+          {/* Section 3: Structured Mother-Tongue Translations */}
+          <section className="ws-section">
+            <div className="ws-section-header">
+              <span className="ws-step-num">3</span>
+              <div>
+                <h2 className="ws-section-title">Mother-Tongue Classroom Translations (मातृभाषा रूपांतरण)</h2>
+                <p className="ws-section-desc">Regional tribal and local language adaptations with native script display</p>
+              </div>
+            </div>
+
+            <div className="ws-languages-grid">
+              {displayLangs.map((item, idx) => (
+                <div key={idx} className={`ws-lang-card ws-lang-${item.code}`}>
+                  <div className="ws-lang-header">
+                    <div className="ws-lang-titles">
+                      <span className="ws-lang-name">{item.name}</span>
+                      {item.native && <span className="ws-lang-native">{item.native}</span>}
+                    </div>
+                    <div className="ws-lang-tags">
+                      <span className="ws-script-pill">{item.script}</span>
+                      <span className="ws-engine-pill">{item.type}</span>
+                    </div>
                   </div>
-                  <div className="lang-text" lang={t.code}>
-                    {t.translated}
+                  <div className="ws-lang-body" lang={item.code}>
+                    <p className={`ws-translated-text ${item.code === "sat" ? "ws-ol-chiki-text" : ""}`}>
+                      {item.text}
+                    </p>
                   </div>
                 </div>
               ))}
-
-              {/* Show spoken phrase bank languages target text */}
-              {Object.entries(audio).map(([langCode, a]) => {
-                if (a.kind !== "audio" || !a.targetText) return null;
-                const names = { hoc: "Ho (ᱦᱳ)", unr: "Mundari (ᱢᱩᱱᱰᱟᱨᱤ)", kru: "Kurukh (कुड़ुख़)", sck: "Sadri (सादरी)" };
-                return (
-                  <div key={langCode} className="worksheet-lang-card">
-                    <div className="lang-card-header">
-                      <span className="lang-name">{names[langCode] || langCode}</span>
-                      <span className="lang-tag">Spoken phrase bank</span>
-                    </div>
-                    <div className="lang-text" lang={langCode}>
-                      {a.targetText}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </section>
 
-          <footer className="worksheet-footer">
-            <div className="footer-qr-container">
-              {qrDataUrl && (
+          {/* Footer with QR Audio Code & Pedagogical Instructions */}
+          <footer className="ws-footer">
+            <div className="ws-qr-panel">
+              {qrDataUrl ? (
                 <img
                   src={qrDataUrl}
-                  alt="QR code to listen to audio"
-                  className="worksheet-qr"
+                  alt="Scan to listen to spoken lesson audio in mother-tongues"
+                  className="ws-qr-image"
                 />
+              ) : (
+                <div className="ws-qr-placeholder">QR Code</div>
               )}
-              <div className="qr-info">
-                <strong>🔊 Scan with phone camera to listen to spoken lesson audio</strong>
-                <p>Teacher can play mother-tongue audio directly to students without typing.</p>
+              <div className="ws-qr-text-block">
+                <div className="ws-qr-headline">
+                  <span className="material-symbols-outlined ws-inline-icon">volume_up</span>
+                  <strong>Scan with Smartphone Camera to Play Audio</strong>
+                </div>
+                <p className="ws-qr-details">
+                  Teachers and students can instantly hear fluent spoken pronunciation in Santali, Ho, Mundari, Kurukh, and Sadri directly in the classroom without internet lookup.
+                </p>
               </div>
             </div>
-            <div className="footer-note">
-              BOLI · SIH26042 · Designed for Jharkhand's Multilingual Classrooms
+
+            <div className="ws-footer-attribution">
+              <div className="ws-project-info">
+                <strong>BOLI (बोली)</strong> · Smart India Hackathon Prototype (SIH26042)
+              </div>
+              <div className="ws-mission-statement">
+                Empowering Multilingual Primary Classrooms in Jharkhand · Bridging Mother-Tongues to State Curriculum
+              </div>
             </div>
           </footer>
-        </div>
+        </article>
       </div>
     </div>
   );

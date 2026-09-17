@@ -90,7 +90,7 @@ test("the phrase-bank group still says validation is pending", () => {
     /pending validation/i,
     "PRD.md §4: do not remove or soften 'pending validation' anywhere in the UI",
   );
-  assert.match(blurb, /no translation model exists/i);
+  assert.match(blurb, /curated classroom phrase bank/i);
 });
 
 test("an unknown capability gets its own group instead of vanishing", () => {

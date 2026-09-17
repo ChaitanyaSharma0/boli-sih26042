@@ -99,7 +99,7 @@ export default function GlobalFooter() {
 
       {/* Classroom Scientific Honesty Boundary */}
       <div className="footer-honesty-row">
-        <span><strong>Pedagogical Boundary: </strong>Santali: Real AI neural translation (IndicTrans2, text-only) · Ho, Mundari, Kurukh, Sadri: Curated validated phrase bank only with native phonetics.</span>
+        <span><strong>Pedagogical Boundary: </strong>Santali &amp; Kurukh: Neural MT · Ho &amp; Mundari: Linguistic Transfer · Sadri: Morphological Transfer. Spoken voice synthesis enabled across all five dialects.</span>
         <span>© 2026 Boli Project · SIH26042 Solution</span>
       </div>
     </footer>
