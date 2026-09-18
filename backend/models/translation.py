@@ -39,7 +39,7 @@ def contains_meetei_mayek(text: str) -> bool:
 # it. These decoding settings stop the loop, but they also change normal
 # output (the pinned गेहूँ contrast loses a word), so they are only a retry.
 _GUARDED = {"no_repeat_ngram_size": 3, "repetition_penalty": 1.3}
-_STUCK = re.compile(r"(.{1,6}){4,}")
+_STUCK = re.compile(r"(.{1,6})\1{4,}")
 
 
 class DegenerateOutput(RuntimeError):

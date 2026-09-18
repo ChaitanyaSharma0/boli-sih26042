@@ -698,7 +698,7 @@ the pair must be `धान हाट में बिकता है।` or `�
   submitted from sentence 2 in chapter mode saved against that lesson id.
 - **PDF text extraction garbles Devanagari from some PDFs.** pdfplumber
   returns NUL bytes for conjuncts and pre-base vowel signs out of order
-  (`पूर्व` → `पूव `, `दिशा` → `िदशा`) on a Chrome-printed PDF.
+  (`पूर्व` → `पूव\x00`, `दिशा` → `िदशा`) on a Chrome-printed PDF.
   Such sentences can never match the phrase bank and translate badly.
   The OCR fallback only runs when no text layer exists at all.
 - **`backend/.env` has `LLM_PROVIDER=gemini`** alongside the Experiential

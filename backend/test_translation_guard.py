@@ -36,6 +36,16 @@ def test_real_translations_pass():
         assert not is_degenerate(output, source), (source, output)
 
 
+def test_a_loop_inside_a_long_sentence_is_caught_by_pattern_alone():
+    # Too short to trip the length rule, so only the repetition pattern can
+    # catch it. This failed while the pattern's \1 had been mangled into a
+    # control character — the length rule had been hiding that.
+    source = "बच्चे सुबह स्कूल जाते हैं और शाम को खेत में माता-पिता की मदद करते हैं।"
+    output = "ᱜᱤᱫᱨᱤ ᱠᱚ ᱥᱮᱛᱟᱜ ᱨᱮ ᱤᱥᱠᱩᱞ " + "ᱞᱮᱹ" * 6 + " ᱾"
+    assert len(output.replace(" ", "")) < 4 * len(source.replace(" ", "")) + 40
+    assert is_degenerate(output, source)
+
+
 def test_runaway_length_is_caught_without_a_pattern():
     varied = " ".join(f"ᱥᱟᱱ{chr(0x1C5A + i % 20)}" for i in range(40))
     assert is_degenerate(varied, "नमस्ते")
@@ -43,6 +53,7 @@ def test_runaway_length_is_caught_without_a_pattern():
 
 if __name__ == "__main__":
     test_the_real_loop_is_caught()
+    test_a_loop_inside_a_long_sentence_is_caught_by_pattern_alone()
     test_real_translations_pass()
     test_runaway_length_is_caught_without_a_pattern()
     print("PASS")
