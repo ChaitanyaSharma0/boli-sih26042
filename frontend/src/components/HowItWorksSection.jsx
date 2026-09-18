@@ -4,7 +4,7 @@ export default function HowItWorksSection() {
       num: "01",
       title: "Input via Voice, Photo, or Text",
       hindiTitle: "आवाज़, फ़ोटो या टेक्स्ट इनपुट",
-      desc: "Teachers or citizens can dictate in Hindi via Meta MMS ASR, snap a photo of textbook pages with Tesseract OCR, or paste official government circulars.",
+      desc: "Teachers can dictate the lesson in Hindi (Meta MMS ASR), photograph a textbook page (Tesseract OCR), upload a whole chapter PDF, or type it.",
       icon: "mic",
     },
     {
@@ -61,7 +61,7 @@ export default function HowItWorksSection() {
       </div>
       <h2 className="screen-title">How Boli Bridges Communication</h2>
       <p className="screen-subtitle">
-        A 4-step pipeline designed specifically for low-connectivity government schools and rural public service delivery.
+        A 4-step pipeline built for primary classrooms with patchy connectivity.
       </p>
 
       {/* 4 Steps Grid */}

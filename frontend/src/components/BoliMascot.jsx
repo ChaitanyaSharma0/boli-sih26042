@@ -31,6 +31,12 @@ export default function BoliMascot({ currentGrade = 2 }) {
     <div
       className="boli-mascot-card"
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
       role="button"
       tabIndex={0}
       title="क्लिक करके बोली साथी से बात करें!"

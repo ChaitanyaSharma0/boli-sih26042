@@ -119,14 +119,14 @@ export default function App() {
     <>
       <ForestBackground />
       <div className="app-shell">
-        {/* Top Government-Grade Utility Bar (Accessibility & SIH Identification) */}
+        {/* Top utility bar: text size, contrast, SIH identification */}
         <TopUtilityBar />
 
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
 
-      {/* Main Government Portal Header */}
+      {/* Main header */}
       <header className="app-header-bar sun-card-shadow">
         <div className="header-brand">
           <Logo size="small" showTagline={true} />
@@ -211,6 +211,7 @@ export default function App() {
               onClick={() => {
                 setHindiText("");
                 setChapterSentences([]);
+                setSourceType("typed");
                 setActiveTab("studio");
                 go(0);
               }}
@@ -281,7 +282,7 @@ export default function App() {
         {activeTab === "how-it-works" && <HowItWorksSection />}
       </main>
 
-      {/* Government-Grade Footer with SIH Prototype Disclaimers */}
+      {/* Footer with the prototype disclaimer and what is real */}
       <GlobalFooter />
     </div>
     </>

@@ -91,6 +91,10 @@ export default function Capture({
           if (res.text) {
             setHindiText((prev) => (prev ? prev + " " + res.text : res.text));
             setSourceType("asr");
+            // Dictation edits the lesson text, so it ends chapter mode —
+            // otherwise the chapter's old sentence list would be processed
+            // and the dictated words silently ignored.
+            setChapterSentences([]);
           }
         } catch (err) {
           setError("Speech recognition failed: " + err.message);
@@ -114,28 +118,30 @@ export default function Capture({
   }
 
   const SAMPLE_LESSONS = [
-    { id: "custom", label: "Select NCERT / JCERT Lesson Preset…", text: "", grade: 2 },
+    // Sample lines written for trying BOLI out — not quoted from a named
+    // textbook, so they are not labelled as if they were.
+    { id: "custom", label: "Try a sample lesson…", text: "", grade: 2 },
     {
       id: "butterfly",
-      label: "Rimjhim Class 2: तितली और कली (कविता)",
+      label: "Class 2 sample: तितली और कली (कविता)",
       text: "हरी डाल पर लगी हुई थी नन्ही सुंदर एक कली। तितली उससे आकर बोली तुम लगती हो बड़ी भली।",
       grade: 2,
     },
     {
       id: "rabbit",
-      label: "Jharkhand Balvatika: नटखट खरगोश और गाजर",
+      label: "Class 1 sample: नटखट खरगोश और गाजर",
       text: "आज कक्षा में सब बच्चे बहुत खुश हैं। नन्हे खरगोश ने मीठे गाजर का हलवा अपनी माँ के साथ मिलकर बनाया। जंगल के सारे दोस्त मिलकर दावत खाएंगे।",
       grade: 1,
     },
     {
       id: "water",
-      label: "Parivesh Class 3: जल ही जीवन है (पर्यावरण)",
+      label: "Class 3 sample: जल ही जीवन है (पर्यावरण)",
       text: "जल ही हमारा जीवन है। कुएं और चापाकल का पानी हमेशा साफ रखना चाहिए। हमें मिलकर पानी बचाना है।",
       grade: 3,
     },
     {
       id: "folk",
-      label: "Mundari / Santhali Folk: करम परब और सरहुल",
+      label: "Class 4 sample: सरहुल का पर्व",
       text: "सरहुल के पावन पर्व पर सखुआ के पेड़ों पर नए फूल खिलते हैं। गाँव के सभी बच्चे और बड़े मांदर की थाप पर मिलकर नाचते हैं।",
       grade: 4,
     },
@@ -162,13 +168,19 @@ export default function Capture({
     }
   }
 
-  function insertTag(tag) {
-    setHindiText((prev) => (prev ? prev.trim() + " " + tag + " " : tag + " "));
+  // Clearing a chapter clears its text too; leaving the joined chapter in
+  // the box would send the whole chapter on as one "sentence".
+  function clearChapter() {
+    setChapterSentences([]);
+    setHindiText("");
+    setSourceType("typed");
   }
 
   const wordCount = hindiText.trim() ? hindiText.trim().split(/\s+/).length : 0;
   const charCount = hindiText.length;
-  const approxDurationSec = Math.max(2, Math.round(wordCount * 0.7));
+  // Time for the teacher to read the Hindi aloud (~0.7s a word) — not the
+  // length of any generated audio, which depends on the language chosen.
+  const readAloudSec = Math.max(2, Math.round(wordCount * 0.7));
 
   return (
     <section aria-labelledby="capture-heading">
@@ -177,7 +189,7 @@ export default function Capture({
 
       <div className="section-eyebrow">
         <span className="eyebrow-tag">कक्षा 1–5 विशेष</span>
-        <span>झारखण्ड प्राथमिक शिक्षा अभियान · मातृभाषा शिक्षण</span>
+        <span>मातृभाषा शिक्षण · झारखण्ड के प्राथमिक विद्यालयों के लिए</span>
       </div>
       <h1 id="capture-heading" className="screen-title">
         Hindi lessons for children who speak{" "}
@@ -306,7 +318,7 @@ export default function Capture({
                 <span className="grade-title">Class {g}</span>
                 <span className="grade-subtitle">
                   {g === 1
-                    ? "बालवाटिका"
+                    ? "कक्षा १"
                     : g === 2
                     ? "कक्षा २"
                     : g === 3
@@ -337,16 +349,13 @@ export default function Capture({
               <label className="field-label" htmlFor="hindi">
                 <span>Enter or Paste Hindi Textbook Content <span lang="hi">(हिंदी पाठ)</span></span>
                 <div className="quick-tags-cluster">
-                  <span className="quick-tag-prompt">त्वरित जोड़ें:</span>
-                  <button type="button" className="quick-tag-btn" onClick={() => insertTag("[कहानी: जंगल कथा]")}>+ [कहानी]</button>
-                  <button type="button" className="quick-tag-btn" onClick={() => insertTag("[पहेली]")}>+ [पहेली]</button>
-                  <button type="button" className="quick-tag-btn" onClick={() => insertTag("[शिक्षक निर्देश]")}>+ [निर्देश]</button>
                   {hindiText && (
                     <button
                       type="button"
                       className="quick-clear-btn"
-                      onClick={() => setHindiText("")}
+                      onClick={clearChapter}
                       title="Clear text"
+                      aria-label="Clear the lesson text"
                     >
                       <span className="material-symbols-outlined text-sm">backspace</span>
                     </button>
@@ -363,10 +372,12 @@ export default function Capture({
                 value={hindiText}
                 onChange={(e) => {
                   setHindiText(e.target.value);
-                  if (!e.target.value.trim()) {
-                    setSourceType("typed");
-                    setChapterSentences([]);
-                  }
+                  // Editing the text ends chapter mode: the teacher's edits
+                  // are what should be processed, not the chapter's old
+                  // sentence list. A photographed or chapter line keeps its
+                  // source type; only clearing the box makes it typed again.
+                  setChapterSentences([]);
+                  if (!e.target.value.trim()) setSourceType("typed");
                 }}
                 placeholder="यहाँ हिंदी पाठ टाइप करें या बोलकर रिकॉर्ड करें... (उदाहरण: किसान खेत में धान उगाता है।)"
               />
@@ -383,7 +394,7 @@ export default function Capture({
                   <span className="metric-separator">•</span>
                   <span className="metric-item metric-duration">
                     <span className="material-symbols-outlined text-sm">timer</span>
-                    <span>Approx {approxDurationSec} sec audio</span>
+                    <span>≈{readAloudSec} sec to read aloud</span>
                   </span>
                 </div>
                 <span className="metric-badge">
@@ -402,8 +413,10 @@ export default function Capture({
                   type="button"
                   className={`mic-toggle-btn ${isRecording ? "recording-pulse-halo active" : ""}`}
                   onClick={isRecording ? stopRecording : startRecording}
-                  disabled={transcribing || reading}
+                  disabled={transcribing || reading || extractingChapter}
                   title="Click to speak Hindi lesson aloud"
+                  aria-label={isRecording ? "Stop dictation" : "Dictate the Hindi lesson"}
+                  aria-pressed={isRecording}
                 >
                   <span
                     className="material-symbols-outlined text-2xl"
@@ -521,7 +534,7 @@ export default function Capture({
                         fontSize: "0.82rem",
                         fontWeight: 700,
                       }}
-                      onClick={() => setChapterSentences([])}
+                      onClick={clearChapter}
                     >
                       Clear
                     </button>
