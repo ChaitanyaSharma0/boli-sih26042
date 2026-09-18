@@ -86,6 +86,12 @@ export default function App() {
     });
   }
 
+  // Tab switch from anywhere (header, footer, help link).
+  function openTab(tab) {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   const next = () => go(Math.min(step + 1, 2));
   const back = () => go(Math.max(step - 1, 0));
 
@@ -120,7 +126,7 @@ export default function App() {
       <ForestBackground />
       <div className="app-shell">
         {/* Top utility bar: text size, contrast, SIH identification */}
-        <TopUtilityBar />
+        <TopUtilityBar onHelp={() => openTab("how-it-works")} />
 
       <a className="skip-link" href="#main-content">
         Skip to content
@@ -283,7 +289,7 @@ export default function App() {
       </main>
 
       {/* Footer with the prototype disclaimer and what is real */}
-      <GlobalFooter />
+      <GlobalFooter onNavigate={openTab} />
     </div>
     </>
   );

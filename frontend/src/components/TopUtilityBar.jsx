@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import logoSrc from "../assets/logo.png";
 
-export default function TopUtilityBar() {
+export default function TopUtilityBar({ onHelp }) {
   const [fontSizeLevel, setFontSizeLevel] = useState(0); // -1, 0, 1
   const [highContrast, setHighContrast] = useState(false);
 
@@ -118,7 +118,14 @@ export default function TopUtilityBar() {
           </button>
 
 
-          <a href="#help-faq" className="utility-help-link">
+          <a
+            href="#how-it-works"
+            className="utility-help-link"
+            onClick={(e) => {
+              e.preventDefault();
+              onHelp?.();
+            }}
+          >
             <span className="material-symbols-outlined text-sm">help</span>
             <span>Help</span>
           </a>
