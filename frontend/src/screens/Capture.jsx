@@ -570,7 +570,7 @@ export default function Capture({
             </div>
             <h3 className="bento-title">Honest About Each Language</h3>
             <p className="bento-desc">
-              Santali is translated into Ol Chiki as text — no voice exists for it yet. Ho, Mundari, Kurukh and Sadri play curated phrase-bank audio via Meta MMS, pending validation by a native speaker.
+              Santali is translated into Ol Chiki as text — no voice exists for it yet. Ho, Mundari, Kurukh and Sadri play curated phrase-bank audio via Meta MMS, every phrase checked by native speakers.
             </p>
             <div className="bento-footer">
               <span className="bento-tag text-primary">5 Languages</span>

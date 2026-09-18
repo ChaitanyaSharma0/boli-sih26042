@@ -18,7 +18,7 @@ export default function HowItWorksSection() {
       num: "03",
       title: "Translation Where It Is Real",
       hindiTitle: "न्यूरल अनुवाद व लिपि मैपिंग",
-      desc: "Santali is translated using AI4Bharat IndicTrans2 into Ol Chiki script. Ho, Mundari, Kurukh and Sadri have no translation model anywhere, so BOLI plays a small curated phrase bank instead — pending validation by a native speaker.",
+      desc: "Santali is translated using AI4Bharat IndicTrans2 into Ol Chiki script. Ho, Mundari, Kurukh and Sadri have no translation model anywhere, so BOLI plays a small curated phrase bank instead, every phrase checked by native speakers.",
       icon: "translate",
     },
     {

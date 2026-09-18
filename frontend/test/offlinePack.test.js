@@ -10,8 +10,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { PHRASE_BANK_NOTE } from "../src/capability.js";
-import { buildPackHtml, buildPackSummary } from "../src/offlinePack.js";
+import { phraseBankNote } from "../src/capability.js";
+import { buildPackHtml, buildPackSummary, packScopeNote } from "../src/offlinePack.js";
 
 const HINDI = "पानी हमारा जीवन है";
 
@@ -85,7 +85,7 @@ test("every language block carries its capability label and edge", () => {
 
 test("the pack states pending validation, on its own, with no app around it", () => {
   const html = buildPackHtml(pack);
-  assert.ok(html.includes(PHRASE_BANK_NOTE), "the phrase-bank note is missing");
+  assert.ok(html.includes(phraseBankNote(LANGUAGES[0])), "the phrase-bank note is missing");
   assert.match(html, /pending validation/i);
 });
 
@@ -100,7 +100,7 @@ test("the summary text carries the same labels and wording", () => {
   const summary = buildPackSummary(pack);
   assert.ok(summary.includes("[Ho, Phrase bank only] audio:"));
   assert.ok(summary.includes(`The Ho phrase for ${HINDI}`));
-  assert.ok(summary.includes(PHRASE_BANK_NOTE));
+  assert.ok(summary.includes(phraseBankNote(LANGUAGES[0])));
   assert.ok(summary.includes("[Santali, AI translation]:"));
   assert.match(summary, /pending validation/i);
 });
@@ -117,4 +117,16 @@ test("a spoken phrase whose text really is the target is shown as-is", () => {
   });
   assert.ok(html.includes("<p>ଦା ଆଲେ ଜୀଉ ତାନା</p>"));
   assert.ok(!html.includes("The Ho phrase for ଦା"));
+});
+
+test("a pack of checked languages says so, and only then", () => {
+  const checked = LANGUAGES.map((l) => ({ ...l, phrases_verified: l.translation === "phrase_bank" }));
+  const html = buildPackHtml({ ...pack, languages: checked });
+  assert.match(html, /checked by native speakers/i);
+  assert.doesNotMatch(html, /pending validation/i);
+  // Still not translation, even when checked.
+  assert.match(html, /not translated from your sentence/i);
+
+  const mixed = checked.map((l) => (l.code === "kru" ? { ...l, phrases_verified: false } : l));
+  assert.match(packScopeNote(mixed), /pending validation/i);
 });

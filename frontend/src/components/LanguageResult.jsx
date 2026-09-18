@@ -1,6 +1,6 @@
 import {
-  PHRASE_BANK_NOTE,
   nativeName,
+  phraseBankNote,
   phraseForLabel,
 } from "../capability";
 import AudioPlayer from "./AudioPlayer";
@@ -62,7 +62,7 @@ export default function LanguageResult({
             </p>
           )}
           {/* Only claim something was spoken when it actually was. */}
-          {isBank && <p className="section-note">{PHRASE_BANK_NOTE}</p>}
+          {isBank && <p className="section-note">{phraseBankNote(language)}</p>}
         </>
       )}
 

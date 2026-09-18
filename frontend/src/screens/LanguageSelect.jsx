@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { languages as fetchLanguages } from "../api";
 import LanguageChip from "../components/LanguageChip";
-import { groupLanguages } from "../capability";
+import { groupLanguages, phrasesVerified } from "../capability";
 
 // Screen 2 — pick the mother tongues in the room.
 //
@@ -140,7 +140,9 @@ export default function LanguageSelect({
               <span>
                 {group.key === "full"
                   ? "AI translation"
-                  : "Phrase bank only · pending validation"}
+                  : group.items.every(phrasesVerified)
+                    ? "Phrase bank only · checked by native speakers"
+                    : "Phrase bank only · pending validation"}
               </span>
             </span>
           </div>

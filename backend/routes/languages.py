@@ -51,6 +51,9 @@ def _capability(code: str) -> dict:
         "translation": translation_cap,
         "tts": "full" if code in tts.MODELS else "none",
         "note": NOTES[code],
+        # Whether every phrase-bank entry for this language has been checked
+        # by a native speaker. Always False where there is no bank.
+        "phrases_verified": phrase_bank.verified_for(code),
     }
 
 

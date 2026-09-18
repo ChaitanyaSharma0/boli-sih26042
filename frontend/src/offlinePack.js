@@ -4,8 +4,8 @@
 // carry the same honesty rules as the screen, on its own, with no app
 // around it (PRD.md §4, RULES.md §2): every language shows whether it is
 // real AI translation or phrase bank only, phrase-bank audio says it is
-// from the curated bank and unchecked by a native speaker, and the Hindi
-// that was sent is never presented as the phrase that was spoken.
+// from the curated bank (and whether a native speaker has checked it), and
+// the Hindi that was sent is never presented as the phrase that was spoken.
 //
 // Pure functions, no DOM and no JSZip, so the rules are testable in Node.
 //
@@ -14,9 +14,10 @@
 // in STATE.md; escape every interpolation here when it is fixed.
 
 import {
-  PHRASE_BANK_NOTE,
   capabilityBadge,
+  phraseBankNote,
   phraseForLabel,
+  phrasesVerified,
 } from "./capability.js";
 
 const CONTAMINATION_NOTE =
@@ -24,12 +25,18 @@ const CONTAMINATION_NOTE =
   "is in the wrong script.";
 
 // The same scope statement the app shows in its footer, because a pack has
-// no app around it to say it.
-export const PACK_SCOPE_NOTE =
-  "Santali is really translated by an AI model and has no voice. Ho, " +
-  "Mundari, Kurukh and Sadri have no translation model anywhere: they are " +
-  "spoken from a small curated phrase bank, pending validation by a native " +
-  "speaker.";
+// no app around it to say it. The verification claim is made only if every
+// phrase-bank language in this pack has been checked by a native speaker.
+export function packScopeNote(languages = []) {
+  const bank = languages.filter((l) => l.translation === "phrase_bank");
+  const checked = bank.length > 0 && bank.every(phrasesVerified);
+  return (
+    "Santali is really translated by an AI model and has no voice. Ho, " +
+    "Mundari, Kurukh and Sadri have no translation model anywhere: they are " +
+    "spoken from a small curated phrase bank, " +
+    (checked ? "checked by native speakers." : "pending validation by a native speaker.")
+  );
+}
 
 function audioPath(sentenceNumber, code) {
   return `audio/sentence_${sentenceNumber}_${code}.wav`;
@@ -54,7 +61,7 @@ function languageBlock(language, item, sentenceNumber) {
       `<audio controls src="${audioPath(sentenceNumber, language.code)}"></audio>`,
       `<p>${spokenText(language, spoken)}</p>`,
     );
-    if (isBank) parts.push(`<p class="note">${PHRASE_BANK_NOTE}</p>`);
+    if (isBank) parts.push(`<p class="note">${phraseBankNote(language)}</p>`);
   }
   if (spoken?.kind === "phrase_bank_only") {
     parts.push(`<p class="note">${spoken.reason}</p>`);
@@ -109,7 +116,7 @@ export function buildPackHtml({ results, languages, grade }) {
 <body>
   <h1>BOLI — Offline Classroom Lesson</h1>
   <p class="meta">Class ${grade} · Zero-Connectivity Offline Classroom Pack</p>
-  <p class="scope">${PACK_SCOPE_NOTE}</p>
+  <p class="scope">${packScopeNote(languages)}</p>
   ${results
     .map((item, idx) => {
       const n = idx + 1;
@@ -134,7 +141,7 @@ export function buildPackSummary({ results, languages, grade }) {
   let text = "BOLI — Mother-Tongue Lesson Pack\n";
   text += `Grade / Class Level: Class ${grade}\n`;
   text += `Total Sentences: ${results.length}\n\n`;
-  text += `${PACK_SCOPE_NOTE}\n\n`;
+  text += `${packScopeNote(languages)}\n\n`;
 
   results.forEach((item, idx) => {
     text += "===============================\n";
@@ -162,7 +169,7 @@ export function buildPackSummary({ results, languages, grade }) {
       if (spoken?.kind === "audio") {
         text += `  [${label}] audio: ${spokenText(language, spoken)}\n`;
         if (language.translation === "phrase_bank") {
-          text += `    ${PHRASE_BANK_NOTE}\n`;
+          text += `    ${phraseBankNote(language)}\n`;
         }
       }
     });

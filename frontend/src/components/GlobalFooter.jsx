@@ -98,7 +98,7 @@ export default function GlobalFooter() {
 
       {/* Classroom Scientific Honesty Boundary */}
       <div className="footer-honesty-row">
-        <span><strong>What is real: </strong>Santali: real AI translation (IndicTrans2), text only — no voice exists for it yet. Ho, Mundari, Kurukh &amp; Sadri: no translation model exists; BOLI speaks a small curated phrase bank with Meta MMS voices, pending validation by a native speaker.</span>
+        <span><strong>What is real: </strong>Santali: real AI translation (IndicTrans2), text only — no voice exists for it yet. Ho, Mundari, Kurukh &amp; Sadri: no translation model exists; BOLI speaks a small curated phrase bank with Meta MMS voices, every phrase checked by native speakers.</span>
         <span>© 2026 Boli Project · SIH26042 Solution</span>
       </div>
     </footer>

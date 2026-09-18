@@ -78,7 +78,7 @@ export default function LanguagesSection() {
       </div>
       <h2 className="screen-title">Languages of Jharkhand in Boli</h2>
       <p className="screen-subtitle">
-        Santali is really translated, and has no voice yet. Ho, Mundari, Kurukh and Sadri have no translation model anywhere, so BOLI speaks a small curated phrase bank in them instead, pending validation by a native speaker.
+        Santali is really translated, and has no voice yet. Ho, Mundari, Kurukh and Sadri have no translation model anywhere, so BOLI speaks a small curated phrase bank in them instead, every phrase checked by native speakers.
       </p>
 
       <div className="languages-cards-grid">

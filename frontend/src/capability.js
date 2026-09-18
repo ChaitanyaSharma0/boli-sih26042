@@ -35,7 +35,16 @@ export function capabilityBadge({ translation }) {
   return "Unavailable";
 }
 
-// Group headings, keyed by the API's `translation` value.
+// Whether a native speaker has checked this language's phrase bank, as
+// /languages reports it. Anything but an explicit true counts as unchecked,
+// so a missing field can never make the UI claim a check that didn't happen.
+export function phrasesVerified(language) {
+  return language?.phrases_verified === true;
+}
+
+// Group headings, keyed by the API's `translation` value. A blurb may be a
+// function of the group's languages, so the verification claim is only
+// made when every language in the group has earned it.
 export const GROUPS = [
   {
     key: "full",
@@ -45,10 +54,12 @@ export const GROUPS = [
   {
     key: "phrase_bank",
     heading: "Curated phrase bank",
-    blurb:
+    blurb: (items) =>
       "No translation model exists for these languages — not ours, not anyone's. " +
-      "BOLI speaks a small hand-built list of phrases instead. None of these " +
-      "phrases has been checked by a native speaker yet: pending validation.",
+      "BOLI speaks a small hand-built list of phrases instead. " +
+      (items.length && items.every(phrasesVerified)
+        ? "Every phrase has been checked by native speakers."
+        : "Not every phrase has been checked by a native speaker yet: pending validation."),
   },
 ];
 
@@ -63,10 +74,11 @@ export function groupLanguages(list) {
     .map((key) => ({ key, heading: key, blurb: "" }));
 
   return [...GROUPS, ...extras]
-    .map((group) => ({
-      ...group,
-      items: list.filter((l) => l.translation === group.key),
-    }))
+    .map((group) => {
+      const items = list.filter((l) => l.translation === group.key);
+      const blurb = typeof group.blurb === "function" ? group.blurb(items) : group.blurb;
+      return { ...group, items, blurb };
+    })
     .filter((group) => group.items.length > 0);
 }
 
@@ -151,11 +163,18 @@ export function nativeName(language) {
 }
 
 // The honesty copy for spoken phrase-bank audio, shared by the on-screen
-// cards (single-sentence and chapter mode) and the downloadable offline
-// pack, so all three say exactly the same thing. Change it here only.
-export const PHRASE_BANK_NOTE =
-  "From the curated phrase bank, not translated from your sentence. " +
-  "No native speaker has checked it yet.";
+// cards (single-sentence and chapter mode), Live Classroom, the worksheet
+// and the offline pack, so they all say exactly the same thing. Being
+// checked by a speaker never makes it a translation of the teacher's
+// sentence — the first half of the note always stays.
+export function phraseBankNote(language) {
+  return (
+    "From the curated phrase bank, not translated from your sentence. " +
+    (phrasesVerified(language)
+      ? "Checked by native speakers."
+      : "No native speaker has checked it yet.")
+  );
+}
 
 // /speak returns audio bytes only, so on a phrase-bank hit the text held
 // is the Hindi that was sent, not the phrase that was spoken. Never present

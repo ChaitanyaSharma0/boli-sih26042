@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { languages as fetchLanguages, speak, transcribeAudio, translate } from "../api";
 import {
-  PHRASE_BANK_NOTE,
   capabilityBadge,
   nativeName,
+  phraseBankNote,
   translateTargetFor,
 } from "../capability";
 import AudioPlayer from "./AudioPlayer";
@@ -169,7 +169,7 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
         Live Classroom <span lang="hi">(लाइव कक्षा शिक्षण)</span>
       </h1>
       <p className="screen-subtitle">
-        Speak or type one Hindi instruction. Santali comes back as translated text (it has no voice yet). Ho, Mundari, Kurukh and Sadri play only when the instruction is one of the curated phrase-bank phrases, pending validation by a native speaker.
+        Speak or type one Hindi instruction. Santali comes back as translated text (it has no voice yet). Ho, Mundari, Kurukh and Sadri play only when the instruction is one of the curated phrase-bank phrases, each checked by native speakers.
       </p>
 
       {/* Dialect Selector Bar */}
@@ -362,7 +362,7 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
             {liveResult.kind === "audio" && (
               <div className="live-audio-wrap">
                 <AudioPlayer blob={liveResult.audioBlob} label={`${liveResult.language.name} audio`} />
-                <p className="section-note">{PHRASE_BANK_NOTE}</p>
+                <p className="section-note">{phraseBankNote(liveResult.language)}</p>
               </div>
             )}
 

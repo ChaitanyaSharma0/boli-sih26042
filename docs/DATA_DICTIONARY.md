@@ -20,18 +20,36 @@ not silently diverged from.
 ## 2. Phrase bank — the fixed Hindi → target-language pairs
 
 This table is the entire content of the "curated phrase bank" referred
-to in PRD.md §4 and ARCHITECTURE.md §3. **Every entry here is
-unverified by a native speaker** — constructed to stay inside each
-model's vocabulary. Do not present these as linguistically confirmed
-anywhere in the UI. Add a `verified` column (see §3 below) the moment
-any entry actually gets checked by a speaker.
+to in PRD.md §4 and ARCHITECTURE.md §3. **Every entry was checked by
+native speakers on 2026-09-18**: Native-speaker college students from Jharkhand (2–3 people); names withheld at their request.
+All 20 entries, each checked individually; no corrections needed (`VERIFICATION` in phrase_bank.py holds the
+record). Checked means the Hindi phrase and the target string match; it
+does not make BOLI a translator — text outside this table is still
+refused by /speak. Ho and Mundari target strings are in Odia script, as
+their TTS checkpoints expect (models/tts.py SCRIPTS).
 
 | id | lang_code | hindi_source | target_text | verified |
 |---|---|---|---|---|
-| 1 | hoc | पानी हमारा जीवन है | दा आले जीउ ताना *(Odia script)* | false |
-| 2 | unr | पानी हमारा जीवन है | दा आले जिउ ताना *(Odia script)* | false |
-| 3 | kru | पानी हमारा जीवन है | अम्म हमक जीवन रअदा | false |
-| 4 | sck | पानी हमारा जीवन है | पानी हमन के जीवन हे | false |
+| 1 | hoc | पानी हमारा जीवन है | ଦା ଆଲେ ଜୀଉ ତାନା | true |
+| 2 | unr | पानी हमारा जीवन है | ଦା ଆଲେ ଜିଉ ତାନା | true |
+| 3 | kru | पानी हमारा जीवन है | अम्म हमक जीवन रअदा | true |
+| 4 | sck | पानी हमारा जीवन है | पानी हमन के जीवन हे | true |
+| 5 | hoc | नमस्ते | ଜୋହାର | true |
+| 6 | unr | नमस्ते | ଜୋହାର | true |
+| 7 | kru | नमस्ते | जोहार | true |
+| 8 | sck | नमस्ते | जोहार | true |
+| 9 | hoc | किताब खोलो | ପୁଥି ଉଗାଡ଼ା | true |
+| 10 | unr | किताब खोलो | ପୁଥି ଉଗାଡ଼ା | true |
+| 11 | kru | किताब खोलो | किताब उग्गड़ा | true |
+| 12 | sck | किताब खोलो | किताब खोला | true |
+| 13 | hoc | यहाँ बैठो | ନେରେ ଦୁବୁ ମେ | true |
+| 14 | unr | यहाँ बैठो | ନେରେ ଦୁବୁ ମେ | true |
+| 15 | kru | यहाँ बैठो | इस्सने उक्का | true |
+| 16 | sck | यहाँ बैठो | इहाँ बैठा | true |
+| 17 | hoc | स्कूल चलो | ଇସ୍କୁଲ ସେନୋଃ ମେ | true |
+| 18 | unr | स्कूल चलो | ଇସ୍କୁଲ ସେନୋଃ ମେ | true |
+| 19 | kru | स्कूल चलो | स्कूल कला | true |
+| 20 | sck | स्कूल चलो | स्कूल चला | true |
 
 **`backend/models/phrase_bank.py` is the single source of truth, full
 stop.** The table above documents what is in that module; it is not a
@@ -42,7 +60,7 @@ phrase bank is deliberately NOT stored in SQLite — see §3.
 encouraged (more classroom topics = better demo), but every new entry
 must follow the same rule — Hindi source, hand-constructed or
 speaker-provided target text, `verified: false` until an actual speaker
-confirms it, and it must stay inside the target model's known-working
+confirms it (the UI then says "pending validation" for that language), and it must stay inside the target model's known-working
 character set. See RULES.md §8 for how to check a checkpoint's vocab
 before writing text for it.
 

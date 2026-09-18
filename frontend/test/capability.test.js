@@ -8,13 +8,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  GROUPS,
   SANTALI_TARGET,
   VERIFIED_CONTRAST,
   capabilityBadge,
   describeCapability,
   groupLanguages,
   nativeName,
+  phraseBankNote,
   speaksWithoutPedagogy,
   translateTargetFor,
 } from "../src/capability.js";
@@ -27,12 +27,21 @@ const LIVE = [
     translation: "full",
     tts: "none",
     note: "No TTS checkpoint exists anywhere for Santali.",
+    phrases_verified: false,
   },
-  { code: "hoc", name: "Ho", translation: "phrase_bank", tts: "full", note: null },
-  { code: "unr", name: "Mundari", translation: "phrase_bank", tts: "full", note: null },
-  { code: "kru", name: "Kurukh", translation: "phrase_bank", tts: "full", note: null },
-  { code: "sck", name: "Sadri", translation: "phrase_bank", tts: "full", note: null },
+  { code: "hoc", name: "Ho", translation: "phrase_bank", tts: "full", note: null, phrases_verified: true },
+  { code: "unr", name: "Mundari", translation: "phrase_bank", tts: "full", note: null, phrases_verified: true },
+  { code: "kru", name: "Kurukh", translation: "phrase_bank", tts: "full", note: null, phrases_verified: true },
+  { code: "sck", name: "Sadri", translation: "phrase_bank", tts: "full", note: null, phrases_verified: true },
 ];
+
+// The same languages as an older backend (or a new, unchecked entry) would
+// report them: no verification claim may appear for these.
+const UNCHECKED = LIVE.map((l) => {
+  const copy = { ...l };
+  delete copy.phrases_verified;
+  return copy;
+});
 
 test("every capability combination produces real text", () => {
   for (const translation of ["full", "phrase_bank", "none"]) {
@@ -83,14 +92,34 @@ test("the live response splits into exactly two groups", () => {
   ]);
 });
 
-test("the phrase-bank group still says validation is pending", () => {
-  const blurb = GROUPS.find((g) => g.key === "phrase_bank").blurb;
-  assert.match(
-    blurb,
-    /pending validation/i,
-    "PRD.md §4: do not remove or soften 'pending validation' anywhere in the UI",
-  );
-  assert.match(blurb, /no translation model exists/i);
+function bankBlurb(list) {
+  return groupLanguages(list).find((g) => g.key === "phrase_bank").blurb;
+}
+
+test("the phrase-bank group says 'checked' only when every language is", () => {
+  assert.match(bankBlurb(LIVE), /checked by native speakers/i);
+  assert.doesNotMatch(bankBlurb(LIVE), /pending validation/i);
+
+  // One unchecked language is enough to withdraw the claim for the group.
+  const oneUnchecked = LIVE.map((l) => (l.code === "kru" ? { ...l, phrases_verified: false } : l));
+  assert.match(bankBlurb(oneUnchecked), /pending validation/i);
+  assert.match(bankBlurb(UNCHECKED), /pending validation/i);
+
+  // Checked or not, it is never described as translation.
+  for (const list of [LIVE, UNCHECKED]) {
+    assert.match(bankBlurb(list), /no translation model exists/i);
+  }
+});
+
+test("the phrase-bank note never claims a check the API did not report", () => {
+  const ho = LIVE.find((l) => l.code === "hoc");
+  assert.match(phraseBankNote(ho), /checked by native speakers/i);
+  assert.match(phraseBankNote({ ...ho, phrases_verified: false }), /no native speaker has checked/i);
+  assert.match(phraseBankNote({ ...ho, phrases_verified: "yes" }), /no native speaker has checked/i);
+  assert.match(phraseBankNote({ code: "hoc" }), /no native speaker has checked/i);
+  for (const l of [ho, { code: "hoc" }]) {
+    assert.match(phraseBankNote(l), /not translated from your sentence/i);
+  }
 });
 
 test("an unknown capability gets its own group instead of vanishing", () => {

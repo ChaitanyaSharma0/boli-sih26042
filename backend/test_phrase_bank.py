@@ -40,6 +40,10 @@ def test_languages():
     for code in ("hoc", "unr", "kru", "sck"):
         assert langs[code]["translation"] == "phrase_bank", code
         assert langs[code]["tts"] == "full", code
+    # phrases_verified reports the bank's real state, per language.
+    assert langs["sat"]["phrases_verified"] is False, "Santali has no phrase bank"
+    for code in ("hoc", "unr", "kru", "sck"):
+        assert langs[code]["phrases_verified"] is phrase_bank.verified_for(code), code
     print("languages:", {c: r["translation"] for c, r in langs.items()})
 
 
@@ -57,10 +61,11 @@ def test_arbitrary_text_is_refused():
     assert body["phrase_bank_only"] is True, body
     assert "X-Target-Text" not in r.headers, "a refusal must not name a spoken phrase"
     assert body["options"], "a refusal must tell the teacher what IS available"
-    assert all(o["verified"] is False for o in body["options"]), (
-        "an entry claims native-speaker verification — check STATE.md before "
-        "any entry is marked verified (RULES.md §2)."
-    )
+    # Every entry was checked by native speakers on 2026-09-18 (see
+    # phrase_bank.VERIFICATION). The claim must stay tied to the data: an
+    # entry marked verified needs the record that vouches for it.
+    assert all(o["verified"] is True for o in body["options"]), body["options"]
+    assert phrase_bank.VERIFICATION["date"] and phrase_bank.VERIFICATION["by"]
     print(f"refused arbitrary Ho text, offered {len(body['options'])} phrase(s)")
 
 

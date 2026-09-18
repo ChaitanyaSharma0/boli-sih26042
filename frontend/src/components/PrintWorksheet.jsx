@@ -1,7 +1,8 @@
 import {
-  PHRASE_BANK_NOTE,
   capabilityBadge,
   nativeName,
+  phraseBankNote,
+  phrasesVerified,
 } from "../capability";
 
 // A printable sheet for one lesson line.
@@ -23,6 +24,9 @@ export default function PrintWorksheet({
 }) {
   if (!isOpen) return null;
 
+  const bank = languages.filter((l) => l.translation === "phrase_bank");
+  const bankChecked = bank.length > 0 && bank.every(phrasesVerified);
+
   function handlePrint() {
     window.print();
   }
@@ -40,7 +44,7 @@ export default function PrintWorksheet({
       name: language.name,
       native: nativeName(language),
       badge: capabilityBadge(language),
-      isBank: language.translation === "phrase_bank",
+      note: language.translation === "phrase_bank" ? phraseBankNote(language) : null,
       text,
     });
   }
@@ -194,7 +198,7 @@ export default function PrintWorksheet({
                     <p className={`ws-translated-text ${item.code === "sat" ? "ws-ol-chiki-text" : ""}`}>
                       {item.text}
                     </p>
-                    {item.isBank && <p className="ws-section-desc">{PHRASE_BANK_NOTE}</p>}
+                    {item.note && <p className="ws-section-desc">{item.note}</p>}
                   </div>
                 </div>
               ))}
@@ -204,7 +208,11 @@ export default function PrintWorksheet({
           {/* Footer: what is real, plus attribution */}
           <footer className="ws-footer">
             <p className="ws-section-desc">
-              Santali has no voice anywhere yet, so it is text only. No phrase-bank entry has been checked by a native speaker yet: pending validation.
+              Santali has no voice anywhere yet, so it is text only.{" "}
+              {bank.length > 0 &&
+                (bankChecked
+                  ? "The phrase-bank phrases were checked by native speakers; they are not translations of this lesson."
+                  : "Not every phrase-bank phrase has been checked by a native speaker yet: pending validation.")}
             </p>
 
             <div className="ws-footer-attribution">

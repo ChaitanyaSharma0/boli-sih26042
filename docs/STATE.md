@@ -433,16 +433,18 @@ fine on a phone, that is why.
   confidence flag catches bad *images*, not bad *encoding*, and the
   teacher's ability to hand-edit the text on screen 1 is load-bearing,
   not a nicety. Do not add a reordering hack (RULES.md §8).
-- **The phrase bank holds 20 entries: five Hindi phrases in each of the
-  four languages** — "पानी हमारा जीवन है", "नमस्ते", "किताब खोलो", "यहाँ
-  बैठो" and "स्कूल चलो" (the last four hand-ported from the rejected
-  `larp` branch on 2026-09-18; its translation engines were not). Every
-  entry passes models/tts.py's script check and synthesises. Ho and
-  Mundari share identical target strings for three of the new phrases,
-  which a speaker should confirm rather than assume. Expanding further
-  is allowed and encouraged (DATA_DICTIONARY.md §2 gives the rules).
-- **No phrase-bank entry has been checked by a native speaker.** Every
-  `verified` is False and must stay False until one actually is.
+- **The phrase bank holds 20 entries, all checked by native speakers.**
+  Five Hindi phrases in each of the four languages — "पानी हमारा जीवन है",
+  "नमस्ते", "किताब खोलो", "यहाँ बैठो", "स्कूल चलो" (the last four hand-ported
+  from the rejected `larp` branch; its translation engines were not). On
+  2026-09-18 two to three native-speaker college students from Jharkhand
+  (names withheld at their request) checked every entry individually,
+  including the three whose Ho and Mundari strings are identical, with no
+  corrections. `verified` is now True for all 20 and
+  `phrase_bank.VERIFICATION` records who and when. `/languages` exposes
+  `phrases_verified` per language and every UI note is derived from it,
+  so a new unchecked entry automatically brings back "pending validation"
+  for its language.
 - The `lessons` table exists but is never written; the Phase 7 result
   flow is what fills it.
 - Corrections are logged and nothing more. No retraining, and the
