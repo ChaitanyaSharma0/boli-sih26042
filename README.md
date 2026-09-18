@@ -1,19 +1,34 @@
 # boli-sih26042
 
 # BOLI — Mother-tongue speech for Jharkhand's classrooms
-SIH26042 · Government of Jharkhand · Smart Education · Team LARPERS
+SIH26042 (problem statement from the Government of Jharkhand) · Smart
+Education · Team LARPERS. An independent prototype, not affiliated with
+any government body.
 
-Turns a Hindi primary-school lesson into a spoken lesson in a child's
-mother tongue — for languages no commercial system supports.
+Turns a Hindi primary-school lesson into something a child can follow in
+their mother tongue — honestly: translation only where a real model
+exists, speech only where a real voice exists.
 
 ## What runs today
-| Language | ISO | TTS | Status |
+| Language | ISO | Translation | Voice |
 |---|---|---|---|
-| Ho | hoc | facebook/mms-tts-hoc | audio generated |
-| Mundari | unr | facebook/mms-tts-unr | audio generated |
-| Kurukh | kru | facebook/mms-tts-kru | audio generated |
-| Sadri | sck | facebook/mms-tts-sck | audio generated |
-| Santali | sat | none exists | translation only |
+| Santali | sat | IndicTrans2 → Ol Chiki (real AI translation) | none exists anywhere — text only |
+| Ho | hoc | none exists — curated phrase bank | facebook/mms-tts-hoc (Odia script) |
+| Mundari | unr | none exists — curated phrase bank | facebook/mms-tts-unr (Odia script) |
+| Kurukh | kru | none exists — curated phrase bank | facebook/mms-tts-kru |
+| Sadri | sck | none exists — curated phrase bank | facebook/mms-tts-sck |
+
+The phrase bank holds 20 entries (5 classroom phrases × 4 languages),
+**every one checked by native speakers** on 2026-09-18 (college students
+from Jharkhand; names withheld at their request). Text outside the bank
+is refused, never guessed.
+
+Around that: lesson input by typing, photo (Tesseract OCR), whole-chapter
+PDF (with OCR for PDFs whose Devanagari text layer is broken) or teacher
+dictation (Meta MMS ASR); grade-aware simplification for Class 1–5 (LLM);
+a Live Classroom mode; a printable worksheet; a downloadable offline
+lesson pack; and an **Offline demo** that replays a real recorded lesson
+with no backend at all.
 
 ## Findings (4 Sep 2026)
 - Google Translate: Santali text only, "Listen" disabled. Ho, Mundari,
@@ -53,33 +68,41 @@ mother tongue — for languages no commercial system supports.
 
 ## Running it locally
 
+One-time setup:
+
 ```bash
 # backend — from backend/, with .env filled in from .env.example
 python -m venv .venv
 ./.venv/Scripts/python.exe -m pip install -r requirements.txt
 ./.venv/Scripts/python.exe -m pip install --no-build-isolation --no-deps   git+https://github.com/VarunGumma/IndicTransToolkit.git@0c607654e8
-./.venv/Scripts/python.exe -m uvicorn main:app --port 8000
 
 # frontend — from frontend/
-npm install && npm run dev
+npm install
 ```
 
-First backend start downloads ~1.7GB of model weights and warms all five
-models before serving.
+Tesseract with the Hindi (`hin`) pack is needed for photos and chapter
+PDFs. The first backend start downloads ~1.7 GB of model weights.
+
+Then, from the repo root in PowerShell:
+
+```powershell
+.\start.ps1          # backend on 8001, waits until every model is loaded, then the frontend
+```
+
+It opens each server in its own window; close a window to stop it. No
+network at the venue? The **Offline demo** button in the header needs no
+backend. To refresh what it replays: `cd backend; ./.venv/Scripts/python.exe make_demo.py`.
 
 ## Checks
 
-```bash
-cd backend  && ./.venv/Scripts/python.exe test_contrast.py      # the P0 contrast
-cd backend  && ./.venv/Scripts/python.exe test_phrase_bank.py   # the scope boundary
-cd backend  && ./.venv/Scripts/python.exe test_corrections.py   # lessons + corrections
-cd backend  && ./.venv/Scripts/python.exe test_ocr_pedagogy.py  # ocr + LLM + retries
-cd frontend && npm test                                         # capability copy and rules
+```powershell
+.\test.ps1 -Quick    # no models or network: guards, corrections, errors, splitting, frontend
+.\test.ps1           # everything, incl. phrase-bank audio, PDF OCR, the contrast, live LLM
 ```
 
-`test_contrast.py` also takes `--base-url` to run against a deployed
-instance. `frontend/test/degradation.mjs` takes a URL too — see
-`docs/DEPLOY.md`.
+`backend/test_contrast.py` also takes `--base-url` to run against a
+deployed instance, and `frontend/test/degradation.mjs` takes a URL too —
+see `docs/DEPLOY.md`.
 
 ## Notebook
 `research/sih_2026.ipynb` — coverage probe, TTS generation, IndicTrans2 test.
