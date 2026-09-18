@@ -433,12 +433,14 @@ fine on a phone, that is why.
   confidence flag catches bad *images*, not bad *encoding*, and the
   teacher's ability to hand-edit the text on screen 1 is load-bearing,
   not a nicety. Do not add a reordering hack (RULES.md §8).
-- **The phrase bank holds exactly four entries, one phrase per
-  language** — all four are the same Hindi sentence, "पानी हमारा जीवन है".
-  So any demo of Ho/Mundari/Kurukh/Sadri audio can only say that one
-  sentence. Expanding it is allowed and encouraged (DATA_DICTIONARY.md
-  §2 gives the rules), and is probably the cheapest way to make the demo
-  cover more classroom topics.
+- **The phrase bank holds 20 entries: five Hindi phrases in each of the
+  four languages** — "पानी हमारा जीवन है", "नमस्ते", "किताब खोलो", "यहाँ
+  बैठो" and "स्कूल चलो" (the last four hand-ported from the rejected
+  `larp` branch on 2026-09-18; its translation engines were not). Every
+  entry passes models/tts.py's script check and synthesises. Ho and
+  Mundari share identical target strings for three of the new phrases,
+  which a speaker should confirm rather than assume. Expanding further
+  is allowed and encouraged (DATA_DICTIONARY.md §2 gives the rules).
 - **No phrase-bank entry has been checked by a native speaker.** Every
   `verified` is False and must stay False until one actually is.
 - The `lessons` table exists but is never written; the Phase 7 result
