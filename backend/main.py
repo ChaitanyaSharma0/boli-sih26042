@@ -36,8 +36,9 @@ from dotenv import load_dotenv
 
 load_dotenv()  # HF_TOKEN must be in the environment before any model loads
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from db import db  # noqa: E402
@@ -67,6 +68,25 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="BOLI", version="0.1.0", lifespan=lifespan)
+log = logging.getLogger("boli")
+
+
+# Registered BEFORE CORSMiddleware so CORS wraps it (the last middleware
+# added is the outermost). An unhandled exception would otherwise become a
+# 500 in Starlette's outer error layer with no CORS headers; the browser
+# then blocks the response and the teacher sees "Couldn't reach the
+# server" for a server that answered. This keeps the real message visible.
+@app.middleware("http")
+async def errors_keep_cors(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception:
+        log.exception("Unhandled error on %s %s", request.method, request.url.path)
+        return JSONResponse(
+            {"detail": "Something went wrong on the server. The error has been logged; try again."},
+            status_code=500,
+        )
+
 
 # ponytail: wide-open CORS, fine for a single-teacher demo backend with no
 # auth (ARCHITECTURE.md §7). Lock to the deployed frontend origin in Phase 10.
@@ -93,4 +113,15 @@ for module in (ocr, chapter, pedagogy, translate, speak, asr_route, correct, lan
 
 @app.get("/health")
 def health():
-    return {"ok": True}
+    """Liveness plus readiness: which models are actually loaded.
+
+    `ready` is True only once translation, every TTS voice and ASR are in
+    memory, so a start script (or a nervous demo) can wait for it instead
+    of guessing when warmup has finished.
+    """
+    models = {
+        "translation": translation._load.cache_info().currsize > 0,
+        "tts": tts._load.cache_info().currsize == len(tts.MODELS),
+        "asr": asr._load_model.cache_info().currsize > 0,
+    }
+    return {"ok": True, "ready": all(models.values()), "models": models}
