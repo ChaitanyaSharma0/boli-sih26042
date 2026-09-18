@@ -9,6 +9,7 @@ import {
 } from "../api";
 import { speaksWithoutPedagogy, translateTargetFor } from "../capability";
 import LanguageResult from "../components/LanguageResult";
+import PrintWorksheet from "../components/PrintWorksheet";
 import { buildPackHtml, buildPackSummary } from "../offlinePack";
 
 // Screen 3 — the lesson, adapted, translated where that is real, and
@@ -50,6 +51,7 @@ export default function Result({
   // Multi-sentence chapter processing results
   const [chapterResults, setChapterResults] = useState([]);
   const [isZipping, setIsZipping] = useState(false);
+  const [isPrintOpen, setIsPrintOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -273,7 +275,14 @@ export default function Result({
 
   return (
     <section aria-labelledby="result-heading">
-      <h1 id="result-heading">Ready to play</h1>
+      <div className="section-eyebrow">
+        <span className="eyebrow-tag">STEP 03</span>
+        <span>LESSON AUDIO</span>
+      </div>
+      <h1 id="result-heading" className="screen-title">Ready to play</h1>
+      <p className="screen-subtitle">
+        Check the wording and listen to the audio before presenting it to your class.
+      </p>
 
       <div role="status" aria-live="polite">
         {stage && (
@@ -286,19 +295,39 @@ export default function Result({
       {error && <p className="error">{error}</p>}
 
       <div className="result-toolbar">
-        <button
-          type="button"
-          className="button button--primary"
-          onClick={handleDownloadOfflinePack}
-          disabled={isZipping || chapterResults.length === 0}
-        >
-          {isZipping ? "Packaging ZIP…" : "📦 Download Offline Pack (.zip)"}
-        </button>
-        {chapterResults.length > 1 && (
-          <span className="result-meta">
-            Chapter mode: {chapterResults.length} sentences processed (Class {grade})
-          </span>
-        )}
+        <div className="result-toolbar-meta">
+          <strong>Class {grade} lesson</strong>
+          {chapterResults.length > 1 && (
+            <span className="result-meta">
+              {" "}· {chapterResults.length} chapter sentences
+            </span>
+          )}
+        </div>
+        <div className="result-toolbar-actions">
+          {/* The worksheet holds one lesson line, so it is offered for a
+              single sentence only; a chapter would print sentence 1 under
+              the whole chapter's text. */}
+          {chapterResults.length <= 1 && (
+            <button
+              type="button"
+              className="button button--secondary tactile-btn-secondary"
+              onClick={() => setIsPrintOpen(true)}
+              disabled={stage !== ""}
+            >
+              <span className="material-symbols-outlined text-base">print</span>
+              <span>Print worksheet</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="button button--primary tactile-btn-primary"
+            onClick={handleDownloadOfflinePack}
+            disabled={isZipping || chapterResults.length === 0}
+          >
+            <span className="material-symbols-outlined text-base">folder_zip</span>
+            <span>{isZipping ? "Packaging ZIP…" : "Download offline pack (.zip)"}</span>
+          </button>
+        </div>
       </div>
 
       {chapterResults.length > 1 ? (
@@ -424,10 +453,22 @@ export default function Result({
       )}
 
       <div className="actions">
-        <button className="button button--secondary" onClick={onBack}>
-          Back
+        <button className="button button--secondary tactile-btn-secondary" onClick={onBack}>
+          <span className="material-symbols-outlined text-base">arrow_back</span>
+          <span>Change languages</span>
         </button>
       </div>
+
+      <PrintWorksheet
+        isOpen={isPrintOpen}
+        onClose={() => setIsPrintOpen(false)}
+        hindiText={hindiText}
+        adapted={adapted}
+        languages={ordered}
+        translations={translations}
+        audio={audio}
+        grade={grade}
+      />
     </section>
   );
 }
