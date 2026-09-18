@@ -13,11 +13,35 @@ causes redone work or, worse, confidently broken assumptions.
 
 ## Current phase
 
-`Phase 10 — LIVE VIA TUNNEL, not hosted. See the warning below.`
+`Phases 0-12 done; hardening pass 2026-09-18. Runs locally
+(.\start.ps1); the Phase 10 tunnel is not running — see its warning.`
 
 ## Last commit
 
-`3c19d35 — style: visual pass matching deck design language`
+Run `git log --oneline -1` — this file no longer pins a hash, because a
+pinned hash was wrong within a day every time.
+
+## Session 2026-09-18 — what changed (read this first)
+
+- **larp merge resolved** (`f04d38f`): larp's design kept, its fabricated
+  Ho/Mundari/Sadri "translation engines", `/speak` refusal removal,
+  capability edits and Santali TTS claim rejected (PRD.md §4).
+- **Phrase bank: 20 entries, all checked by native speakers**
+  (`314dd1d`); `/languages` exposes `phrases_verified` and every UI note
+  derives from it.
+- **Fixed, each with a test:** IndicTrans2 repetition loops (`b1ec3b5`,
+  `a3e960e`); garbled Devanagari PDFs now OCR'd (`8c920c9`); offline pack
+  HTML escaping and `send()` bypass (`2a5d08b`); **dictation never worked
+  in a real browser** — MediaRecorder's WebM is now converted to WAV
+  (`416f021`); server 500s lost their CORS headers and showed as "couldn't
+  reach the server" (`bb4b932`); Capture chapter clear/edit/dictation
+  bugs (`eac76a4`); near-invisible titles on the forest photo (`ef4155b`).
+- **Honesty:** removed a real government email (jepc.jharkhand.gov.in),
+  WCAG/JCERT claims, textbook-provenance claims, an unearned pacing badge
+  and government-programme wording (`3b270f4`, `eac76a4`, `3eff40f`).
+- **New:** Offline demo that replays a real recorded run with no backend
+  (`00fa1c3`, refresh with `backend/make_demo.py`); `/health` readiness;
+  `start.ps1` and `test.ps1` (`934e84b`).
 
 ## What is confirmed working right now
 
