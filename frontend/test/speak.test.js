@@ -46,7 +46,7 @@ test("every backend call reports an unreachable server the same way", async () =
     const calls = [
       () => api.languages(),
       () => api.extractChapter(new Blob(["x"])),
-      () => api.transcribeAudio(new Blob(["x"])),
+      () => api.transcribeAudio(new Blob(["x"], { type: "audio/wav" })),
       () => api.speak("पानी हमारा जीवन है", "hoc"),
       () => api.translate("पानी", "sat_Olck"),
     ];

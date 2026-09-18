@@ -2,6 +2,8 @@
 // directly — the gated HF token must never reach the browser
 // (ARCHITECTURE.md §1).
 
+import { toAsrWav } from "./wav.js";
+
 // import.meta.env only exists under Vite; the node tests import this file too.
 const BASE = import.meta.env?.VITE_API_BASE ?? "http://127.0.0.1:8000";
 
@@ -73,8 +75,10 @@ export async function extractChapter(file) {
 
 // ASR: speech-to-text via Meta MMS Hindi ASR.
 export async function transcribeAudio(audioBlob) {
+  // Browsers record WebM or MP4, never WAV; the backend reads WAV only.
+  const wav = audioBlob.type === "audio/wav" ? audioBlob : await toAsrWav(audioBlob);
   const form = new FormData();
-  form.append("file", audioBlob, "recording.wav");
+  form.append("file", wav, "recording.wav");
   const response = await send("/asr", { method: "POST", body: form });
   if (!response.ok) throw new Error(await detail(response));
   return response.json(); // { text }
