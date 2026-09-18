@@ -486,7 +486,7 @@ export default function Capture({
                 ref={chapterFileInput}
                 id="lesson-chapter"
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.txt"
                 onChange={handleChapterUpload}
                 disabled={extractingChapter}
                 hidden
@@ -506,7 +506,7 @@ export default function Capture({
                   <strong>
                     {extractingChapter
                       ? "Extracting chapter sentences…"
-                      : "Upload Textbook Chapter (PDF)"}
+                      : "Upload Textbook Chapter (PDF or text file)"}
                   </strong>
                   <small>
                     Extracts Hindi sentences page-by-page from NCERT/JCERT textbook chapters for batch grade adaptation, translation, and audio generation.
