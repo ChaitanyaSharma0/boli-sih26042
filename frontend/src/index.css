@@ -887,8 +887,8 @@ textarea:disabled {
 }
 
 /* The Hindi we asked with, not the language that was spoken — so it is
-   deliberately not given the large target-script treatment. /speak returns
-   only audio, so the matched phrase-bank string never reaches the client. */
+   deliberately not given the large target-script treatment. Only used when
+   /speak did not name the phrase it spoke (no X-Target-Text header). */
 .asked-for {
   margin: 0.4rem 0;
   color: var(--slate);

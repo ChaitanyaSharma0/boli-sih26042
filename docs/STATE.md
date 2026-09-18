@@ -715,15 +715,20 @@ the pair must be `धान हाट में बिकता है।` or `�
   hit before. Santali translation is unavailable until it is cleared;
   Phase 8.5 holds, so Ho, Mundari, Kurukh and Sadri still produce audio
   and only Santali shows a scoped error.
-- **`/speak` does not say which phrase it spoke.** It returns wav bytes
-  only, so on a phrase-bank hit the frontend cannot show the Odia or
-  Devanagari that was actually spoken and falls back to naming the Hindi
-  it sent ("The Ho phrase for …"). Accurate but incomplete: the spoken
-  text cannot get the large target-script treatment the rest of the app
-  gives real target-language output. Tracked as PLAN.md Phase 12,
-  **deliberately gated on the billing fix above**. The trap to remember
-  is CORS — custom response headers are invisible to the browser without
-  `expose_headers`, even with `allow_origins=["*"]`.
+- **`/speak` names the phrase it spoke** (PLAN.md Phase 12, done
+  2026-09-18). On a phrase-bank hit it sends `X-Phrase-Bank-Match: true`
+  and `X-Target-Text` (base64 of the UTF-8 target), exposed via CORS
+  `expose_headers`. The frontend decodes it (`spokenPhrase` in api.js)
+  and shows the Odia or Devanagari actually spoken, in the large target
+  script, on the card, in the offline pack and as a correction's original.
+  With no header (an older backend) it falls back to "The Ho phrase for
+  <Hindi>". Verified in a real browser with a .txt chapter: Ho and Kurukh
+  each showed their own phrase for three bank sentences; the fourth was
+  still refused.
+- **IndicTrans2 can loop instead of translating.** "नमस्ते" came back as
+  "ᱵᱮᱲ,ᱵᱮᱲ,…" repeated across the line, and the contamination check did
+  not flag it because every character is Ol Chiki. It is shown as an AI
+  translation with no warning. Not fixed.
 
 - *(Resolved 2026-09-05 — kept here only as the reason for the model
   choice.)* `gpt-5.6-luna` and `deepseek-v4-flash` return

@@ -2,7 +2,8 @@
 // directly — the gated HF token must never reach the browser
 // (ARCHITECTURE.md §1).
 
-const BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000";
+// import.meta.env only exists under Vite; the node tests import this file too.
+const BASE = import.meta.env?.VITE_API_BASE ?? "http://127.0.0.1:8000";
 
 // FastAPI puts its error message in `detail`. Surface that to the teacher
 // rather than a generic failure — the backend's messages are written to be
@@ -116,10 +117,32 @@ export async function speak(text, lang) {
 
   const type = response.headers.get("content-type") ?? "";
   if (type.startsWith("audio/")) {
-    return { kind: "audio", blob: await response.blob() };
+    return {
+      kind: "audio",
+      blob: await response.blob(),
+      targetText: spokenPhrase(response.headers), // null if not a bank hit
+    };
   }
   const body = await response.json();
   return { kind: "phrase_bank_only", ...body }; // { reason, options: [...] }
+}
+
+// On a phrase-bank hit /speak names the phrase it actually spoke:
+// X-Target-Text is base64 of its UTF-8 (header values are Latin-1 only).
+// atob gives one char per byte, so the bytes are decoded as UTF-8 here —
+// reading atob's output directly would turn Odia or Devanagari into
+// mojibake. Anything but an explicit match returns null, and the caller
+// falls back to naming the Hindi it sent.
+export function spokenPhrase(headers) {
+  if (headers.get("X-Phrase-Bank-Match") !== "true") return null;
+  const encoded = headers.get("X-Target-Text");
+  if (!encoded) return null;
+  try {
+    const bytes = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0));
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes) || null;
+  } catch {
+    return null;
+  }
 }
 
 // Writes one row. Triggers no retraining and changes nothing the teacher

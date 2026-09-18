@@ -98,25 +98,21 @@ export default function Result({
 
           // Helper to speak one language.
           //
-          // textIsTarget is false: /speak returns wav bytes only, so on a
-          // phrase-bank hit the text held here is the Hindi that was sent,
-          // not the phrase that was spoken. The render uses this flag so it
-          // never presents that Hindi as the spoken output.
+          // On a phrase-bank hit /speak names the phrase it spoke, and that
+          // is what gets shown (textIsTarget: true). Without that header the
+          // text held is the Hindi that was sent, and textIsTarget stays
+          // false so the render never presents that Hindi as spoken output.
           async function speakInto(language, text) {
             setStage(`Generating ${language.name} audio…`);
             try {
               const result = await speak(text, language.code);
               if (cancelled) return;
-              currentAudio[language.code] = {
-                ...result,
-                text,
-                textIsTarget: false,
-              };
+              const spoken = result.targetText
+                ? { ...result, text: result.targetText, textIsTarget: true }
+                : { ...result, text, textIsTarget: false };
+              currentAudio[language.code] = spoken;
               if (idx === 0) {
-                setAudio((prev) => ({
-                  ...prev,
-                  [language.code]: { ...result, text, textIsTarget: false },
-                }));
+                setAudio((prev) => ({ ...prev, [language.code]: spoken }));
               }
             } catch (e) {
               if (cancelled) return;
