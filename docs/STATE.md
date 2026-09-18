@@ -696,11 +696,15 @@ the pair must be `धान हाट में बिकता है।` or `�
   schema.sql and ARCHITECTURE updated). Verified end to end: a real PDF
   upload wrote one `pdf_chapter` lesson per sentence, and a correction
   submitted from sentence 2 in chapter mode saved against that lesson id.
-- **PDF text extraction garbles Devanagari from some PDFs.** pdfplumber
-  returns NUL bytes for conjuncts and pre-base vowel signs out of order
-  (`पूर्व` → `पूव\x00`, `दिशा` → `िदशा`) on a Chrome-printed PDF.
-  Such sentences can never match the phrase bank and translate badly.
-  The OCR fallback only runs when no text layer exists at all.
+- **PDF Devanagari extraction — fixed 2026-09-18.** pdfplumber's text
+  layer broke conjuncts and pre-base vowel signs (किताब -> "िकताब", NUL
+  bytes for missing glyphs), so those sentences could never match the
+  phrase bank. Each page is now scored (`chapter.garble_score`); a damaged
+  or empty page is rendered with pypdfium2 and OCR'd, and the cleaner
+  reading wins. The old scanned-PDF fallback never worked here: it needed
+  Poppler for pdf2image, which is not installed. `.txt` uploads now accept
+  UTF-8 with a BOM and UTF-16 (Notepad) instead of decoding them as Latin-1
+  mojibake. `backend/test_chapter_pdf.py` runs a real garbled PDF fixture.
 - **`backend/.env` has `LLM_PROVIDER=gemini`** alongside the Experiential
   Labs base URL and `claude-haiku-4.5`, so `/simplify` currently calls
   `gemini-3.6-flash`, whose free-tier quota is exhausted (429 → 502). This

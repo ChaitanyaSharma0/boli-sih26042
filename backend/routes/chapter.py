@@ -1,8 +1,12 @@
 """POST /chapter/extract — Extract sentences from a textbook chapter PDF.
 
-Extracts text page-by-page using pdfplumber (or pypdf fallback). If pages
-are scanned images with no embedded text, falls back to Tesseract OCR with
-the Hindi language pack.
+Each page's embedded text layer is read with pdfplumber. Devanagari text
+layers are often broken: PDF fonts map conjuncts and pre-base vowel signs
+badly, so पूर्व comes out as "पूव\x00" and किताब as "िकताब" — text that can
+never match the phrase bank and translates badly. So every page is scored
+for that damage, and a damaged or empty (scanned) page is re-read by
+Tesseract from a rendered image; whichever reading is cleaner wins.
+Rendering uses pypdfium2 (installed with pdfplumber), so no Poppler.
 
 Returns a clean list of sentences split by Hindi punctuation (danda ।, ॥, ?, !).
 The caller (frontend or batch processor) then loops the existing
@@ -14,12 +18,34 @@ import logging
 import re
 from typing import List
 
+import pdfplumber
+import pypdfium2 as pdfium
+import pytesseract
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from routes.ocr import _binary, LANG
 
 router = APIRouter()
 log = logging.getLogger(__name__)
+
+# Signs of a broken Devanagari text layer: NUL or replacement characters,
+# or a dependent sign (vowel sign, virama, nasal mark) starting a word —
+# which never happens in real Hindi.
+_GARBLED = re.compile(
+    r"\x00|\ufffd|(?:^|[\s।,.!?\"'(])[\u0900-\u0903\u093a-\u094f\u0955-\u0957\u0962\u0963]"
+)
+OCR_DPI = 300
+
+
+def garble_score(text: str) -> int:
+    return len(_GARBLED.findall(text))
+
+
+def _ocr_page(page) -> str:
+    pytesseract.pytesseract.tesseract_cmd = _binary()
+    image = page.render(scale=OCR_DPI / 72).to_pil()
+    return pytesseract.image_to_string(image, lang=LANG)
+
 
 # Matches sentence text followed by its terminal punctuation (or end of line)
 SENTENCE_PATTERN = re.compile(r"([^।॥\?!.\n]+[।॥\?!.]?)")
@@ -41,56 +67,43 @@ def split_hindi_sentences(raw_text: str) -> List[str]:
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    """Extract text from PDF using pdfplumber, pypdf, or OCR fallback."""
-    text_pieces = []
-
-    # 1. Try pdfplumber
+    """Best text for every page: its text layer, or OCR where that is damaged."""
     try:
-        import pdfplumber
-
         with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-            for page in pdf.pages:
-                t = page.extract_text()
-                if t and t.strip():
-                    text_pieces.append(t.strip())
-    except ImportError:
-        pass
+            layers = [(page.extract_text() or "").strip() for page in pdf.pages]
+        document = pdfium.PdfDocument(file_bytes)
     except Exception as e:
-        log.warning("pdfplumber extraction failed: %s", e)
+        raise HTTPException(400, f"This file could not be read as a PDF: {e}")
 
-    # 2. If no text found yet, try pypdf
-    if not text_pieces:
-        try:
-            import pypdf
+    pieces = []
+    try:
+        for number, layer in enumerate(layers):
+            text = layer
+            if not layer or garble_score(layer):
+                try:
+                    ocr = _ocr_page(document[number]).strip()
+                except Exception as e:  # Tesseract missing or failing: keep the layer
+                    log.warning("OCR of page %d failed: %s", number + 1, e)
+                    ocr = ""
+                if ocr and (not layer or garble_score(ocr) < garble_score(layer)):
+                    text = ocr
+            if text:
+                pieces.append(text)
+    finally:
+        document.close()
+    return "\n".join(pieces)
 
-            reader = pypdf.PdfReader(io.BytesIO(file_bytes))
-            for page in reader.pages:
-                t = page.extract_text()
-                if t and t.strip():
-                    text_pieces.append(t.strip())
-        except ImportError:
-            pass
-        except Exception as e:
-            log.warning("pypdf extraction failed: %s", e)
 
-    # 3. If still no text (scanned PDF), try pdf2image + pytesseract
-    if not text_pieces:
-        try:
-            from pdf2image import convert_from_bytes
-            import pytesseract
-
-            pytesseract.pytesseract.tesseract_cmd = _binary()
-            images = convert_from_bytes(file_bytes)
-            for img in images:
-                ocr_text = pytesseract.image_to_string(img, lang=LANG)
-                if ocr_text and ocr_text.strip():
-                    text_pieces.append(ocr_text.strip())
-        except ImportError:
-            pass
-        except Exception as e:
-            log.warning("pdf2image + Tesseract OCR fallback failed: %s", e)
-
-    return "\n".join(text_pieces)
+def decode_text_file(file_bytes: bytes) -> str:
+    """UTF-8 (with or without a BOM) or UTF-16, which Windows Notepad writes."""
+    if file_bytes.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return file_bytes.decode("utf-16")
+    try:
+        return file_bytes.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(
+            400, "This text file is not UTF-8 or UTF-16. Save it as UTF-8 and try again."
+        )
 
 
 @router.post("/chapter/extract")
@@ -107,10 +120,7 @@ async def extract_chapter(file: UploadFile = File(...)):
 
     raw_text = ""
     if filename.endswith(".txt"):
-        try:
-            raw_text = file_bytes.decode("utf-8")
-        except UnicodeDecodeError:
-            raw_text = file_bytes.decode("latin-1")
+        raw_text = decode_text_file(file_bytes)
     else:
         # Assume PDF by default
         raw_text = extract_text_from_pdf(file_bytes)
@@ -121,7 +131,7 @@ async def extract_chapter(file: UploadFile = File(...)):
         raise HTTPException(
             422,
             "Could not extract any readable Hindi sentences from this file. "
-            "If this is a scanned PDF, ensure Tesseract with 'hin' pack and pdf2image are available.",
+            "If it is a scanned PDF, check that Tesseract with the 'hin' pack is installed.",
         )
 
     return {

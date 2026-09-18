@@ -21,8 +21,8 @@ requests               # pedagogy LLM call (gemini provider)
 openai                 # pedagogy LLM call (openai_compatible provider)
 pytesseract            # also needs the Tesseract binary + the `hin` language pack
 Pillow
-pdfplumber
-pypdf
+pdfplumber             # PDF text layer
+pypdfium2              # renders damaged/scanned PDF pages for OCR (no Poppler needed)
 
 # IndicTransToolkit, pinned to the last pure-Python commit. Master Cythonised
 # processor.py and now needs MSVC to build on Windows. Install it last, with:
