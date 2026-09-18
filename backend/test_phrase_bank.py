@@ -11,6 +11,7 @@ lifespan warmup, so the refusal path runs without loading a single
 model. Only the one accepted-phrase check pulls a checkpoint in.
 """
 
+import base64
 import io
 import sys
 
@@ -54,6 +55,7 @@ def test_arbitrary_text_is_refused():
     )
     body = r.json()
     assert body["phrase_bank_only"] is True, body
+    assert "X-Target-Text" not in r.headers, "a refusal must not name a spoken phrase"
     assert body["options"], "a refusal must tell the teacher what IS available"
     assert all(o["verified"] is False for o in body["options"]), (
         "an entry claims native-speaker verification — check STATE.md before "
@@ -70,6 +72,11 @@ def test_bank_phrase_speaks():
     assert r.headers["content-type"] == "audio/wav", r.headers["content-type"]
     assert r.content[:4] == b"RIFF" and r.content[8:12] == b"WAVE", r.content[:16]
     print(f"bank phrase spoke: {len(r.content)} bytes of wav")
+    # Phase 12: the response names the phrase it actually spoke.
+    assert r.headers["X-Phrase-Bank-Match"] == "true", r.headers
+    spoken = base64.b64decode(r.headers["X-Target-Text"]).decode("utf-8")
+    assert spoken == entry["target_text"], spoken
+    print(f"header names the spoken phrase: {spoken}")
 
 
 def test_sentence_final_danda_still_matches():

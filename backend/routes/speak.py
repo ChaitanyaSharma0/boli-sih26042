@@ -10,6 +10,8 @@ string is exactly the plausible-looking-but-wrong output the phrase bank
 exists to avoid.
 """
 
+import base64
+
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 
@@ -33,6 +35,7 @@ def speak(req: SpeakRequest):
         )
 
     text = req.text
+    headers = {}
     if req.lang in phrase_bank.LANGS:
         entry = phrase_bank.lookup(req.lang, text)
         if entry is None:
@@ -47,9 +50,14 @@ def speak(req: SpeakRequest):
                 "options": phrase_bank.options(req.lang),
             }
         text = entry["target_text"]
+        # Say which phrase was actually spoken, so the UI can show the Ho or
+        # Kurukh text rather than the Hindi it sent (PLAN.md Phase 12).
+        # Header values are Latin-1 only, hence base64 of the UTF-8 string.
+        headers["X-Phrase-Bank-Match"] = "true"
+        headers["X-Target-Text"] = base64.b64encode(text.encode("utf-8")).decode("ascii")
 
     try:
         wav = tts.synthesize(text, req.lang)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    return Response(content=wav, media_type="audio/wav")
+    return Response(content=wav, media_type="audio/wav", headers=headers)
