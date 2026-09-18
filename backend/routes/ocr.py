@@ -50,7 +50,10 @@ def _binary() -> str:
 
 @router.post("/ocr")
 async def ocr(file: UploadFile = File(...)):
-    pytesseract.pytesseract.tesseract_cmd = _binary()
+    try:
+        pytesseract.pytesseract.tesseract_cmd = _binary()
+    except RuntimeError as e:  # a setup problem, and the message says how to fix it
+        raise HTTPException(503, str(e))
     try:
         image = Image.open(io.BytesIO(await file.read()))
     except Exception as e:
