@@ -668,16 +668,12 @@ the pair must be `धान हाट में बिकता है।` or `�
 
 - **Known issues from the naman/chapter-and-voice merge** (2026-09-17),
   logged deliberately rather than fixed, so the merge was not blocked:
-  1. **Offline pack HTML is not escaped.** `frontend/src/offlinePack.js`
-     interpolates lesson text, translations and Hindi straight into the
-     generated `index.html`. A chapter PDF containing markup would end up
-     running inside the pack. Fix by escaping every interpolation in that
-     one file; a `ponytail:` comment there marks it.
-  2. **`extractChapter` and `transcribeAudio` in `frontend/src/api.js`
-     call `fetch` directly** instead of the `send()` wrapper, so a network
-     failure on chapter upload or the mic shows the browser's "Failed to
-     fetch" rather than "Couldn't reach the server". Route both through
-     `send()`.
+  1. ~~**Offline pack HTML is not escaped.**~~ Fixed 2026-09-18: every
+     value reaching the pack's HTML goes through `esc()`; a test feeds a
+     `<script>` chapter through and checks it stays text.
+  2. ~~**`extractChapter` and `transcribeAudio` bypass `send()`.**~~ Fixed
+     2026-09-18: both use `send()`, and a test checks every API call
+     reports an unreachable server as "Couldn't reach the server".
   3. ~~**In chapter mode, a simplification failure on any sentence after
      the first is silent.**~~ Fixed 2026-09-17: each sentence card now shows
      its own "Couldn't simplify this sentence" line and passes
@@ -705,13 +701,15 @@ the pair must be `धान हाट में बिकता है।` or `�
   Poppler for pdf2image, which is not installed. `.txt` uploads now accept
   UTF-8 with a BOM and UTF-16 (Notepad) instead of decoding them as Latin-1
   mojibake. `backend/test_chapter_pdf.py` runs a real garbled PDF fixture.
-- **`backend/.env` has `LLM_PROVIDER=gemini`** alongside the Experiential
-  Labs base URL and `claude-haiku-4.5`, so `/simplify` currently calls
-  `gemini-3.6-flash`, whose free-tier quota is exhausted (429 → 502). This
-  disagrees with the working configuration recorded above.
+- **LLM configuration (checked 2026-09-18):** `backend/.env` has
+  `LLM_PROVIDER=openai_compatible` with the Experiential Labs base URL and
+  `LLM_MODEL=gpt-5.6-luna`; a live `/simplify` call succeeded in 3.6s.
+  Earlier the owner chose `claude-haiku-4.5` as the model going forward —
+  which of the two stays is the owner's call.
 - The offline pack loads no web fonts, since it is meant to work offline.
-  Santali (Ol Chiki) text therefore relies on the device having a font
-  that covers it, and may render as boxes on phones that do not.
+  Its target text now asks for the system fonts that commonly cover Ol
+  Chiki and Odia (Nirmala UI on Windows, Noto elsewhere), but a phone with
+  neither may still show boxes.
 
 - **`/simplify` is down again, and it is billing, not code.** The
   Experiential Labs key now returns

@@ -9,9 +9,9 @@
 //
 // Pure functions, no DOM and no JSZip, so the rules are testable in Node.
 //
-// ponytail: text from the lesson is interpolated into the HTML unescaped.
-// A PDF containing markup would land in the generated index.html. Tracked
-// in STATE.md; escape every interpolation here when it is fixed.
+// Every value that reaches the HTML goes through esc(): lesson text comes
+// from typing, OCR or a PDF, and a pack is opened on other machines, so a
+// "<script>" in a chapter must stay text.
 
 import {
   capabilityBadge,
@@ -38,6 +38,12 @@ export function packScopeNote(languages = []) {
   );
 }
 
+const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+
+export function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => ESCAPES[ch]);
+}
+
 function audioPath(sentenceNumber, code) {
   return `audio/sentence_${sentenceNumber}_${code}.wav`;
 }
@@ -56,38 +62,42 @@ function languageBlock(language, item, sentenceNumber) {
   );
   const parts = [];
 
+  const code = esc(language.code);
+
   if (spoken?.kind === "audio") {
     parts.push(
-      `<audio controls src="${audioPath(sentenceNumber, language.code)}"></audio>`,
-      `<p>${spokenText(language, spoken)}</p>`,
+      `<audio controls src="${esc(audioPath(sentenceNumber, language.code))}"></audio>`,
+      spoken.textIsTarget
+        ? `<p lang="${code}" class="target">${esc(spokenText(language, spoken))}</p>`
+        : `<p>${esc(spokenText(language, spoken))}</p>`,
     );
-    if (isBank) parts.push(`<p class="note">${phraseBankNote(language)}</p>`);
+    if (isBank) parts.push(`<p class="note">${esc(phraseBankNote(language))}</p>`);
   }
   if (spoken?.kind === "phrase_bank_only") {
-    parts.push(`<p class="note">${spoken.reason}</p>`);
+    parts.push(`<p class="note">${esc(spoken.reason)}</p>`);
   }
   if (spoken?.kind === "error") {
     parts.push(`<p class="error">Couldn't make the audio.</p>`);
   }
   translations.forEach((t) => {
     if (!t.translated) {
-      parts.push(`<p class="error">No translation for this sentence: ${t.error ?? "it failed"}</p>`);
+      parts.push(`<p class="error">No translation for this sentence: ${esc(t.error ?? "it failed")}</p>`);
       return;
     }
-    parts.push(`<p lang="${language.code}" class="target">${t.translated}</p>`);
+    parts.push(`<p lang="${code}" class="target">${esc(t.translated)}</p>`);
     if (t.contaminated) parts.push(`<p class="warn">${CONTAMINATION_NOTE}</p>`);
   });
   if (language.tts === "none") {
     parts.push(
-      `<p class="note">${
-        language.note ?? "There is no voice for this language."
-      } This is text only.</p>`,
+      `<p class="note">${esc(
+        language.note ?? "There is no voice for this language.",
+      )} This is text only.</p>`,
     );
   }
 
   return `
-      <div class="lang cap-${language.translation}">
-        <h3>${language.name} <span class="badge">${capabilityBadge(language)}</span></h3>
+      <div class="lang cap-${esc(language.translation)}">
+        <h3>${esc(language.name)} <span class="badge">${esc(capabilityBadge(language))}</span></h3>
         ${parts.join("\n        ")}
       </div>`;
 }
@@ -113,24 +123,26 @@ export function buildPackHtml({ results, languages, grade }) {
     .note { color: #55606E; font-size: 0.9rem; }
     .warn { border-left: 3px solid #B06A00; background: #FDF6EA; padding: 0.3rem 0.5rem; font-size: 0.9rem; }
     .error { color: #B02A20; }
-    .target { font-size: 1.15rem; }
+    /* No web fonts: a pack must work offline. These are the system fonts
+       that commonly cover Ol Chiki (Nirmala UI ships with Windows). */
+    .target { font-size: 1.15rem; font-family: "Nirmala UI", "Noto Sans Ol Chiki", "Noto Sans Oriya", system-ui, sans-serif; }
     audio { display: block; margin: 0.4rem 0; width: 100%; }
   </style>
 </head>
 <body>
   <h1>BOLI — Offline Classroom Lesson</h1>
-  <p class="meta">Class ${grade} · Zero-Connectivity Offline Classroom Pack</p>
-  <p class="scope">${packScopeNote(languages)}</p>
+  <p class="meta">Class ${esc(grade)} · Zero-Connectivity Offline Classroom Pack</p>
+  <p class="scope">${esc(packScopeNote(languages))}</p>
   ${results
     .map((item, idx) => {
       const n = idx + 1;
       return `
     <div class="card">
       <h2>Sentence ${n}</h2>
-      <p><strong>Original Hindi:</strong> ${item.sourceText}</p>
+      <p><strong>Original Hindi:</strong> <span lang="hi">${esc(item.sourceText)}</span></p>
       ${
         item.adapted
-          ? `<p><strong>Simplified Hindi:</strong> ${item.adapted.adapted_hindi.join(" ")}</p>`
+          ? `<p><strong>Simplified Hindi:</strong> <span lang="hi">${esc(item.adapted.adapted_hindi.join(" "))}</span></p>`
           : ""
       }
       ${languages.map((language) => languageBlock(language, item, n)).join("")}

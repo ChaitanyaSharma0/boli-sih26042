@@ -115,7 +115,8 @@ test("a spoken phrase whose text really is the target is shown as-is", () => {
       },
     ],
   });
-  assert.ok(html.includes("<p>ଦା ଆଲେ ଜୀଉ ତାନା</p>"));
+  // Shown as the Ho it is: tagged with its language, in the target styling.
+  assert.ok(html.includes('<p lang="hoc" class="target">ଦା ଆଲେ ଜୀଉ ତାନା</p>'));
   assert.ok(!html.includes("The Ho phrase for ଦା"));
 });
 
@@ -142,4 +143,22 @@ test("a sentence the model could not translate is named, not printed as Santali"
   assert.match(html, /No translation for this sentence: The Santali model got stuck/);
   assert.doesNotMatch(html, /class="target">null/);
   assert.match(buildPackSummary({ ...pack, results: [failed] }), /no translation \(The Santali model got stuck/);
+});
+
+test("lesson text can never become live HTML in a shared pack", () => {
+  const evil = '<script>alert("x")</script><img src=x onerror=alert(1)>';
+  const html = buildPackHtml({
+    ...pack,
+    results: [
+      {
+        ...RESULTS[0],
+        sourceText: evil,
+        adapted: { ...RESULTS[0].adapted, adapted_hindi: [evil] },
+        translations: [{ code: "sat", name: "Santali", sentence: evil, translated: evil, contaminated: false }],
+      },
+    ],
+  });
+  assert.doesNotMatch(html, /<script>alert/);
+  assert.doesNotMatch(html, /<img src=x/);
+  assert.match(html, /&lt;script&gt;alert\(&quot;x&quot;\)&lt;\/script&gt;/);
 });

@@ -37,3 +37,23 @@ test("a malformed header falls back rather than showing garbage", () => {
   assert.equal(spokenPhrase(headers({ "X-Phrase-Bank-Match": "true", "X-Target-Text": bad })), null);
   assert.equal(spokenPhrase(headers({ "X-Phrase-Bank-Match": "true", "X-Target-Text": "%%%" })), null);
 });
+
+test("every backend call reports an unreachable server the same way", async () => {
+  const api = await import("../src/api.js");
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"));
+  try {
+    const calls = [
+      () => api.languages(),
+      () => api.extractChapter(new Blob(["x"])),
+      () => api.transcribeAudio(new Blob(["x"])),
+      () => api.speak("पानी हमारा जीवन है", "hoc"),
+      () => api.translate("पानी", "sat_Olck"),
+    ];
+    for (const call of calls) {
+      await assert.rejects(call, /Couldn't reach the server/);
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
