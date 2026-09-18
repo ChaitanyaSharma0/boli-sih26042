@@ -78,9 +78,15 @@ def test_sentence_final_danda_still_matches():
         entry = phrase_bank.options(lang)[0]
         for text in (entry["hindi_source"] + "।", " " + entry["hindi_source"] + " ।"):
             assert phrase_bank.lookup(lang, text) == entry, (lang, text)
-    # Only the ending is loosened: a different sentence still misses.
+    # Punctuation inside the sentence is ignored too, words are not.
+    assert phrase_bank.lookup("hoc", "यहाँ, बैठो!") is not None
+    assert phrase_bank.lookup("hoc", '"किताब खोलो"') is not None
+    # The visarga is a letter, not punctuation: a target ending in ଃ matches.
+    assert phrase_bank.lookup("hoc", "ଇସ୍କୁଲ ସେନୋଃ ମେ") is not None
+    # A different sentence, or a near miss, is still refused.
     assert phrase_bank.lookup("hoc", "सूरज पूर्व दिशा में उगता है।") is None
-    print("danda-terminated bank phrases match; others still refused")
+    assert phrase_bank.lookup("hoc", "यहाँ बैठ") is None
+    print("punctuation ignored inside and at the end; words still exact")
 
 
 def test_every_language_has_a_bank_and_speaks_it():

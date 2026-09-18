@@ -19,6 +19,8 @@ target string in the script that checkpoint expects (models/tts.py
 SCRIPTS), and `verified: False`.
 """
 
+import re
+
 PHRASES = [
     # 1. पानी हमारा जीवन है (Water is our life)
     {
@@ -190,11 +192,16 @@ def lookup(lang: str, text: str) -> dict | None:
     return None
 
 
-def _normalise(text: str) -> str:
-    """Collapse whitespace and drop sentence-final punctuation.
+# Punctuation only — never letters, matras or the visarga (ः / ଃ), which
+# are part of the words themselves.
+_PUNCT = re.compile(r"[.!?,।॥:;\-_\"'()]+")
 
-    The chapter splitter, OCR and typing all end a sentence with a danda
-    (or not) at will. "पानी हमारा जीवन है।" is the same phrase as the bank's
-    "पानी हमारा जीवन है"; nothing inside the sentence is loosened.
+
+def _normalise(text: str) -> str:
+    """Drop punctuation anywhere and collapse whitespace.
+
+    The chapter splitter, OCR and typing add or omit a danda, commas and
+    quotes at will. "पानी हमारा जीवन है।" and "यहाँ, बैठो" are the bank's
+    phrases; the words themselves still have to match exactly.
     """
-    return " ".join(text.split()).rstrip("।॥?!. ")
+    return " ".join(_PUNCT.sub(" ", text).split())
