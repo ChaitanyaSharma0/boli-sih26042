@@ -29,9 +29,12 @@ const clock = () => performance.now();
 // /translate where a real model exists (Santali, text only — no voice),
 // /speak's phrase bank for the rest. Nothing here translates into Ho,
 // Mundari, Kurukh or Sadri, because nothing can (PRD.md §4).
-export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
+export default function LiveClassroom({ onLoadIntoStudio }) {
   const [dialects, setDialects] = useState([]);
   const [inputText, setInputText] = useState("");
+  // How the current text got here, so a lesson opened in the Studio is
+  // logged with the right source_type ("typed" or "asr").
+  const [inputSource, setInputSource] = useState("typed");
   const [selectedLang, setSelectedLang] = useState("sat");
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -79,6 +82,7 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
           const res = await transcribeAudio(audioBlob);
           if (res.text) {
             setInputText(res.text);
+            setInputSource("asr");
             await processTeacherSentence(res.text, selectedLang);
           }
         } catch (err) {
@@ -232,7 +236,10 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
             type="text"
             className="live-text-input"
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            onChange={(e) => {
+              setInputText(e.target.value);
+              setInputSource("typed");
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 processTeacherSentence(inputText, selectedLang);
@@ -263,6 +270,7 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
                 className="preset-chip-btn"
                 onClick={() => {
                   setInputText(p.text);
+                  setInputSource("typed");
                   processTeacherSentence(p.text, selectedLang);
                 }}
               >
@@ -289,7 +297,6 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
               <div className="output-meta">
                 <span className="lang-badge">{liveResult.language.name}</span>
                 <span className="badge">{capabilityBadge(liveResult.language)}</span>
-                <span className="pedagogy-badge">Class {currentGrade} Pacing</span>
               </div>
               {measuredLatencySec && (
                 <span className="latency-pill" title="Actual end-to-end API execution time">
@@ -385,7 +392,7 @@ export default function LiveClassroom({ onLoadIntoStudio, currentGrade = 2 }) {
                 <button
                   type="button"
                   className="button button--secondary tactile-btn-secondary"
-                  onClick={() => onLoadIntoStudio(liveResult.originalHindi)}
+                  onClick={() => onLoadIntoStudio(liveResult.originalHindi, inputSource)}
                 >
                   <span className="material-symbols-outlined text-sm">auto_stories</span>
                   <span>Open in Full Lesson Studio</span>

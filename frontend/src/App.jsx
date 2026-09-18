@@ -273,13 +273,13 @@ export default function App() {
 
         {activeTab === "live" && (
           <LiveClassroom
-            onLoadIntoStudio={(text) => {
+            onLoadIntoStudio={(text, source) => {
               setHindiText(text);
+              setSourceType(source);
               setChapterSentences([]);
               setActiveTab("studio");
               go(0);
             }}
-            currentGrade={grade}
           />
         )}
 
