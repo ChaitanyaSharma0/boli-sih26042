@@ -10,6 +10,7 @@ plausible-looking wrong answer.
 """
 
 import os
+import re
 from functools import lru_cache
 
 import torch
@@ -30,6 +31,30 @@ _MEETEI_MAYEK = ((0xABC0, 0xABFF), (0xAAE0, 0xAAFF))
 
 def contains_meetei_mayek(text: str) -> bool:
     return any(lo <= ord(ch) <= hi for ch in text for lo, hi in _MEETEI_MAYEK)
+
+
+# IndicTrans2's other measured failure: on some short inputs (नमस्ते) beam
+# search gets stuck on one syllable and emits "ᱦᱚᱞᱮᱹᱞᱮᱹᱞᱮᱹ…" until
+# max_length — every character is Ol Chiki, so the script check can't see
+# it. These decoding settings stop the loop, but they also change normal
+# output (the pinned गेहूँ contrast loses a word), so they are only a retry.
+_GUARDED = {"no_repeat_ngram_size": 3, "repetition_penalty": 1.3}
+_STUCK = re.compile(r"(.{1,6}){4,}")
+
+
+class DegenerateOutput(RuntimeError):
+    """The model looped instead of translating, even after a guarded retry."""
+
+
+def is_degenerate(output: str, source: str) -> bool:
+    """True for output no reader should be shown as a translation.
+
+    Either a unit of 1-6 characters repeated five or more times back to
+    back, or output far longer than any real translation of the source.
+    """
+    out = re.sub(r"\s+", "", output)
+    src = re.sub(r"\s+", "", source)
+    return bool(_STUCK.search(out)) or len(out) > 4 * len(src) + 40
 
 
 @lru_cache(maxsize=1)
@@ -65,14 +90,24 @@ def translate(text: str, target: str = "sat_Olck") -> str:
     if not text.strip():
         raise ValueError("Nothing to translate — the text was empty.")
 
+    translated = _generate(text, target)
+    if is_degenerate(translated, text):
+        translated = _generate(text, target, **_GUARDED)
+    if is_degenerate(translated, text):
+        raise DegenerateOutput(
+            "The Santali model got stuck repeating itself on this sentence, so "
+            "there is no usable translation. Try rewording it."
+        )
+    if not translated.strip():
+        raise RuntimeError("Translation came back empty — try a shorter sentence.")
+    return translated
+
+
+def _generate(text: str, target: str, **decoding) -> str:
     tok, model, ip = _load()
     batch = ip.preprocess_batch([text], src_lang=SRC_LANG, tgt_lang=target)
     enc = tok(batch, truncation=True, padding="longest", return_tensors="pt")
     with torch.no_grad():
-        out = model.generate(**enc, max_length=256, num_beams=5)
+        out = model.generate(**enc, max_length=256, num_beams=5, **decoding)
     decoded = tok.batch_decode(out, skip_special_tokens=True)
-    translated = ip.postprocess_batch(decoded, lang=target)[0]
-
-    if not translated.strip():
-        raise RuntimeError("Translation came back empty — try a shorter sentence.")
-    return translated
+    return ip.postprocess_batch(decoded, lang=target)[0]

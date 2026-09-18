@@ -727,10 +727,16 @@ the pair must be `धान हाट में बिकता है।` or `�
   <Hindi>". Verified in a real browser with a .txt chapter: Ho and Kurukh
   each showed their own phrase for three bank sentences; the fourth was
   still refused.
-- **IndicTrans2 can loop instead of translating.** "नमस्ते" came back as
-  "ᱵᱮᱲ,ᱵᱮᱲ,…" repeated across the line, and the contamination check did
-  not flag it because every character is Ol Chiki. It is shown as an AI
-  translation with no warning. Not fixed.
+- **IndicTrans2 looping — fixed 2026-09-18.** On some short inputs
+  ("नमस्ते") beam search repeated one syllable to max_length
+  ("ᱦᱚᱞᱮᱹᱞᱮᱹᱞᱮᱹ…", 302 chars), invisible to the script check.
+  `translation.is_degenerate` now catches it; the call is retried once
+  with `no_repeat_ngram_size=3, repetition_penalty=1.3` (only as a retry:
+  those settings change normal output, e.g. the pinned गेहूँ contrast), and
+  if it still loops /translate returns 422 rather than a looped line.
+  नमस्ते now translates to "ᱦᱚᱞᱮᱹᱢᱮ ᱾". Tested by
+  `backend/test_translation_guard.py` (no model needed). The frontend now
+  shows a failed sentence on its own card instead of aborting the lesson.
 
 - *(Resolved 2026-09-05 — kept here only as the reason for the model
   choice.)* `gpt-5.6-luna` and `deepseek-v4-flash` return

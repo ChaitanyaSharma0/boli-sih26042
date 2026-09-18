@@ -30,6 +30,9 @@ def translate(req: TranslateRequest):
         translated = translation.translate(req.text, req.target)
     except ValueError as e:
         raise HTTPException(400, str(e))
+    except translation.DegenerateOutput as e:
+        # Never hand back a looped line as if it were Santali.
+        raise HTTPException(422, str(e))
 
     # Report the one failure mode we have actually measured, rather than
     # handing back broken output that looks fine. A caller that renders

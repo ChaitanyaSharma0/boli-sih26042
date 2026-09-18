@@ -130,3 +130,16 @@ test("a pack of checked languages says so, and only then", () => {
   const mixed = checked.map((l) => (l.code === "kru" ? { ...l, phrases_verified: false } : l));
   assert.match(packScopeNote(mixed), /pending validation/i);
 });
+
+test("a sentence the model could not translate is named, not printed as Santali", () => {
+  const failed = {
+    ...RESULTS[0],
+    translations: [
+      { code: "sat", name: "Santali", sentence: "नमस्ते", translated: null, error: "The Santali model got stuck repeating itself." },
+    ],
+  };
+  const html = buildPackHtml({ ...pack, results: [failed] });
+  assert.match(html, /No translation for this sentence: The Santali model got stuck/);
+  assert.doesNotMatch(html, /class="target">null/);
+  assert.match(buildPackSummary({ ...pack, results: [failed] }), /no translation \(The Santali model got stuck/);
+});

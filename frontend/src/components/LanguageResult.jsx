@@ -109,10 +109,18 @@ export default function LanguageResult({
         </p>
       )}
 
-      {translations.length > 0 && (
+      {translations
+        .filter((t) => t.error)
+        .map((t, i) => (
+          <p key={`err-${i}`} className="error">
+            No {language.name} for “<span lang="hi">{t.sentence}</span>”. {t.error}
+          </p>
+        ))}
+
+      {translations.some((t) => t.translated) && (
         <>
           <ol className="sentences target" lang={language.code}>
-            {translations.map((t, i) => (
+            {translations.filter((t) => t.translated).map((t, i) => (
               <li key={i}>
                 {t.translated}
                 {t.contaminated && (
@@ -127,7 +135,7 @@ export default function LanguageResult({
           </ol>
           <CorrectionForm
             lang={language.code}
-            original={translations.map((t) => t.translated).join(" ")}
+            original={translations.filter((t) => t.translated).map((t) => t.translated).join(" ")}
             lessonId={lessonId}
           />
         </>

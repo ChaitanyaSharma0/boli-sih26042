@@ -157,15 +157,30 @@ export default function Result({
               if (!target) continue;
               setStage(`Translating into ${language.name}…`);
               for (const sentence of simplified.adapted_hindi) {
-                const result = await translate(sentence, target);
-                if (cancelled) return;
-                const transObj = {
-                  code: language.code,
-                  name: language.name,
-                  sentence,
-                  translated: result.translated,
-                  contaminated: result.script_contamination,
-                };
+                // One sentence the model can't handle is that sentence's
+                // problem, shown on its card — not a reason to stop the
+                // whole lesson or every later chapter sentence.
+                let transObj;
+                try {
+                  const result = await translate(sentence, target);
+                  if (cancelled) return;
+                  transObj = {
+                    code: language.code,
+                    name: language.name,
+                    sentence,
+                    translated: result.translated,
+                    contaminated: result.script_contamination,
+                  };
+                } catch (e) {
+                  if (cancelled) return;
+                  transObj = {
+                    code: language.code,
+                    name: language.name,
+                    sentence,
+                    translated: null,
+                    error: e.message,
+                  };
+                }
                 currentTranslations.push(transObj);
                 if (idx === 0) {
                   setTranslations((prev) => [...prev, transObj]);
@@ -179,7 +194,7 @@ export default function Result({
             if (language.tts !== "full" || speaksWithoutPedagogy(language))
               continue;
             const mine = currentTranslations.filter(
-              (t) => t.code === language.code
+              (t) => t.code === language.code && t.translated
             );
             if (!mine.length) continue;
             await speakInto(

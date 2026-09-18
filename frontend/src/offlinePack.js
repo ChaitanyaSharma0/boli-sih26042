@@ -70,6 +70,10 @@ function languageBlock(language, item, sentenceNumber) {
     parts.push(`<p class="error">Couldn't make the audio.</p>`);
   }
   translations.forEach((t) => {
+    if (!t.translated) {
+      parts.push(`<p class="error">No translation for this sentence: ${t.error ?? "it failed"}</p>`);
+      return;
+    }
     parts.push(`<p lang="${language.code}" class="target">${t.translated}</p>`);
     if (t.contaminated) parts.push(`<p class="warn">${CONTAMINATION_NOTE}</p>`);
   });
@@ -163,6 +167,10 @@ export function buildPackSummary({ results, languages, grade }) {
       (item.translations || [])
         .filter((t) => t.code === language.code)
         .forEach((t) => {
+          if (!t.translated) {
+            text += `  [${label}]: no translation (${t.error ?? "it failed"})\n`;
+            return;
+          }
           text += `  [${label}]: ${t.translated}\n`;
           if (t.contaminated) text += `    ${CONTAMINATION_NOTE}\n`;
         });
