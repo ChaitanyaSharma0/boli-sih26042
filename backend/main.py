@@ -75,6 +75,9 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    # Custom response headers are invisible to a cross-origin page unless
+    # exposed; /speak uses these to name the phrase it spoke.
+    expose_headers=["X-Target-Text", "X-Phrase-Bank-Match"],
 )
 
 # Resolved against this file, not the working directory: the app must
