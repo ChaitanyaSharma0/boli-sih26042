@@ -1,0 +1,93 @@
+{
+  "recorded": "2026-09-18",
+  "hindiText": "पानी हमारा जीवन है।",
+  "grade": 2,
+  "languages": [
+    {
+      "code": "sat",
+      "name": "Santali",
+      "translation": "full",
+      "tts": "none",
+      "note": "No TTS checkpoint exists anywhere for Santali.",
+      "phrases_verified": false
+    },
+    {
+      "code": "hoc",
+      "name": "Ho",
+      "translation": "phrase_bank",
+      "tts": "full",
+      "note": null,
+      "phrases_verified": true
+    },
+    {
+      "code": "unr",
+      "name": "Mundari",
+      "translation": "phrase_bank",
+      "tts": "full",
+      "note": null,
+      "phrases_verified": true
+    },
+    {
+      "code": "kru",
+      "name": "Kurukh",
+      "translation": "phrase_bank",
+      "tts": "full",
+      "note": null,
+      "phrases_verified": true
+    },
+    {
+      "code": "sck",
+      "name": "Sadri",
+      "translation": "phrase_bank",
+      "tts": "full",
+      "note": null,
+      "phrases_verified": true
+    }
+  ],
+  "adapted": {
+    "concept": "Water is necessary for life.",
+    "adapted_hindi": [
+      "पानी से हम जीते हैं।"
+    ],
+    "substitutions": [],
+    "readability": {
+      "before_wps": 4.0,
+      "after_wps": 5.0
+    }
+  },
+  "translations": [
+    {
+      "code": "sat",
+      "name": "Santali",
+      "sentence": "पानी से हम जीते हैं।",
+      "translated": "ᱫᱟᱜ ᱛᱮ ᱤᱧᱟᱹᱜ ᱡᱤᱭᱚᱱ ᱢᱮᱱᱟᱜᱼᱟ ᱾",
+      "contaminated": false
+    }
+  ],
+  "audio": {
+    "hoc": {
+      "kind": "audio",
+      "file": "hoc.wav",
+      "text": "ଦା ଆଲେ ଜୀଉ ତାନା",
+      "textIsTarget": true
+    },
+    "unr": {
+      "kind": "audio",
+      "file": "unr.wav",
+      "text": "ଦା ଆଲେ ଜିଉ ତାନା",
+      "textIsTarget": true
+    },
+    "kru": {
+      "kind": "audio",
+      "file": "kru.wav",
+      "text": "अम्म हमक जीवन रअदा",
+      "textIsTarget": true
+    },
+    "sck": {
+      "kind": "audio",
+      "file": "sck.wav",
+      "text": "पानी हमन के जीवन हे",
+      "textIsTarget": true
+    }
+  }
+}

@@ -38,6 +38,7 @@ export default function Result({
   sourceType,
   selectedLangs,
   onBack,
+  demo = false,
 }) {
   const [stage, setStage] = useState("Loading languages…");
   const [error, setError] = useState("");
@@ -52,11 +53,57 @@ export default function Result({
   const [chapterResults, setChapterResults] = useState([]);
   const [isZipping, setIsZipping] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+  // Set when replaying the recorded offline demo (backend/make_demo.py).
+  const [demoLesson, setDemoLesson] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
 
+    // Offline demo: replay one real, recorded run of this same pipeline from
+    // the app's own static files. No backend call is made, nothing is
+    // written, and the banner says it is a recording.
+    async function replayDemo() {
+      const base = `${import.meta.env.BASE_URL}demo/`;
+      const lesson = await (await fetch(`${base}lesson.json`)).json();
+      const replayed = Object.fromEntries(
+        await Promise.all(
+          Object.entries(lesson.audio).map(async ([code, a]) => [
+            code,
+            { ...a, blob: await (await fetch(base + a.file)).blob() },
+          ]),
+        ),
+      );
+      if (cancelled) return;
+      setDemoLesson(lesson);
+      setChosen(lesson.languages);
+      setAdapted(lesson.adapted);
+      setTranslations(lesson.translations);
+      setAudio(replayed);
+      setChapterResults([
+        {
+          sentenceIndex: 0,
+          sourceText: lesson.hindiText,
+          lessonId: null,
+          adapted: lesson.adapted,
+          translations: lesson.translations,
+          audio: replayed,
+        },
+      ]);
+      setStage("");
+    }
+
     async function run() {
+      if (demo) {
+        try {
+          await replayDemo();
+        } catch (e) {
+          if (!cancelled) {
+            setError("The offline demo files are missing or unreadable. " + e.message);
+            setStage("");
+          }
+        }
+        return;
+      }
       const sentenceList =
         chapterSentences && chapterSentences.length > 0
           ? chapterSentences
@@ -227,7 +274,7 @@ export default function Result({
     return () => {
       cancelled = true;
     };
-  }, [hindiText, grade, chapterSentences, sourceType, selectedLangs]);
+  }, [hindiText, grade, chapterSentences, sourceType, selectedLangs, demo]);
 
   // Play one phrase from the bank, when the teacher's own sentence was not
   // in it. Same /speak route, same rules — just a phrase that will match.
@@ -298,6 +345,14 @@ export default function Result({
       <p className="screen-subtitle">
         Check the wording and listen to the audio before presenting it to your class.
       </p>
+
+      {demoLesson && (
+        <p className="note demo-banner" role="note">
+          <strong>Offline demo.</strong> This is a real lesson BOLI processed on{" "}
+          {demoLesson.recorded}, saved and replayed from this device — nothing is
+          being sent to the server right now.
+        </p>
+      )}
 
       <div role="status" aria-live="polite">
         {stage && (
@@ -477,7 +532,7 @@ export default function Result({
       <PrintWorksheet
         isOpen={isPrintOpen}
         onClose={() => setIsPrintOpen(false)}
-        hindiText={hindiText}
+        hindiText={demoLesson?.hindiText ?? hindiText}
         adapted={adapted}
         languages={ordered}
         translations={translations}

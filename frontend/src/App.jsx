@@ -67,6 +67,8 @@ export default function App() {
   const [chapterSentences, setChapterSentences] = useState([]);
   const [sourceType, setSourceType] = useState("typed");
   const [selectedLangs, setSelectedLangs] = useState([]);
+  // Replaying the recorded offline demo instead of calling the backend.
+  const [demo, setDemo] = useState(false);
   const mainRef = useRef(null);
 
   function canGoToStep(targetStep) {
@@ -79,6 +81,9 @@ export default function App() {
 
   function go(nextStep) {
     if (!canGoToStep(nextStep)) return;
+    // Leaving the result screen ends a demo replay, so a teacher who then
+    // types a real lesson always gets live processing, never the recording.
+    if (nextStep < 2) setDemo(false);
     setStep(nextStep);
     requestAnimationFrame(() => {
       mainRef.current?.focus();
@@ -226,6 +231,20 @@ export default function App() {
               <span className="material-symbols-outlined text-sm">restart_alt</span>
               <span className="util-btn-text">New Lesson</span>
             </button>
+            <button
+              type="button"
+              className="header-util-btn"
+              onClick={() => {
+                setDemo(true);
+                setActiveTab("studio");
+                setStep(2);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              title="Replay a real lesson recorded earlier, with no network or server needed"
+            >
+              <span className="material-symbols-outlined text-sm">offline_pin</span>
+              <span className="util-btn-text">Offline demo</span>
+            </button>
           </div>
           <div className="sih-initiative-badge">
             <span className="initiative-dot" />
@@ -260,6 +279,7 @@ export default function App() {
             )}
             {step === 2 && (
               <Result
+                demo={demo}
                 hindiText={hindiText}
                 grade={grade}
                 chapterSentences={chapterSentences}
